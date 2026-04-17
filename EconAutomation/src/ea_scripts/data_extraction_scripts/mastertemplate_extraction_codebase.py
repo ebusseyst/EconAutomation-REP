@@ -1,10 +1,11 @@
 import logging
 import platform
 import datetime
+import locale
 
 import openpyxl
 
-from ea_scripts.data_extraction_scripts.data_extraction_codebase import DataExtractorCore
+from ea_scripts.data_extraction_scripts.extraction_core_codebase import DataExtractorCore
 
 # Module's logger instance
 logger = logging.getLogger(__name__)
@@ -41,7 +42,8 @@ class MasterTemplateInfo:
             "report_date": "B12",
             "reference_date": "B13",
             "date_of_accident": "B14",
-            "date_of_trial": "B15",
+            "date_of_trial_short": "B15",
+            "date_of_trial_long" : "B15",
             "LTB1_loss_to_trial_base_1": "B16",
             "ac1_after_credit_1": "B17",
             "place_of_trial": "B18",
@@ -86,7 +88,7 @@ class MasterTemplateInfo:
             "inflation_rate": "B61",
             "consistent_with": "B62"
             }
-
+        
         # Higher scope nested dictionary to hold all target cell dictionaries (one per worksheet)
         mastertemplate_targets_dict = {
             "Inputs": mastertemplate_inputs_dict
@@ -94,15 +96,109 @@ class MasterTemplateInfo:
 
         return mastertemplate_targets_dict
     
+    @staticmethod
+    def define_short_form_dates():
+        """
+        Defines the short form dates for the relevant workbook.
+        """
+        short_form_dates_list = [
+            "claimant_short_DOB",
+            "report_date",
+            "reference_date",
+            "date_of_accident",
+            "date_of_trial_short"
+        ]
+        return short_form_dates_list
+    
+    @staticmethod
+    def define_long_form_dates():
+        """
+        Defines the long form dates for the relevant workbook.
+        """
+        long_form_dates_list = [
+            "claimant_long_DOB",
+            "LCP_report_date",
+            "date_of_trial_long"
+        ]
+        return long_form_dates_list
+    
+    @staticmethod
+    def define_currency_values():
+        """
+        Defines the currency values for the relevant workbook.
+        """
+        currency_values_list = [
+            "LTB1_loss_to_trial_base_1",
+            "ac1_after_credit_1",
+            "primary_earnings_base_1",
+            "primary_earnings_base_2",
+            "alternative_earnings_base",
+            "hourly_wage",
+            "weekly_wage",
+            "pv_employer_fringe_contrib",
+            "loss_from_trial_wo_return_to_work",
+            "loss_from_trial_after_credit_1",
+            "pv_meds_low",
+            "pv_meds_mid",
+            "pv_meds_high",
+            "estimate_lower_bound",
+            "estimate_upper_bound",
+            "estimate_midpoint"
+        ]
+        return currency_values_list
+    
+    @staticmethod
+    def define_percentages():
+        """
+        Defines the percentage values for the relevant workbook.
+        """
+        percentages_list = [
+            "default_discount_rate",
+            "real_discount_rate",
+            "inflation_rate"
+        ]
+        return percentages_list
+    
+    @staticmethod
+    def define_reformatted_floats():
+        """
+        Defines the to-be-rounded float values for the relevant workbook.
+        """
+        reformatted_floats_list = [
+            "age_at_reference",
+            "life_expectancy",
+            "duration_of_projection"
+        ]
+        return reformatted_floats_list
+    
 class MasterTemplateExtractor(DataExtractorCore):
-    def __init__(self, active_workbook_path: str = MASTERTEMPLATE_PATH):
+    def __init__(self, active_workbook_path: str = None):
         super().__init__(active_workbook_path)
         
         # DEFINING CLASS ATTRIBUTES
         self.target_cells_dict = MasterTemplateInfo.define_workbook_targets()
+        self.short_form_dates_list = MasterTemplateInfo.define_short_form_dates()
+        self.long_form_dates_list = MasterTemplateInfo.define_long_form_dates()
+        self.currency_values_list = MasterTemplateInfo.define_currency_values()
+        self.percentages_list = MasterTemplateInfo.define_percentages()
+        self.reformatted_floats_list = MasterTemplateInfo.define_reformatted_floats()
         
         # CALLING METHODS
         self.extracted_data = self.extract_data(self.target_cells_dict)
+        self.extracted_data = self.reprocess_dates(short_form_dates_list=self.short_form_dates_list, long_form_dates_list=self.long_form_dates_list, extracted_data_dict=self.extracted_data)
+        self.extracted_data = self.reprocess_currency_values(currency_values_list=self.currency_values_list, extracted_data_dict=self.extracted_data)
+        self.extracted_data = self.reprocess_percentages(percentages_list=self.percentages_list, extracted_data_dict=self.extracted_data)
+        self.extracted_data = self.reprocess_floats(floats_list=self.reformatted_floats_list, extracted_data_dict=self.extracted_data)
+        
+        # CREATING CONSOLIDATED KEYS FOR CONVENIENCE
+        self.extracted_data["claimant_name_full"] = f"{self.extracted_data['claimant_name_first']} {self.extracted_data['claimant_name_last']}"
+        self.extracted_data["claimant_salutation_with_name_last"] = f"{self.extracted_data['claimant_salutation']} {self.extracted_data['claimant_name_last']}"
+        self.extracted_data["attorney_name_full"] = f"{self.extracted_data['attorney_name_first']} {self.extracted_data['attorney_name_last']}"
+        self.extracted_data["attorney_salutation_with_name_full"] = f"{self.extracted_data['attorney_salutation']} {self.extracted_data['attorney_name_full']}"
+        self.extracted_data["attorney_salutation_with_name_last"] = f"{self.extracted_data['attorney_salutation']} {self.extracted_data['attorney_name_last']}"
+        self.extracted_data["firm_city_state_zip"] = f"{self.extracted_data['firm_city']}, {self.extracted_data['firm_state']} {self.extracted_data['firm_zip_code']}"
+        self.extracted_data["firm_address_full"] = f"{self.extracted_data['firm_name']}\n{self.extracted_data['firm_street_address']}\n{self.extracted_data['firm_city_state_zip']}"
+        
         
     # def extract_pv_summary_no_rounding_table(self):
     #     """

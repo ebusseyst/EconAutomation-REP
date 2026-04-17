@@ -4,7 +4,7 @@ import openpyxl
 import pandas as pd
 import pydantic
 
-from ea_scripts.data_extraction_scripts.data_extraction_codebase import DataExtractorCore
+from ea_scripts.data_extraction_scripts.extraction_core_codebase import DataExtractorCore
 
 # Module's logger instance
 logger = logging.getLogger(__name__)
@@ -44,10 +44,10 @@ class WorkingCalcExtractor(DataExtractorCore):
         self.target_cells_dict = WorkingCalcInfo.define_working_calc_targets()
         
         # CALLING METHODS
-        self.extracted_data = self.extract_table_data(self.target_cells_dict)
+        self.extracted_data = self.extract_data(self.target_cells_dict)
         
-    def extract_pv_summary_no_rounding_table(self):
-        """
-        Extracts the PowerQuery table from the PV_Summary_No_Rounding worksheet.
-        """
+    # def extract_pv_summary_no_rounding_table(self):
+    #     """
+    #     Extracts the PowerQuery table from the PV_Summary_No_Rounding worksheet.
+    #     """
         
