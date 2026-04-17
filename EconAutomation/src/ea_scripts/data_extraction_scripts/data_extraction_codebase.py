@@ -10,8 +10,8 @@ class DataExtractorCore:
     def __init__(self, active_workbook_path: str):
         self.active_workbook_path = Path(active_workbook_path)
         self.active_workbook = openpyxl.load_workbook(active_workbook_path, data_only=True) # Returns only computed values of formulas
-
-    def extract_table_data(self, worksheet_targets_dict: dict[str, dict[str, str]]):
+        
+    def extract_data(self, worksheet_targets_dict: dict[str, dict[str, str]]):
         """
         Extracts data from the specified worksheet based on its target cells subdictionaries.
         """

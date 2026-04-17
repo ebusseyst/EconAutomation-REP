@@ -1,10 +1,10 @@
 import logging
 
-from ea_scripts.ea_main_codebase import *
+from ea_scripts.data_extraction_scripts.mastertemplate_extraction_codebase import MasterTemplateExtractor
 
 # Top-level logger instance
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    working_calc_extractor = WorkingCalcExtractor()
-    print(working_calc_extractor.extracted_data)
+    mastertemplate_extractor = MasterTemplateExtractor()
+    print(mastertemplate_extractor.extracted_data)
