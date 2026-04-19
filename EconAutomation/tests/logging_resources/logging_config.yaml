@@ -1,0 +1,39 @@
+version: 1
+disable_existing_loggers: False
+
+filters:
+  GlobalContextFilter:
+    (): logging_resources.log_context.GlobalContextFilter # the path to the filter class
+
+formatters:
+  DefaultJSONFormatter:
+    (): logging_resources.log_context.DefaultJSONFormatter
+    style: "{"
+    format: "{name} {module} {funcName} {lineno} {asctime} {levelname} {message} {stack_info}"
+    rename_fields:
+      levelname: log_level
+      asctime: timestamp
+      lineno: line_number
+      module: module_name
+      funcName: function_name
+  
+  DefaultConsoleFormatter:
+    (): logging_resources.log_context.DefaultConsoleFormatter
+    style: "{"
+    format: "{name} {module} {funcName} {lineno} {asctime} {levelname} {message} {stack_info}"
+
+handlers:
+  default_json_handler:
+    class: logging.StreamHandler
+    formatter: DefaultJSONFormatter
+    level: INFO
+
+loggers:
+  assoc2_main:
+    handlers: [default_json_handler]
+    level: INFO
+    propagate: False
+
+root:
+  handlers: [default_json_handler]
+  level: INFO
