@@ -4,7 +4,8 @@ import datetime
 import locale
 from decimal import Decimal
 
-import openpyxl
+import xlwings as xw
+import openpyxl as opxl
 import pandas as pd
 
 # Module's logger instance
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 class DataExtractorCore:
     def __init__(self, active_workbook_path: str):
         self.active_workbook_path = Path(active_workbook_path)
-        self.active_workbook = openpyxl.load_workbook(active_workbook_path, data_only=True) # Returns only computed values of formulas
+        self.active_workbook = opxl.load_workbook(active_workbook_path, data_only=True) # Returns only computed values of formulas
         
     def extract_data(self, workbook_targets_dict: dict[str, dict[str, str]]):
         """
@@ -33,22 +34,22 @@ class DataExtractorCore:
             logger.exception(f"DataExtractorCore.extract_data: Error extracting data: {e}")
             return None
     
-    def extract_tables(self, workbook_tables_list: list[str]=None):
-        """
-        Extracts tables from the specified worksheets based on their target table subdictionaries.
-        """
-        extracted_tables_dict = {}
-        try:
-            for worksheet_name in workbook_tables_list:
-                for table_name, table in self.active_workbook[worksheet_name].tables.items():
-                    df = pd.read_excel(self.active_workbook_path, sheet_name=worksheet_name, header=0, usecols=table.ref)
-                    extracted_tables_dict[worksheet_name][table_name] = df
-            logger.info(f"DataExtractorCore: Extracted tables from {self.active_workbook_path}")
-            logger.info(f"DataExtractorCore: Extracted tables dict: {extracted_tables_dict}")
-            return extracted_tables_dict
-        except Exception as e:
-            logger.exception(f"DataExtractorCore.extract_tables: Error extracting tables: {e}")
-            return None
+    # def extract_tables(self, workbook_tables_list: list[str]=None):
+    #     """
+    #     Extracts tables from the specified worksheets based on their target table subdictionaries.
+    #     """
+    #     extracted_tables_dict = {}
+    #     try:
+    #         for worksheet_name in workbook_tables_list:
+    #             for table_name, table in self.active_workbook[worksheet_name].tables.items():
+    #                 df = pd.read_excel(self.active_workbook_path, sheet_name=worksheet_name, header=0, usecols=table.ref)
+    #                 extracted_tables_dict[worksheet_name][table_name] = df
+    #         logger.info(f"DataExtractorCore: Extracted tables from {self.active_workbook_path}")
+    #         logger.info(f"DataExtractorCore: Extracted tables dict: {extracted_tables_dict}")
+    #         return extracted_tables_dict
+    #     except Exception as e:
+    #         logger.exception(f"DataExtractorCore.extract_tables: Error extracting tables: {e}")
+    #         return None
     
     def reprocess_currency_values(self, currency_values_list: list[str]=None, extracted_data_dict: dict[str, any]=None):
         """
@@ -150,4 +151,4 @@ class DataExtractorCore:
             except Exception as e:
                 logger.exception(f"DataExtractorCore.reprocess_floats: Error reprocessing floats: {e}")
         
-        return extracted_data_dict  
+        return extracted_data_dict
