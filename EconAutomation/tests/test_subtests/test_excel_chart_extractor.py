@@ -3,9 +3,6 @@ import logging
 import platform
 from pathlib import Path
 import unittest
-import sys
-
-import openpyxl as opxl
 import xlwings as xw
 import pandas as pd
 import pydantic
@@ -13,11 +10,8 @@ import pypdf
 
 from ea_scripts.data_extraction_scripts.working_calc_extraction_codebase import WORKING_CALC_PATH_STR
 
-# Test Module Logger
+# Test Module Logger    
 logger = logging.getLogger(__name__)
-
-# TEMP: Add path to sys.path
-sys.path.append(str(Path(__file__).parent.parent.parent))
 
 # TEMP: Hardcode output chart directory file path
 OUTPUT_CHART_DIR = Path(r"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/ea_outputs/extracted_charts")

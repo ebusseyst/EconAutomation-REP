@@ -2,6 +2,7 @@ import logging
 import platform
 import datetime
 import locale
+from typing import Any
 
 import openpyxl
 
@@ -172,7 +173,7 @@ class MasterTemplateInfo:
         return reformatted_floats_list
     
 class MasterTemplateExtractor(DataExtractorCore):
-    def __init__(self, active_workbook_path: str = None):
+    def __init__(self, active_workbook_path: str):
         super().__init__(active_workbook_path)
         
         # DEFINING CLASS ATTRIBUTES
@@ -184,20 +185,31 @@ class MasterTemplateExtractor(DataExtractorCore):
         self.reformatted_floats_list = MasterTemplateInfo.define_reformatted_floats()
         
         # CALLING METHODS
-        self.extracted_data = self.extract_data(self.target_cells_dict)
-        self.extracted_data = self.reprocess_dates(short_form_dates_list=self.short_form_dates_list, long_form_dates_list=self.long_form_dates_list, extracted_data_dict=self.extracted_data)
-        self.extracted_data = self.reprocess_currency_values(currency_values_list=self.currency_values_list, extracted_data_dict=self.extracted_data)
-        self.extracted_data = self.reprocess_percentages(percentages_list=self.percentages_list, extracted_data_dict=self.extracted_data)
-        self.extracted_data = self.reprocess_floats(floats_list=self.reformatted_floats_list, extracted_data_dict=self.extracted_data)
+        try:
+            # EXTRACTING DATA FROM WORKBOOK
+            self.extracted_data = self.extract_data(self.target_cells_dict)
+            
+            # REPROCESSING INDIVIDUAL FIELDS
+            self.extracted_data = self.reprocess_dates(short_form_dates_list=self.short_form_dates_list, long_form_dates_list=self.long_form_dates_list, extracted_data_dict=self.extracted_data)
+            self.extracted_data = self.reprocess_currency_values(currency_values_list=self.currency_values_list, extracted_data_dict=self.extracted_data)
+            self.extracted_data = self.reprocess_percentages(percentages_list=self.percentages_list, extracted_data_dict=self.extracted_data)
+            self.extracted_data = self.reprocess_floats(floats_list=self.reformatted_floats_list, extracted_data_dict=self.extracted_data)
+            
+            # CREATING CONSOLIDATED KEYS
+            self.extracted_data["claimant_name_full"] = f"{self.extracted_data['claimant_name_first']} {self.extracted_data['claimant_name_last']}"
+            self.extracted_data["claimant_salutation_with_name_last"] = f"{self.extracted_data['claimant_salutation']} {self.extracted_data['claimant_name_last']}"
+            self.extracted_data["attorney_name_full"] = f"{self.extracted_data['attorney_name_first']} {self.extracted_data['attorney_name_last']}"
+            self.extracted_data["attorney_salutation_with_name_full"] = f"{self.extracted_data['attorney_salutation']} {self.extracted_data['attorney_name_full']}"
+            self.extracted_data["attorney_salutation_with_name_last"] = f"{self.extracted_data['attorney_salutation']} {self.extracted_data['attorney_name_last']}"
+            self.extracted_data["firm_city_state_zip"] = f"{self.extracted_data['firm_city']}, {self.extracted_data['firm_state']} {self.extracted_data['firm_zip_code']}"
+            self.extracted_data["firm_address_full"] = f"{self.extracted_data['firm_name']}\n{self.extracted_data['firm_street_address']}\n{self.extracted_data['firm_city_state_zip']}"
+        except Exception as e:
+            logger.exception(f"MasterTemplateExtractor.__init__: Error extracting data from workbook.")
+            raise ValueError("Error extracting data from workbook.")
         
-        # CREATING CONSOLIDATED KEYS FOR CONVENIENCE
-        self.extracted_data["claimant_name_full"] = f"{self.extracted_data['claimant_name_first']} {self.extracted_data['claimant_name_last']}"
-        self.extracted_data["claimant_salutation_with_name_last"] = f"{self.extracted_data['claimant_salutation']} {self.extracted_data['claimant_name_last']}"
-        self.extracted_data["attorney_name_full"] = f"{self.extracted_data['attorney_name_first']} {self.extracted_data['attorney_name_last']}"
-        self.extracted_data["attorney_salutation_with_name_full"] = f"{self.extracted_data['attorney_salutation']} {self.extracted_data['attorney_name_full']}"
-        self.extracted_data["attorney_salutation_with_name_last"] = f"{self.extracted_data['attorney_salutation']} {self.extracted_data['attorney_name_last']}"
-        self.extracted_data["firm_city_state_zip"] = f"{self.extracted_data['firm_city']}, {self.extracted_data['firm_state']} {self.extracted_data['firm_zip_code']}"
-        self.extracted_data["firm_address_full"] = f"{self.extracted_data['firm_name']}\n{self.extracted_data['firm_street_address']}\n{self.extracted_data['firm_city_state_zip']}"
+
+            
+
         
         
     # def extract_pv_summary_no_rounding_table(self):

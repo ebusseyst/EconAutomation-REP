@@ -6,13 +6,11 @@ import sys
 
 import yaml
 
-from test_subtests.test_excel_chart_extractor import TestExcelChartExtractorCore
-
-# TEMP: Add path to sys.path
-sys.path.append(str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from tests.test_subtests.test_excel_chart_extractor import TestExcelChartExtractorCore
 
 # Setting up same logging config as main
-with open("/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/tests/logging_resources/logging_config.yaml", "r") as f:
+with open("src/logging_resources/logging_config.yaml", "r") as f:
     config = yaml.safe_load(f.read())
     logging.config.dictConfig(config)
     

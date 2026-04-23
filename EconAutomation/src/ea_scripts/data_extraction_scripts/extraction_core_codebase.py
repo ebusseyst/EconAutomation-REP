@@ -3,6 +3,7 @@ from pathlib import Path
 import datetime
 import locale
 from decimal import Decimal
+from typing import Any, ClassVar
 
 import xlwings as xw
 import openpyxl as opxl
@@ -32,7 +33,7 @@ class DataExtractorCore:
             return extracted_dict
         except Exception as e:
             logger.exception(f"DataExtractorCore.extract_data: Error extracting data: {e}")
-            return None
+            return {}
     
     # def extract_tables(self, workbook_tables_list: list[str]=None):
     #     """
@@ -51,7 +52,7 @@ class DataExtractorCore:
     #         logger.exception(f"DataExtractorCore.extract_tables: Error extracting tables: {e}")
     #         return None
     
-    def reprocess_currency_values(self, currency_values_list: list[str]=None, extracted_data_dict: dict[str, any]=None):
+    def reprocess_currency_values(self, currency_values_list: list[str], extracted_data_dict: dict[str, Any]) -> dict[str, Any]:
         """
         Reprocesses currency values to ensure they are in the correct format.
         """
@@ -64,33 +65,30 @@ class DataExtractorCore:
             """
             return locale.currency(money_value, symbol=True, grouping=True)
         
-        if extracted_data_dict is None:
-            return
-        if currency_values_list is None:
-            return
-        else:
-            try:
-                for value_name in currency_values_list:
-                    if extracted_data_dict[value_name] is None:
-                        continue
-                    extracted_data_dict[value_name] = format_currency(extracted_data_dict[value_name])
-                logger.info(f"DataExtractorCore.reprocess_currency_values: Reprocessed currency values: {extracted_data_dict}")
-                return extracted_data_dict
-            except Exception as e:
-                logger.exception(f"DataExtractorCore.reprocess_currency_values: Error reprocessing currency values: {e}")
-                return
+        if not extracted_data_dict:
+            return extracted_data_dict
+        if not currency_values_list:
+            return extracted_data_dict
             
-    def reprocess_dates(self, short_form_dates_list: list[str]=None, long_form_dates_list: list[str]=None, extracted_data_dict: dict[str, any]=None):
+        try:
+            for value_name in currency_values_list:
+                if extracted_data_dict.get(value_name) == "" or value_name not in extracted_data_dict:
+                    continue
+                extracted_data_dict[value_name] = format_currency(extracted_data_dict[value_name])
+            logger.info(f"DataExtractorCore.reprocess_currency_values: Reprocessed currency values: {extracted_data_dict}")
+            return extracted_data_dict
+        except Exception as e:
+            logger.exception(f"DataExtractorCore.reprocess_currency_values: Error reprocessing currency values: {e}")
+            return extracted_data_dict
+            
+    def reprocess_dates(self, short_form_dates_list: list[str], long_form_dates_list: list[str], extracted_data_dict: dict[str, Any]) -> dict[str, Any]:
         """
         Reprocesses provided date values to ensure they are in the correct format.
         """
-        if extracted_data_dict is None:
-            return
-        
-        if short_form_dates_list is not None:
+        if short_form_dates_list:
             try:
                 for date_value_name in short_form_dates_list:
-                    if extracted_data_dict[date_value_name] is None:
+                    if extracted_data_dict.get(date_value_name) is None:
                         continue
                     extracted_data_dict[date_value_name] = extracted_data_dict[date_value_name].date()
                     extracted_data_dict[date_value_name] = datetime.datetime.strftime(extracted_data_dict[date_value_name], "%m/%d/%Y")
@@ -99,10 +97,10 @@ class DataExtractorCore:
             except Exception as e:
                 logger.exception(f"DataExtractorCore.reprocess_dates: Error reprocessing short form dates: {e}")
         
-        if long_form_dates_list is not None:
+        if long_form_dates_list:
             try:
                 for date_value_name in long_form_dates_list:
-                    if extracted_data_dict[date_value_name] is None:
+                    if extracted_data_dict.get(date_value_name) is None:
                         continue
                     extracted_data_dict[date_value_name] = extracted_data_dict[date_value_name].date()
                     extracted_data_dict[date_value_name] = datetime.datetime.strftime(extracted_data_dict[date_value_name], "%B %#d, %Y")
@@ -113,17 +111,14 @@ class DataExtractorCore:
         
         return extracted_data_dict
     
-    def reprocess_percentages(self, percentages_list: list[str]=None, extracted_data_dict: dict[str, any]=None):
+    def reprocess_percentages(self, percentages_list: list[str], extracted_data_dict: dict[str, Any]) -> dict[str, Any]:
         """
         Reprocesses provided percentage values to ensure they are in the correct format.
         """
-        if extracted_data_dict is None:
-            return
-        
-        if percentages_list is not None:
+        if percentages_list:
             try:
                 for percentage_value_name in percentages_list:
-                    if extracted_data_dict[percentage_value_name] is None:
+                    if extracted_data_dict.get(percentage_value_name) == "" or extracted_data_dict.get(percentage_value_name) is None:
                         continue
                     extracted_data_dict[percentage_value_name] = extracted_data_dict[percentage_value_name] * 100
                     extracted_data_dict[percentage_value_name] = str(f"{extracted_data_dict[percentage_value_name]:.2f}%")
@@ -133,17 +128,14 @@ class DataExtractorCore:
         
         return extracted_data_dict
     
-    def reprocess_floats(self, floats_list: list[str]=None, extracted_data_dict: dict[str, any]=None):
+    def reprocess_floats(self, floats_list: list[str], extracted_data_dict: dict[str, Any]) -> dict[str, Any]:
         """
         Reprocesses provided float values to ensure they are in the correct format.
         """
-        if extracted_data_dict is None:
-            return
-        
-        if floats_list is not None:
+        if floats_list:
             try:
                 for float_value_name in floats_list:
-                    if extracted_data_dict[float_value_name] is None:
+                    if extracted_data_dict.get(float_value_name) == "" or extracted_data_dict.get(float_value_name) is None:
                         continue
                     extracted_data_dict[float_value_name] = Decimal(extracted_data_dict[float_value_name]).quantize(Decimal("0.00"))
                     extracted_data_dict[float_value_name] = str(extracted_data_dict[float_value_name]) # TEMP: Convert to string for consistency

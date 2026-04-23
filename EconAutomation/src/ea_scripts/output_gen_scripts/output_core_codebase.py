@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import Any
 
 import docx
 from docx.oxml.ns import qn
@@ -13,43 +14,18 @@ class WordTemplateProcessor:
     """
     A class that handles the autofilling of Word document templates with extracted data.
     """
-    def __init__(self, extracted_data_dict: dict[str, any]=None, template_filepath: Path=None, output_save_path: Path=None):
+    def __init__(self, extracted_data_dict: dict[str, Any], template_filepath: str, output_save_path: str):
         # DEFINING CLASS ATTRIBUTES
         self.variable_map = {}
-        
-        # DETERMINING TEMPLATE FILE PATH
-        if template_filepath is None:
-            try:
-                raise ValueError("WordTemplateProcessor.__init__: template_filepath is None")
-            except ValueError as e:
-                logger.exception(e)
-                return None
-        else:
-            self.template_filepath = template_filepath
-            
-        # DETERMINING OUTPUT SAVE PATH
-        if output_save_path is None:
-            try:
-                raise ValueError("WordTemplateProcessor.__init__: output_save_path is None")
-            except ValueError as e:
-                logger.exception(e)
-                return None
-        else:
-            self.output_save_path = output_save_path
+        self.template_filepath = template_filepath
+        self.output_save_path = output_save_path
         
         # DETERMINING VARIABLE MAP
-        if extracted_data_dict is None:
-            try:
-                raise ValueError("WordTemplateProcessor.__init__: extracted_data_dict is None")
-            except ValueError as e:
-                logger.exception(e)
-                return None
-        else:
-            for k,v in extracted_data_dict.items():
-                variable_token = f"[[{k}]]" # creating the variable token
-                self.variable_map[variable_token] = str(v) # converting all values to strings
-                if self.variable_map[variable_token] is None:
-                    self.variable_map[variable_token] = "" # replacing None values with empty strings
+        for k,v in extracted_data_dict.items():
+            variable_token = f"[[{k}]]" # creating the variable token
+            self.variable_map[variable_token] = str(v) # converting all values to strings
+            if self.variable_map[variable_token] is None:
+                self.variable_map[variable_token] = "" # replacing None values with empty strings
         
         # DEBUG
         for k,v in self.variable_map.items():
