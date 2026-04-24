@@ -2,6 +2,7 @@ import logging
 import logging.config
 from pathlib import Path
 import datetime
+import sys
 
 import yaml
 
@@ -13,6 +14,26 @@ with open("src/logging_resources/logging_config.yaml", "r") as f:
     logging.config.dictConfig(config)
     
 logger = logging.getLogger(__name__)
+
+# Resource path function
+def resource_path(relative_path: str) -> Path:
+    """Resolve path to a bundled resource; works in dev and PyInstaller exe."""
+    if hasattr(sys, '_MEIPASS'):
+        return Path(sys._MEIPASS) / relative_path
+    return Path(__file__).parent / relative_path
+
+# TEMP: Will need to be changed to be more dynamic
+MASTERTEMPLATE_FILEPATH = resource_path("supporting_docs/sorted_econ_files/MASTERTEMPLATE (color coded).xlsx")
+WORKING_CALC_FILEPATH = resource_path("supporting_docs/sorted_econ_files/Working_CALC_VER1.11 (color coded).xlsx")
+PV2_FILEPATH = resource_path("supporting_docs/sorted_econ_files/PV2 (color coded).xlsx")
+HHS_FILEPATH = resource_path("supporting_docs/sorted_econ_files/HHS_PV_New (color coded).xlsx")
+
+# TEMP: Will need to be changed to be more dynamic
+EARNINGS_AND_PV_MEDS_TEMPLATE_FILEPATH = resource_path("supporting_docs/sorted_econ_files/Earnings and PV Meds Report Template (color coded).docx")
+LCP_TEMPLATE_FILEPATH = resource_path("supporting_docs/sorted_econ_files/LCP MASTERTEMPLATE (color coded).docx")
+
+# TEMP: Will need to be changed to be more dynamic
+OUTPUT_SAVE_DIRECTORY = resource_path("data_output_files/output_files")
 
 def get_project_root() -> Path:
     """Search upwards for a marker file to find the project root."""
@@ -28,8 +49,19 @@ if __name__ == "__main__":
     today_str = today.strftime("%Y-%m-%d")
     
     # DEFINING FILE PATHS (TO BE CHANGED LATER)
-    mastertemplate_filepath = fr"C:\Users\EricBussey\GitHub\EconAutomation-REP\EconAutomation\src\supporting_docs\original_econ_files\MASTERTEMPLATE.xlsx"
-    output_template_filepath = fr"C:\Users\EricBussey\GitHub\EconAutomation-REP\EconAutomation\src\supporting_docs\econ_report_templates\LCP_mastertemplate_report_template.docx"
-    output_save_path = fr"C:\Users\EricBussey\GitHub\EconAutomation-REP\EconAutomation\src\supporting_docs\ea_generated_reports\{today_str} gen_LCP_report.docx"
+    input_workbooks_filepaths_dict = {
+        "mastertemplate_filepath": MASTERTEMPLATE_FILEPATH,
+        "working_calc_filepath": WORKING_CALC_FILEPATH,
+        "pv2_filepath": PV2_FILEPATH,
+        "hhs_filepath": HHS_FILEPATH
+        }
+        
+    output_template_filepaths_dict = {
+        "lcp_report_template_filepath": LCP_TEMPLATE_FILEPATH,
+        }
     
-    econ_workflow_automation = EconWorkflowAutomation(mastertemplate_filepath, output_template_filepath, output_save_path)
+    output_save_paths_list = [
+        fr"{OUTPUT_SAVE_DIRECTORY}"
+        ]
+    
+    econ_workflow_automation = EconWorkflowAutomation(input_workbooks_filepaths_dict, output_template_filepaths_dict, output_save_paths_list)

@@ -1,29 +1,23 @@
 import logging
-import platform
-import datetime
-import locale
+from pathlib import Path
 from typing import Any
 
 import openpyxl
 
-from ea_scripts.data_extraction_scripts.extraction_core_codebase import DataExtractorCore
+from ea_scripts.data_extraction_scripts.extraction_core_codebase import DataExtractorCore, DataFormatterCore
 
 # Module's logger instance
 logger = logging.getLogger(__name__)
-
-# TEMP hardcoded file paths
-if platform.system() == "Darwin":
-    MASTERTEMPLATE_PATH = r"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/original_econ_files/MASTERTEMPLATE.xlsx"
-    
-elif platform.system() == "Windows":
-    MASTERTEMPLATE_PATH = r"C:/Users/EricBussey/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/original_econ_files/MASTERTEMPLATE.xlsx"
 
 class MasterTemplateInfo:
     """
     Organizational class to define information about the target cells for the MASTERTEMPLATE workbook.
     """
-    @staticmethod
-    def define_workbook_targets():
+    def __init__(self):
+        self.workbook_variables_dict = self.define_workbook_variables_dict()
+        self.reformatting_lists_dict = self.create_reformatting_lists_dict()
+
+    def define_workbook_variables_dict(self) -> dict[str, dict[str, Any]]:
         """
         Defines the target cells for the relevant workbook. Dictionaries are currently hardcoded and
         are individually defined for readability.
@@ -97,8 +91,7 @@ class MasterTemplateInfo:
 
         return mastertemplate_targets_dict
     
-    @staticmethod
-    def define_short_form_dates():
+    def define_short_form_dates(self) -> list[str]:
         """
         Defines the short form dates for the relevant workbook.
         """
@@ -111,8 +104,7 @@ class MasterTemplateInfo:
         ]
         return short_form_dates_list
     
-    @staticmethod
-    def define_long_form_dates():
+    def define_long_form_dates(self) -> list[str]:
         """
         Defines the long form dates for the relevant workbook.
         """
@@ -123,8 +115,7 @@ class MasterTemplateInfo:
         ]
         return long_form_dates_list
     
-    @staticmethod
-    def define_currency_values():
+    def define_currency_values(self) -> list[str]:
         """
         Defines the currency values for the relevant workbook.
         """
@@ -148,8 +139,7 @@ class MasterTemplateInfo:
         ]
         return currency_values_list
     
-    @staticmethod
-    def define_percentages():
+    def define_percentages(self) -> list[str]:
         """
         Defines the percentage values for the relevant workbook.
         """
@@ -160,8 +150,7 @@ class MasterTemplateInfo:
         ]
         return percentages_list
     
-    @staticmethod
-    def define_reformatted_floats():
+    def define_reformatted_floats(self) -> list[str]:
         """
         Defines the to-be-rounded float values for the relevant workbook.
         """
@@ -172,28 +161,48 @@ class MasterTemplateInfo:
         ]
         return reformatted_floats_list
     
+    def create_reformatting_lists_dict(self) -> dict[str, list[str]]:
+        """
+        Creates a dictionary of the reformatting lists for the relevant workbook.
+        """
+        reformatting_lists_dict = {
+            "short_form_dates": self.define_short_form_dates(),
+            "long_form_dates": self.define_long_form_dates(),
+            "currency_values": self.define_currency_values(),
+            "percentages": self.define_percentages(),
+            "reformatted_floats": self.define_reformatted_floats()
+        }
+        return reformatting_lists_dict
+    
 class MasterTemplateExtractor(DataExtractorCore):
-    def __init__(self, active_workbook_path: str):
-        super().__init__(active_workbook_path)
+    def __init__(self, mastertemplate_path: Path, data_formatter: DataFormatterCore):
+        super().__init__(mastertemplate_path, data_formatter)
+        
+        # INSTANTIATING WORKBOOK-SPECIFIC ATTRIBUTES
+        self.mastertemplate_info = MasterTemplateInfo()
         
         # DEFINING CLASS ATTRIBUTES
-        self.target_cells_dict = MasterTemplateInfo.define_workbook_targets()
-        self.short_form_dates_list = MasterTemplateInfo.define_short_form_dates()
-        self.long_form_dates_list = MasterTemplateInfo.define_long_form_dates()
-        self.currency_values_list = MasterTemplateInfo.define_currency_values()
-        self.percentages_list = MasterTemplateInfo.define_percentages()
-        self.reformatted_floats_list = MasterTemplateInfo.define_reformatted_floats()
+        self.target_cells_dict = self.mastertemplate_info.define_workbook_variables_dict()
+        self.short_form_dates_list = self.mastertemplate_info.define_short_form_dates()
+        self.long_form_dates_list = self.mastertemplate_info.define_long_form_dates()
+        self.currency_values_list = self.mastertemplate_info.define_currency_values()
+        self.percentages_list = self.mastertemplate_info.define_percentages()
+        self.reformatted_floats_list = self.mastertemplate_info.define_reformatted_floats()
         
+        self.reformatting_lists_dict = self.mastertemplate_info.create_reformatting_lists_dict()
+        
+        self.data_formatter = data_formatter
+
         # CALLING METHODS
         try:
             # EXTRACTING DATA FROM WORKBOOK
             self.extracted_data = self.extract_data(self.target_cells_dict)
             
             # REPROCESSING INDIVIDUAL FIELDS
-            self.extracted_data = self.reprocess_dates(short_form_dates_list=self.short_form_dates_list, long_form_dates_list=self.long_form_dates_list, extracted_data_dict=self.extracted_data)
-            self.extracted_data = self.reprocess_currency_values(currency_values_list=self.currency_values_list, extracted_data_dict=self.extracted_data)
-            self.extracted_data = self.reprocess_percentages(percentages_list=self.percentages_list, extracted_data_dict=self.extracted_data)
-            self.extracted_data = self.reprocess_floats(floats_list=self.reformatted_floats_list, extracted_data_dict=self.extracted_data)
+            self.extracted_data = self.data_formatter.reprocess_dates(short_form_dates_list=self.short_form_dates_list, long_form_dates_list=self.long_form_dates_list, extracted_data_dict=self.extracted_data)
+            self.extracted_data = self.data_formatter.reprocess_currency_values(currency_values_list=self.currency_values_list, extracted_data_dict=self.extracted_data)
+            self.extracted_data = self.data_formatter.reprocess_percentages(percentages_list=self.percentages_list, extracted_data_dict=self.extracted_data)
+            self.extracted_data = self.data_formatter.reprocess_floats(floats_list=self.reformatted_floats_list, extracted_data_dict=self.extracted_data)
             
             # CREATING CONSOLIDATED KEYS
             self.extracted_data["claimant_name_full"] = f"{self.extracted_data['claimant_name_first']} {self.extracted_data['claimant_name_last']}"
@@ -205,12 +214,7 @@ class MasterTemplateExtractor(DataExtractorCore):
             self.extracted_data["firm_address_full"] = f"{self.extracted_data['firm_name']}\n{self.extracted_data['firm_street_address']}\n{self.extracted_data['firm_city_state_zip']}"
         except Exception as e:
             logger.exception(f"MasterTemplateExtractor.__init__: Error extracting data from workbook.")
-            raise ValueError("Error extracting data from workbook.")
-        
-
-            
-
-        
+            raise ValueError("Error extracting data from workbook.")  
         
     # def extract_pv_summary_no_rounding_table(self):
     #     """

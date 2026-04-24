@@ -1,20 +1,14 @@
 import logging
-import platform
+from pathlib import Path
 
 import openpyxl
 import pandas as pd
 import pydantic
 
-from ea_scripts.data_extraction_scripts.extraction_core_codebase import DataExtractorCore
+from ea_scripts.data_extraction_scripts.extraction_core_codebase import DataExtractorCore, DataFormatterCore
 
 # Module's logger instance
 logger = logging.getLogger(__name__)
-
-# TEMP: Define path to working calc workbook
-if platform.system() == "Windows":
-    WORKING_CALC_PATH_STR = r"C:/Users/EricBussey/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/original_econ_files/Working_CALC_VER1.11.xlsx"
-else:
-    WORKING_CALC_PATH_STR = r"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/original_econ_files/Working_CALC_VER1.11.xlsx"
 
 class WorkingCalcInfo:
     """
@@ -44,7 +38,7 @@ class WorkingCalcInfo:
         return working_calc_targets_dict
 
 class WorkingCalcExtractor(DataExtractorCore):
-    def __init__(self, active_workbook_path: str = WORKING_CALC_PATH_STR):
+    def __init__(self, active_workbook_path: Path):
         super().__init__(active_workbook_path)
         
         # DEFINING CLASS ATTRIBUTES
