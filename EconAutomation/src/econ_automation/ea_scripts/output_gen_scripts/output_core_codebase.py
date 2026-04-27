@@ -11,64 +11,106 @@ from docx.oxml import OxmlElement
 # Module's logger instance
 logger = logging.getLogger(__name__)
         
-
 class WordTemplateProcessor:
     """
     A class that handles the autofilling of Word document templates with extracted data.
     """
-    def __init__(self, extracted_data_dict_1: dict[str, Any], extracted_data_dict_2: dict[str, Any] | None=None, template_filepaths_dict: dict[str, Path] = {}, output_save_paths_list: list[Path] = []):
+    def __init__(self, 
+                 main_reformatted_data_dict: dict[str, dict[str, Any]], 
+                 selected_template_filepaths: list[Path], 
+                 selected_output_filepaths: list[Path]
+                 ):
         # DEFINING CLASS ATTRIBUTES
-        self.template_filepaths_dict = template_filepaths_dict
-        self.output_save_paths_list = output_save_paths_list
-        self.documents_list = []
+        self.main_reformatted_data_dict = main_reformatted_data_dict
+        self.selected_template_filepaths = selected_template_filepaths
+        self.selected_output_filepaths = selected_output_filepaths
+        self.documents_dict = {}
                 
         # DETERMINING VARIABLE MAPS
-        self.variable_map_1, self.variable_map_2 = self.determine_variable_maps(extracted_data_dict_1, extracted_data_dict_2)
+        self.variable_map = self.determine_variable_map(self.main_reformatted_data_dict)
         
         # LOADING AND APPENDING ALL WORD DOCUMENT INSTANCES TO SELF.DOCUMENTS_LIST
-        for template_filepath in self.template_filepaths_dict.values():
-            self.documents_list.append(self.load_template(template_filepath))
-        
-        # DEBUG
-        for k,v in self.variable_map_1.items():
-            logger.debug(f"\nWordTemplateProcessor.__init__.variable_map_1: {k}: {v}")
-        
-        if self.variable_map_2:
-            for k,v in self.variable_map_2.items():
-                logger.debug(f"\nWordTemplateProcessor.__init__.variable_map_2: {k}: {v}")
+        for template_filepath in self.selected_template_filepaths:
+            self.documents_dict[template_filepath.name] = self.load_template(template_filepath)
         
         # CALLING METHODS
         try:
-            for document in self.documents_list:
+            for report_type, document in self.documents_dict.items():
                 self.autofill_relevant_paragraphs(document)
-            self.save_output_document()
+                self.save_output_document(document, report_type)
         except Exception as e:
             logger.exception(f"Error autofilling Word document templates: {e}")
             raise
         
-    def determine_variable_maps(self, extracted_data_dict_1: dict[str, Any], extracted_data_dict_2: dict[str, Any] | None=None) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    def autofill_relevant_paragraphs(self, document: Document, target_character="[[") -> None:
+        """
+        Executes the final autofill process, replacing all variable tokens in the document with values from variable_map: {"variable_token": "replacement"}.
+        """
+        try:
+            self.replace_tokens_in_paragraphs(document.paragraphs, target_character)
+            self.replace_tokens_in_tables(document.tables)
+
+            for section in document.sections:
+                self.replace_tokens_in_paragraphs(section.header.paragraphs)
+                self.replace_tokens_in_tables(section.header.tables)
+                self.replace_tokens_in_paragraphs(section.footer.paragraphs)
+                self.replace_tokens_in_tables(section.footer.tables)
+
+        except Exception as e:
+            logger.exception(f"WordTemplateProcessor.autofill_relevant_paragraphs() error: {e}")
+            
+    def save_output_document(self, document: Document, report_type: str) -> None:
+        """
+        Saves the output document to the specified paths.
+        """
+        document_to_save = document
+        try:
+            for output_filepath in self.selected_output_filepaths:
+                base_filename = f"{self.variable_map['[[claimant_name_last]]']}{self.variable_map['[[claimant_name_first_initial]]']} - {report_type}.docx"
+                final_output_path = output_filepath / base_filename
+                final_output_pathstr = f"{final_output_path}"
+
+                if not final_output_path.exists():
+                    final_output_path.mkdir(parents=True, exist_ok=True)
+                
+                final_filepath_counter = 0
+                while final_output_path.exists():
+                    final_filepath_counter += 1
+                    final_output_pathstr = f"{output_filepath}/{base_filename}({final_filepath_counter}).docx"
+                
+                document_to_save.save(final_output_pathstr)
+                
+                # DEBUG
+                logger.info(f"WordTemplateProcessor.save_output_document: Saved output document to: {final_output_pathstr}")
+        except KeyError:
+            logger.exception(f"WordTemplateProcessor.save_output_document() KeyError")
+            raise
+        except TypeError:
+            logger.exception(f"WordTemplateProcessor.save_output_document() TypeError")
+            raise
+        except FileNotFoundError:
+            logger.exception(f"WordTemplateProcessor.save_output_document() FileNotFoundError")
+            raise
+        except Exception as e:
+            logger.exception(f"WordTemplateProcessor.save_output_document() error: {e}")
+            raise
+        
+    def determine_variable_map(self, main_reformatted_data_dict: dict[str, dict[str, Any]]) -> dict[str, Any]:
         """
         Determines the variable maps for the Word document templates.
         """
-        variable_map_1 = {}
-        variable_map_2 = {}
+        variable_map = {}
         
         try:
-            for k,v in extracted_data_dict_1.items():
-                variable_token = f"[[{k}]]"
-                variable_map_1[variable_token] = "" if v is None else str(v)
-
-            if extracted_data_dict_2:
-                for k,v in extracted_data_dict_2.items():
-                    variable_token = f"[[{k}]]"
-                    variable_map_2[variable_token] = "" if v is None else str(v)
-            else:
-                variable_map_2 = None
+            for wb_name, wb_data in main_reformatted_data_dict.items():
+                for variable, value in wb_data.items():
+                    variable_token = f"[[{variable}]]"
+                    variable_map[variable_token] = "" if value is None else str(value)
         except Exception as e:
             logger.exception(f"Error determining variable maps: {e}")
             raise
         
-        return variable_map_1, variable_map_2
+        return variable_map
     
     def load_template(self, template_filepath: Path) -> Document:
         """
@@ -133,11 +175,8 @@ class WordTemplateProcessor:
             for run in paragraph.runs:
                 if run._r.find(qn('w:drawing')) is not None:
                     continue
-                for token, value in self.variable_map_1.items():
+                for token, value in self.variable_map.items():
                     run.text = run.text.replace(token, value)
-                if self.variable_map_2:
-                    for token, value in self.variable_map_2.items():
-                        run.text = run.text.replace(token, value)
                     
     def replace_tokens_in_tables(self, tables) -> None:
         """
@@ -147,49 +186,6 @@ class WordTemplateProcessor:
             for row in table.rows:
                 for cell in row.cells:
                     self.replace_tokens_in_paragraphs(cell.paragraphs)
-        
-    def autofill_relevant_paragraphs(self, document: Document, target_character="[[") -> None:
-        """
-        Executes the final autofill process, replacing all variable tokens in the document with values from variable_map: {"variable_token": "replacement"}.
-        """
-        try:
-            self.replace_tokens_in_paragraphs(document.paragraphs, target_character)
-            self.replace_tokens_in_tables(document.tables)
-
-            for section in document.sections:
-                self.replace_tokens_in_paragraphs(section.header.paragraphs)
-                self.replace_tokens_in_tables(section.header.tables)
-                self.replace_tokens_in_paragraphs(section.footer.paragraphs)
-                self.replace_tokens_in_tables(section.footer.tables)
-
-        except Exception as e:
-            logger.exception(f"WordTemplateProcessor.autofill_relevant_paragraphs() error: {e}")
-            
-    def save_output_document(self) -> None:
-        """
-        Saves the output document to the specified path.
-        """
-        try:
-            for i, output_save_path in enumerate(self.output_save_paths_list):
-                output_path_object = Path(output_save_path)
-                base_filename = f"{self.variable_map_1['[[claimant_name_last]]']}{self.variable_map_1['[[claimant_name_first_initial]]']} - {output_path_object.name}"
-                final_output_path = Path(rf"{output_path_object}/{base_filename}.docx")
-
-                if not final_output_path.exists():
-                    final_output_path.mkdir(parents=True, exist_ok=True)
-                
-                final_filepath_counter = 0
-                while final_output_path.exists():
-                    final_filepath_counter += 1
-                    final_output_path = Path(rf"{output_path_object}/{base_filename}({final_filepath_counter}).docx")
-                
-                self.documents_list[i].save(final_output_path)
-                
-                # DEBUG
-                logger.info(f"WordTemplateProcessor.save_output_document: Saved output document to: {final_output_path}")
-        except Exception as e:
-            logger.exception(f"WordTemplateProcessor.save_output_document() error: {e}")
-            raise
             
     # def create_relevant_tables(self, extracted_tables_dict: dict[str, pd.DataFrame]=None, target_character="||"):
     #     """

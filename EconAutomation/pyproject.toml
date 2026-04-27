@@ -6,15 +6,11 @@ project-includes = [
     "**/*.py*"
 ]
 search-path = [
-    "."
-]
-site-package-path = [
-    ".venv/Lib/site-packages"
+    "src"
 ]
 
 # Configuring Python environment
 python-version = ">=3.14"
-python-interpreter-path = ".venv/Scripts/python.exe"
 
 # Build system header
 [build-system]
@@ -22,7 +18,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "EconAutomation"
+name = "econ_automation"
 version = "0.1.0"
 description = "A collection of workflow automation scripts for the Stokes & Associates Econ department."
 authors = [
@@ -32,29 +28,27 @@ maintainers = [
     {name = "Eric Bussey", email = "ebussey@stokes-associates.com"}
 ]
 dependencies = [
-    "annotated-types==0.7.0",
-    "docxtpl==0.20.2",
-    "Econ_Automation==0.1.0",
-    "-e git+https://github.com/ebusseyst/EconAutomation-REP.git@bd88876d1479acf7945c8fdab9e2b3ebc76a6559#egg=EconAutomation&subdirectory=econautomation",
-    "et_xmlfile==2.0.0",
-    "Jinja2==3.1.6",
-    "lxml==6.0.4",
-    "MarkupSafe==3.0.3",
-    "numpy==2.4.4",
-    "openpyxl==3.1.5",
-    "pandas==3.0.2",
-    "pydantic==2.13.3",
-    "pydantic_core==2.46.3",
-    "pypdf==6.10.1",
-    "python-dateutil==2.9.0.post0",
-    "python-docx==1.2.0",
-    "python-json-logger==4.1.0",
-    "pywin32==311",
-    "PyYAML==6.0.3",
-    "six==1.17.0",
-    "types-PyYAML==6.0.12.20260408",
-    "typing-inspection==0.4.2",
-    "typing_extensions==4.15.0",
-    "tzdata==2026.1",
-    "xlwings==0.35.1"
+    "annotated-types>=0.7.0",
+    "docxtpl>=0.20.2",
+    "et_xmlfile>=2.0.0",
+    "Jinja2>=3.1.6",
+    "lxml>=6.0.4",
+    "MarkupSafe>=3.0.3",
+    "numpy>=2.4.4",
+    "openpyxl>=3.1.5",
+    "pandas>=3.0.2",
+    "pydantic>=2.13.3",
+    "pydantic_core>=2.46.3",
+    "pypdf>=6.10.1",
+    "python-dateutil>=2.9.0.post0",
+    "python-docx>=1.2.0",
+    "python-json-logger>=4.1.0",
+    "PyYAML>=6.0.3",
+    "six>=1.17.0",
+    "types-openpyxl>=3.1.5.20260408",
+    "types-PyYAML>=6.0.12.20260408",
+    "typing-inspection>=0.4.2",
+    "typing_extensions>=4.15.0",
+    "tzdata>=2026.1",
+    "xlwings>=0.35.1"
 ]

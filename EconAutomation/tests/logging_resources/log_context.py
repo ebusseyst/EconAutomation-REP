@@ -4,7 +4,7 @@ import traceback
 
 from pythonjsonlogger import jsonlogger
 
-from ea_scripts.ea_main_codebase import APP_NAME, APP_VERSION
+from econ_automation.ea_main_codebase import APP_NAME, APP_VERSION
 
 # Sets global attribute, which is then injected via handler filter
 class GlobalContextFilter(logging.Filter):
