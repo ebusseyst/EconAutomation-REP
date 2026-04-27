@@ -93,7 +93,7 @@ class DataFormatterCore:
             """
             Formats a float value as currency.
             """
-            return locale.currency(money_value, symbol=True, grouping=True)
+            return locale.format_string("$%.0f", money_value, grouping=True)
             
         try:
             for value_name in currency_values_list:
