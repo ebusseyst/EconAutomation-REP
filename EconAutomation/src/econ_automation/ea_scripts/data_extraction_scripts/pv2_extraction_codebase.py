@@ -128,7 +128,16 @@ class PV2Info(WorkbookInfoCore):
         Defines the percentage values for the relevant workbook.
         """
         percentages_list = [
-            ""
+            "b1e_WLE_growth_rate",
+            "b2e_WLE_growth_rate",
+            "b3e_WLE_growth_rate",
+            "b4e_WLE_growth_rate",
+            "b5e_WLE_growth_rate",
+            "b1e_toage_growth_rate",
+            "b2e_toage_growth_rate",
+            "b3e_toage_growth_rate",
+            "b4e_toage_growth_rate",
+            "b5e_toage_growth_rate"
         ]
         return percentages_list
     
@@ -137,8 +146,7 @@ class PV2Info(WorkbookInfoCore):
         Defines the to-be-rounded float values for the relevant workbook.
         """
         reformatted_floats_list = [
-            "b1e_WLE_growth_rate",
-            #THIS IS WHERE I LEFT OFF
+            ""
         ]
         return reformatted_floats_list
     

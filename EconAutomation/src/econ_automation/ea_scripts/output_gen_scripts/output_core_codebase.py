@@ -66,22 +66,20 @@ class WordTemplateProcessor:
         document_to_save = document
         try:
             for output_filepath in self.selected_output_filepaths:
-                base_filename = f"{self.variable_map['[[claimant_name_last]]']}{self.variable_map['[[claimant_name_first_initial]]']} - {report_type}.docx"
-                final_output_path = output_filepath / base_filename
-                final_output_pathstr = f"{final_output_path}"
+                base_stem = f"{self.variable_map['[[claimant_name_last]]']}{self.variable_map['[[claimant_name_first_initial]]']} - {report_type}"
+                final_output_path = output_filepath / f"{base_stem}.docx"
 
-                if not final_output_path.exists():
-                    final_output_path.mkdir(parents=True, exist_ok=True)
-                
+                output_filepath.mkdir(parents=True, exist_ok=True)
+
                 final_filepath_counter = 0
                 while final_output_path.exists():
                     final_filepath_counter += 1
-                    final_output_pathstr = f"{output_filepath}/{base_filename}({final_filepath_counter}).docx"
-                
-                document_to_save.save(final_output_pathstr)
+                    final_output_path = output_filepath / f"{base_stem}({final_filepath_counter}).docx"
+
+                document_to_save.save(str(final_output_path))
                 
                 # DEBUG
-                logger.info(f"WordTemplateProcessor.save_output_document: Saved output document to: {final_output_pathstr}")
+                logger.info(f"WordTemplateProcessor.save_output_document: Saved output document to: {final_output_path}")
         except KeyError:
             logger.exception(f"WordTemplateProcessor.save_output_document() KeyError")
             raise

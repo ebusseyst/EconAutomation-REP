@@ -133,7 +133,7 @@ class MasterTemplateExtractor(DataExtractorCore):
                 extracted_data_dict=self.extracted_data,
                 reformatting_lists_dict=self.reformatting_lists_dict
             )
-            self.reformatted_data_dict = mastertemplate_formatter.extracted_data_dict
+            self.reformatted_data_dict = mastertemplate_formatter.reformatted_data_dict
     
     def create_consolidated_keys(self) -> None:
         """

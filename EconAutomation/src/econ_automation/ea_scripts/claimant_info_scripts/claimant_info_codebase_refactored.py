@@ -213,9 +213,8 @@ class CaseProfile:
             n = self.attorney_phone
             self.attorney_phone = f"{n[:3]}-{n[3:6]}-{n[6:]}"
 
-        # Attorney / paralegal email normalization
-        self.attorney_email  = self.attorney_email.lower()
-        self.paralegal_email = self.paralegal_email.lower()
+        # Attorney email normalization
+        self.attorney_email = self.attorney_email.lower()
 
         # Firm address
         firm_parts = [self.firm_address_1, self.firm_address_2]

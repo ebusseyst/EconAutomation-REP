@@ -1,8 +1,5 @@
 import logging
 import logging.config
-import datetime
-import sys
-# from pprint import pprint
 
 import yaml
 

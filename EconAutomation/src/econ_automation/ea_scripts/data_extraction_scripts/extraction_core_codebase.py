@@ -103,7 +103,7 @@ class DataFormatterCore:
             logger.info(f"DataExtractorCore.reprocess_currency_values: Reprocessed currency values: {self.extracted_data_dict}")
         except Exception as e:
             logger.exception(f"DataExtractorCore.reprocess_currency_values: Error reprocessing currency values: {e}")
-  
+
     def reprocess_short_form_dates(self, short_form_dates_list: list[str]) -> None:
         """
         Reprocesses provided date values to ensure they are in short-form format.
@@ -143,7 +143,7 @@ class DataFormatterCore:
                 if self.extracted_data_dict.get(percentage_variable) == "" or self.extracted_data_dict.get(percentage_variable) is None:
                     continue
                 self.extracted_data_dict[percentage_variable] = self.extracted_data_dict[percentage_variable] * 100
-                self.extracted_data_dict[percentage_variable] = str(f"{self.extracted_data_dict[percentage_variable]:.2f}%")
+                self.extracted_data_dict[percentage_variable] = f"{self.extracted_data_dict[percentage_variable]:.2f}%"
             logger.info(f"DataExtractorCore.reprocess_percentages - reprocessed percentages: {self.extracted_data_dict}")
         except Exception as e:
             logger.exception(f"DataExtractorCore.reprocess_percentages - Error reprocessing percentages: {e}")
