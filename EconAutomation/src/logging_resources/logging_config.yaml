@@ -3,7 +3,7 @@ disable_existing_loggers: False
 
 filters:
   GlobalContextFilter:
-    (): logging_resources.log_context.GlobalContextFilter # the path to the filter class
+    (): logging_resources.log_context.GlobalContextFilter
 
 formatters:
   DefaultJSONFormatter:

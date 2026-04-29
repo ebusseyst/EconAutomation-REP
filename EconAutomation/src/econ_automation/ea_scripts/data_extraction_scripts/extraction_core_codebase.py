@@ -1,27 +1,34 @@
+import datetime as dt
 import logging
-from pathlib import Path
-import datetime
 import locale
 from decimal import Decimal
+from pathlib import Path
 from typing import Any
-
 import openpyxl as opxl
 
 # Module's logger instance
 logger = logging.getLogger(__name__)
 
+
 class WorkbookInfoCore:
     """
     Core class for workbook information.
     """
-    def __init__(self, workbook_filepath: Path, workbook_outputs_sheet_name: str="REPORT_OUTPUTS") -> None:
+
+    def __init__(
+        self,
+        workbook_filepath: Path,
+        workbook_outputs_sheet_name: str = "REPORT_OUTPUTS",
+    ) -> None:
+
         # DEFINING CLASS ATTRIBUTES
-        self.workbook = opxl.load_workbook(workbook_filepath)
+        self.workbook_name = Path(workbook_filepath).name
         self.workbook_outputs_sheet_name = workbook_outputs_sheet_name
-        
+        self.active_workbook = opxl.load_workbook(workbook_filepath, data_only=True)
+
         # DEFINING WORKBOOK VARIABLES
         self.workbook_variables_dict = self.define_workbook_variables_dict()
-    
+
     def define_workbook_variables_dict(self) -> dict[str, tuple[str, str]]:
         """
         Defines the target cells for the instanced workbook. Data is pulled from dedicated "REPORT_OUTPUTS" tab on each
@@ -29,43 +36,125 @@ class WorkbookInfoCore:
         """
         try:
             workbook_variables_dict = {}
-            workbook_outputs_sheet = self.workbook[self.workbook_outputs_sheet_name]
-            for row in workbook_outputs_sheet.iter_rows(min_row=3, min_col=1, max_col=4, max_row=100, values_only=True):
+            workbook_outputs_sheet = self.active_workbook[
+                self.workbook_outputs_sheet_name
+            ]
+            for row in workbook_outputs_sheet.iter_rows(
+                min_row=3, min_col=1, max_col=4, max_row=100, values_only=True
+            ):
                 variable_name = row[0]
                 worksheet_name = row[1]
                 cell_address = row[2]
-                if variable_name == "" or worksheet_name == "" or cell_address == "":
-                    logger.debug("DataExtractorCore.define_workbook_variables_dict: Empty column(s) found in REPORT_OUTPUTS tab.")
+                if (
+                    (variable_name == "" or variable_name is None)
+                    or (worksheet_name == "" or worksheet_name is None)
+                    or (cell_address == "" or cell_address is None)
+                ):
+                    logger.debug(
+                        "DataExtractorCore.define_workbook_variables_dict: Empty column(s) found in REPORT_OUTPUTS tab."
+                    )
                     continue
-                workbook_variables_dict[f"{variable_name}"] = (f"{worksheet_name}", f"{cell_address}")
+                workbook_variables_dict[f"{variable_name}"] = (
+                    f"{worksheet_name}",
+                    f"{cell_address}",
+                )
+            logger.info(
+                f"DataExtractorCore.define_workbook_variables_dict: {self.workbook_name} variables dict: {workbook_variables_dict}"
+            )
             return workbook_variables_dict
         except KeyError:
-            logger.exception("DataExtractorCore.define_workbook_variables_dict: KeyError defining workbook variables.")
+            logger.exception(
+                f"DataExtractorCore.define_workbook_variables_dict: KeyError defining workbook variables for {self.workbook_name}"
+            )
             raise
         except IndexError:
-            logger.exception("DataExtractorCore.define_workbook_variables_dict: IndexError defining workbook variables.")
+            logger.exception(
+                f"DataExtractorCore.define_workbook_variables_dict: IndexError defining workbook variables for {self.workbook_name}"
+            )
             raise
         except TypeError:
-            logger.exception("DataExtractorCore.define_workbook_variables_dict: TypeError defining workbook variables.")
+            logger.exception(
+                f"DataExtractorCore.define_workbook_variables_dict: TypeError defining workbook variables for {self.workbook_name}"
+            )
             raise
+
 
 class DataFormatterCore:
     """
     Formats relevant values extracted from the workbook.
     """
-    def __init__(self, 
-                extracted_data_dict: dict[str, Any],
-                reformatting_lists_dict: dict[str, list[str]]
-                ):
+
+    def __init__(
+        self,
+        workbook_dataclass: Any,
+        reformatting_lists_dict: dict[str, list[str]],
+    ):
         # DEFINING CLASS ATTRIBUTES
-        self.extracted_data_dict = extracted_data_dict
+        self.workbook_dataclass = workbook_dataclass
         self.reformatting_lists_dict = reformatting_lists_dict
-        
+
         # CALLING MAIN REPROCESSING METHOD
         self.reprocess_all_relevant_data()
-        
-        self.reformatted_data_dict = self.extracted_data_dict
-        
+
+    # ── Private parsing helpers ──────────────────────────────────────────
+
+    @staticmethod
+    def _parse_date_value(date_value: str | dt.date) -> dt.date:
+        """Converts a date value to a date object."""
+        if isinstance(date_value, dt.date):
+            return date_value
+        else:
+            formats = [
+                "%Y-%m-%d",
+                "%Y/%m/%d",
+                "%m-%d-%Y",
+                "%m/%d/%Y",
+                "%m-%d-%y",
+                "%m/%d/%y",
+                "%B %#d, %Y",
+                "%B %d, %Y",
+                "%b %#d, %Y",
+                "%b %d, %Y",
+            ]
+            for fmt in formats:
+                try:
+                    return dt.datetime.strptime(date_value, fmt).date()
+                except ValueError:
+                    continue
+            raise ValueError(f"Unable to parse date value: {date_value}")
+
+    @staticmethod
+    def _parse_currency_value(currency_value: str | float) -> float:
+        """
+        Parses a currency value to ensure it is in the correct format.
+        """
+        if isinstance(currency_value, float):
+            return currency_value
+        else:
+            return float(currency_value)
+
+    @staticmethod
+    def _parse_percentage_value(percentage_value: str | float) -> float:
+        """
+        Parses a percentage value to ensure it is in the correct format.
+        """
+        if isinstance(percentage_value, float):
+            return percentage_value
+        else:
+            return float(percentage_value)
+
+    @staticmethod
+    def _parse_float_value(float_value: str | float) -> float:
+        """
+        Parses a float value to ensure it is in the correct format.
+        """
+        if isinstance(float_value, float):
+            return float_value
+        else:
+            return float(float_value)
+
+    # ── Main reformatting methods ───────────────────────────────────────
+
     def reprocess_all_relevant_data(self) -> None:
         """
         Reprocesses all relevant data in the instanced extracted data dictionary.
@@ -94,15 +183,29 @@ class DataFormatterCore:
             Formats a float value as currency.
             """
             return locale.format_string("$%.0f", money_value, grouping=True)
-            
+
         try:
             for value_name in currency_values_list:
-                if self.extracted_data_dict.get(value_name) == "" or value_name not in self.extracted_data_dict:
+                if getattr(
+                    self.workbook_dataclass, value_name, None
+                ) == "" or not hasattr(self.workbook_dataclass, value_name):
                     continue
-                self.extracted_data_dict[value_name] = format_currency(self.extracted_data_dict[value_name])
-            logger.info(f"DataExtractorCore.reprocess_currency_values: Reprocessed currency values: {self.extracted_data_dict}")
+                setattr(
+                    self.workbook_dataclass,
+                    value_name,
+                    format_currency(
+                        self._parse_currency_value(
+                            getattr(self.workbook_dataclass, value_name)
+                        )
+                    ),
+                )
+            logger.debug(
+                f"DataExtractorCore.reprocess_currency_values: Reprocessed currency values: {self.workbook_dataclass}"
+            )
         except Exception as e:
-            logger.exception(f"DataExtractorCore.reprocess_currency_values: Error reprocessing currency values: {e}")
+            logger.exception(
+                f"DataExtractorCore.reprocess_currency_values: Error reprocessing currency values: {e}"
+            )
 
     def reprocess_short_form_dates(self, short_form_dates_list: list[str]) -> None:
         """
@@ -110,85 +213,161 @@ class DataFormatterCore:
         """
         try:
             for date_value_name in short_form_dates_list:
-                if self.extracted_data_dict.get(date_value_name) is None:
+                if getattr(self.workbook_dataclass, date_value_name, None) is None:
                     continue
-                self.extracted_data_dict[date_value_name] = self.extracted_data_dict[date_value_name].date()
-                self.extracted_data_dict[date_value_name] = datetime.datetime.strftime(self.extracted_data_dict[date_value_name], "%m/%d/%Y")
-                self.extracted_data_dict[date_value_name] = str(self.extracted_data_dict[date_value_name])
-            logger.info(f"DataExtractorCore.reprocess_short_form_dates: Reprocessed short form dates: {self.extracted_data_dict}")
+                setattr(
+                    self.workbook_dataclass,
+                    date_value_name,
+                    self._parse_date_value(
+                        getattr(self.workbook_dataclass, date_value_name)
+                    ).strftime("%m/%d/%Y"),
+                )
+            logger.debug(
+                f"DataExtractorCore.reprocess_short_form_dates: Reprocessed short form dates: {self.workbook_dataclass}"
+            )
         except Exception as e:
-            logger.exception(f"DataExtractorCore.reprocess_short_form_dates: Error reprocessing short form dates: {e}")
-    
+            logger.exception(
+                f"DataExtractorCore.reprocess_short_form_dates: Error reprocessing short form dates: {e}"
+            )
+
     def reprocess_long_form_dates(self, long_form_dates_list: list[str]) -> None:
         """
         Reprocesses provided date values to ensure they are in long-form format.
         """
         try:
             for date_value_name in long_form_dates_list:
-                if self.extracted_data_dict.get(date_value_name) is None:
+                if getattr(self.workbook_dataclass, date_value_name, None) is None:
                     continue
-                self.extracted_data_dict[date_value_name] = self.extracted_data_dict[date_value_name].date()
-                self.extracted_data_dict[date_value_name] = datetime.datetime.strftime(self.extracted_data_dict[date_value_name], "%B %#d, %Y")
-                self.extracted_data_dict[date_value_name] = str(self.extracted_data_dict[date_value_name])
-            logger.info(f"DataExtractorCore.reprocess_long_form_dates: Reprocessed long form dates: {self.extracted_data_dict}")
+                setattr(
+                    self.workbook_dataclass,
+                    date_value_name,
+                    self._parse_date_value(
+                        getattr(self.workbook_dataclass, date_value_name)
+                    ).strftime("%B %d, %Y"),
+                )
+            logger.debug(
+                f"DataExtractorCore.reprocess_long_form_dates: Reprocessed long form dates: {self.workbook_dataclass}"
+            )
         except Exception as e:
-            logger.exception(f"DataExtractorCore.reprocess_long_form_dates: Error reprocessing long form dates: {e}")
-        
+            logger.exception(
+                f"DataExtractorCore.reprocess_long_form_dates: Error reprocessing long form dates: {e}"
+            )
+
     def reprocess_percentages(self, percentages_list: list[str]) -> None:
         """
         Reprocesses provided percentage values to ensure they are in the correct format.
         """
         try:
             for percentage_variable in percentages_list:
-                if self.extracted_data_dict.get(percentage_variable) == "" or self.extracted_data_dict.get(percentage_variable) is None:
+                if (
+                    getattr(self.workbook_dataclass, percentage_variable, None) == ""
+                    or getattr(self.workbook_dataclass, percentage_variable, None)
+                    is None
+                ):
                     continue
-                self.extracted_data_dict[percentage_variable] = self.extracted_data_dict[percentage_variable] * 100
-                self.extracted_data_dict[percentage_variable] = f"{self.extracted_data_dict[percentage_variable]:.2f}%"
-            logger.info(f"DataExtractorCore.reprocess_percentages - reprocessed percentages: {self.extracted_data_dict}")
+                parsed = (
+                    self._parse_percentage_value(
+                        getattr(self.workbook_dataclass, percentage_variable)
+                    )
+                    * 100
+                )
+                setattr(
+                    self.workbook_dataclass,
+                    percentage_variable,
+                    f"{parsed:.2f}%",
+                )
+            logger.debug(
+                f"DataExtractorCore.reprocess_percentages - reprocessed percentages: {self.workbook_dataclass}"
+            )
         except Exception as e:
-            logger.exception(f"DataExtractorCore.reprocess_percentages - Error reprocessing percentages: {e}")
-        
+            logger.exception(
+                f"DataExtractorCore.reprocess_percentages - Error reprocessing percentages: {e}"
+            )
+
     def reprocess_floats(self, floats_list: list[str]) -> None:
         """
         Reprocesses provided float values to ensure they are in the correct format.
         """
         try:
             for float_variable in floats_list:
-                if self.extracted_data_dict.get(float_variable) == "" or self.extracted_data_dict.get(float_variable) is None:
+                if (
+                    getattr(self.workbook_dataclass, float_variable, None) == ""
+                    or getattr(self.workbook_dataclass, float_variable, None) is None
+                ):
                     continue
-                self.extracted_data_dict[float_variable] = Decimal(self.extracted_data_dict[float_variable]).quantize(Decimal("0.00"))
-                self.extracted_data_dict[float_variable] = str(self.extracted_data_dict[float_variable]) # TEMP: Convert to string for consistency
-            logger.info(f"DataExtractorCore.reprocess_floats: Reprocessed floats: {self.extracted_data_dict}")
+                quantized = Decimal(
+                    self._parse_float_value(
+                        getattr(self.workbook_dataclass, float_variable)
+                    )
+                ).quantize(Decimal("0.00"))
+                setattr(
+                    self.workbook_dataclass,
+                    float_variable,
+                    str(quantized),  # TEMP: Convert to string for consistency
+                )
+            logger.debug(
+                f"DataExtractorCore.reprocess_floats: Reprocessed floats: {self.workbook_dataclass}"
+            )
         except Exception as e:
-            logger.exception(f"DataExtractorCore.reprocess_floats: Error reprocessing floats: {e}")
+            logger.exception(
+                f"DataExtractorCore.reprocess_floats: Error reprocessing floats: {e}"
+            )
+
 
 class DataExtractorCore:
     """
     Core class for extracting data from an active Excel workbook.
     """
-    def __init__(self, workbook_filepath: Path):
-        self.workbook_filepath = workbook_filepath
-        self.workbook = opxl.load_workbook(workbook_filepath, data_only=True) # Returns only computed values of formulas
-        self.workbook_info = WorkbookInfoCore(workbook_filepath, workbook_outputs_sheet_name="REPORT_OUTPUTS")
-        self.extracted_data = self.extract_data(self.workbook_info.workbook_variables_dict)
-    
-    def extract_data(self, workbook_variables_dict: dict[str, tuple[str, str]]):
+
+    def __init__(
+        self,
+        workbook_name: str,
+        active_workbook: opxl.Workbook,
+        workbook_variables_dict: dict[str, tuple[str, str]],
+        workbook_dataclass: Any,
+    ):
+        self.workbook_name = workbook_name
+        self.active_workbook = active_workbook
+        self.workbook_variables_dict = workbook_variables_dict
+        self.workbook_dataclass = workbook_dataclass
+
+        # CALLING EXTRACT DATA METHOD
+        self.extract_data(
+            self.active_workbook,
+            self.workbook_variables_dict,
+            self.workbook_dataclass,
+        )
+
+    def extract_data(
+        self,
+        active_workbook: opxl.Workbook,
+        workbook_variables_dict: dict[str, tuple[str, str]],
+        workbook_dataclass: Any,
+    ) -> None:
         """
         Extracts data from the specified worksheet based on its target cells subdictionaries.
         """
-        extracted_dict = {}
+        dataclass_object = workbook_dataclass
         try:
-            for variable_name, value_tuple in workbook_variables_dict.items():
+            for variable_name, value_tuple in self.workbook_variables_dict.items():
                 worksheet_name, cell_address = value_tuple
-                active_worksheet = self.workbook[worksheet_name]
-                extracted_dict[variable_name] = active_worksheet[cell_address].value
-            logger.info(f"DataExtractorCore.extract_data: Extracted data from {self.workbook}")
-            logger.info(f"DataExtractorCore.extract_data: Extracted data dict: {extracted_dict}")
-            return extracted_dict
+                setattr(
+                    dataclass_object,
+                    variable_name,
+                    self.active_workbook[worksheet_name][cell_address].value,
+                )
+            logger.info(
+                f"DataExtractorCore.extract_data: Extracted data from {self.workbook_name}: {self.workbook_variables_dict.keys()}"
+            )
+            logger.info(
+                f"DataExtractorCore.extract_data: Extracted data from {self.workbook_name}: {dataclass_object}"
+            )
         except Exception as e:
-            logger.exception(f"DataExtractorCore.extract_data: Error extracting data: {e}")
+            logger.exception(
+                f"DataExtractorCore.extract_data: Error extracting data from {self.workbook_name}: {e}"
+            )
             raise
-    
+
     # def extract_tables(self, workbook_tables_list: list[str]=None):
     #     """
     #     Extracts tables from the specified worksheets based on their target table subdictionaries.
@@ -205,5 +384,3 @@ class DataExtractorCore:
     #     except Exception as e:
     #         logger.exception(f"DataExtractorCore.extract_tables: Error extracting tables: {e}")
     #         return None
-    
-    
