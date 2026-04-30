@@ -1,3 +1,4 @@
+from dataclasses import make_dataclass, fields
 import logging
 from pathlib import Path
 from typing import Any
@@ -6,7 +7,6 @@ from importlib.metadata import version, metadata
 from econ_automation.ea_scripts.file_system_scripts.file_system_codebase import (
     FileSystemCore as fsc,
 )
-
 from econ_automation.ea_scripts.data_extraction_scripts.mastertemplate_extraction_codebase import (
     MasterTemplateExtractor,
 )
@@ -76,18 +76,30 @@ class EconWorkflowAutomation:
             selected_outputs_list, self.output_filepaths_dict
         )
 
+        # CALLING INITIALIZE EXTRACTORS
         self.initialize_extractors()
+
+        # EXTRACTS RELEVANT FORMATTED WORKBOOK DATACLASSES FROM ALL SELECTED WORKBOOKS
+        econ_data_list = self.get_all_reformatted_data()
+
+        # FLATTENS EXTRACTED DATA INTO A SINGLE MAIN    DATACLASS
+        self.ea_main_dataclass = self.flatten_all_extracted_data(econ_data_list)
+
+        # DEBUG
+        logger.error(
+            f"EconWorkflowAutomation.flatten_all_extracted_data: {self.ea_main_dataclass}"
+        )
 
         # CALLING GENERATE REPORTS
         self.generate_reports(
-            main_reformatted_data_dict=self.main_reformatted_data_dict,
+            ea_main_dataclass=self.ea_main_dataclass,
             selected_template_filepaths=self.selected_template_filepaths,
             selected_output_filepaths=self.selected_output_filepaths,
         )
 
     def generate_reports(
         self,
-        main_reformatted_data_dict: dict[str, Any],
+        ea_main_dataclass: Any,
         selected_template_filepaths: list[Path],
         selected_output_filepaths: list[Path],
     ):
@@ -96,7 +108,7 @@ class EconWorkflowAutomation:
         """
         try:
             AutofillWordTemplates(
-                main_reformatted_data_dict=main_reformatted_data_dict,
+                ea_main_dataclass=ea_main_dataclass,
                 selected_template_filepaths=selected_template_filepaths,
                 selected_output_filepaths=selected_output_filepaths,
             )
@@ -160,7 +172,9 @@ class EconWorkflowAutomation:
         return selected_template_filepaths
 
     def select_output_filepaths(
-        self, selected_outputs_list: list[str], output_filepaths_dict: dict[str, Path]
+        self,
+        selected_outputs_list: list[str],
+        output_filepaths_dict: dict[str, Path],
     ) -> list[Path]:
         """
         Obtains the output filepaths based on the selected outputs.
@@ -186,16 +200,28 @@ class EconWorkflowAutomation:
         self.pv2_extractor = PV2Extractor()
         self.hhspv_extractor = HHSPVExtractor()
 
-        self.main_reformatted_data_dict = self.get_all_reformatted_data()
-
-    def get_all_reformatted_data(self) -> dict[str, Any]:
+    def get_all_reformatted_data(self) -> list[Any]:
         """
         Returns all reformatted data from all extractors.
         """
-        return {
-            "OFF": self.off_extractor.case_profile,
-            "MASTERTEMPLATE": self.mastertemplate_extractor.workbook_dataclass,
-            "WORKING_CALC": self.working_calc_extractor.workbook_dataclass,
-            "PV2": self.pv2_extractor.workbook_dataclass,
-            "HHSPV": self.hhspv_extractor.workbook_dataclass,
-        }
+        return [
+            self.off_extractor.case_profile,
+            self.mastertemplate_extractor.workbook_dataclass,
+            self.working_calc_extractor.workbook_dataclass,
+            self.pv2_extractor.workbook_dataclass,
+            self.hhspv_extractor.workbook_dataclass,
+        ]
+
+    def flatten_all_extracted_data(self, econ_data_list: list[Any]) -> Any:
+        """
+        Returns a flattened dictionary of all extracted data.
+        """
+        all_fields = []
+        all_values = {}
+        for dc in econ_data_list:
+            for f in fields(dc):
+                all_fields.append((f.name, f.type))
+                all_values[f.name] = getattr(dc, f.name)
+
+        FlattenedDataClass = make_dataclass("FlattenedDataClass", all_fields)
+        return FlattenedDataClass(**all_values)

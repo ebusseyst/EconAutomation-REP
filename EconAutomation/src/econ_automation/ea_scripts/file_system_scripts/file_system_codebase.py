@@ -45,7 +45,7 @@ class FileSystemCore:
     def __init__(self):
         self.ea_config_data = self.load_ea_config()
 
-        self.OFF_filepaths = self.ea_config_data["OFF_FILEPATHS"]
+        self.OFF_filepaths = self.ea_config_data["OFFs"]
         self.workbook_filepaths = self.ea_config_data["WORKBOOKS"]
         self.template_filepaths = self.ea_config_data["TEMPLATES"]
         self.output_filepaths = self.ea_config_data["OUTPUTS"]

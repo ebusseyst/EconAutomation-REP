@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from pathlib import Path
 import logging
 
@@ -13,11 +12,6 @@ from econ_automation.ea_scripts.data_extraction_scripts.extraction_core_codebase
 
 # Module's logger instance
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class WorkingCalcData:
-    """Represents the data from the WORKING_CALC workbook."""
 
 
 class WorkingCalcInfo(WorkbookInfoCore):
@@ -96,7 +90,6 @@ class WorkingCalcExtractor(DataExtractorCore):
             workbook_name="WORKING_CALC",
             active_workbook=self.working_calc_info.active_workbook,
             workbook_variables_dict=self.workbook_variables_dict,
-            workbook_dataclass=WorkingCalcData(),
         )
 
         DataFormatterCore(

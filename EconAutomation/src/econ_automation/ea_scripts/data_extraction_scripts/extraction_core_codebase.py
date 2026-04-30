@@ -5,6 +5,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 import openpyxl as opxl
+from dataclasses import make_dataclass
 
 # Module's logger instance
 logger = logging.getLogger(__name__)
@@ -324,49 +325,62 @@ class DataExtractorCore:
         workbook_name: str,
         active_workbook: opxl.Workbook,
         workbook_variables_dict: dict[str, tuple[str, str]],
-        workbook_dataclass: Any,
     ):
         self.workbook_name = workbook_name
         self.active_workbook = active_workbook
         self.workbook_variables_dict = workbook_variables_dict
-        self.workbook_dataclass = workbook_dataclass
+
+        self.workbook_dataclass = self.build_workbook_dataclass(
+            self.workbook_name, self.workbook_variables_dict
+        )
 
         # CALLING EXTRACT DATA METHOD
         self.extract_data(
-            self.active_workbook,
-            self.workbook_variables_dict,
-            self.workbook_dataclass,
+            self.active_workbook, self.workbook_variables_dict, self.workbook_dataclass
         )
 
     def extract_data(
         self,
         active_workbook: opxl.Workbook,
         workbook_variables_dict: dict[str, tuple[str, str]],
-        workbook_dataclass: Any,
+        workbook_dataclass: type[Any],
     ) -> None:
         """
         Extracts data from the specified worksheet based on its target cells subdictionaries.
         """
         dataclass_object = workbook_dataclass
         try:
-            for variable_name, value_tuple in self.workbook_variables_dict.items():
+            for variable_name, value_tuple in workbook_variables_dict.items():
                 worksheet_name, cell_address = value_tuple
                 setattr(
                     dataclass_object,
                     variable_name,
-                    self.active_workbook[worksheet_name][cell_address].value,
+                    active_workbook[worksheet_name][cell_address].value,
                 )
             logger.info(
-                f"DataExtractorCore.extract_data: Extracted data from {self.workbook_name}: {self.workbook_variables_dict.keys()}"
+                f"DataExtractorCore.extract_data: Extracted data variables: {workbook_variables_dict.keys()}"
             )
             logger.info(
-                f"DataExtractorCore.extract_data: Extracted data from {self.workbook_name}: {dataclass_object}"
+                f"DataExtractorCore.extract_data: Created dataclass object: {dataclass_object}"
             )
         except Exception as e:
             logger.exception(
-                f"DataExtractorCore.extract_data: Error extracting data from {self.workbook_name}: {e}"
+                f"DataExtractorCore.extract_data: Error extracting data: {e}"
             )
             raise
+
+    def build_workbook_dataclass(
+        self,
+        workbook_name: str,
+        workbook_variables_dict: dict[str, tuple[str, str]],
+    ) -> type[Any]:
+        """
+        Returns the workbook's dataclass object.
+        """
+        return make_dataclass(
+            f"{workbook_name}Data",
+            [(key, Any) for key in workbook_variables_dict.keys()],
+        )
 
     # def extract_tables(self, workbook_tables_list: list[str]=None):
     #     """

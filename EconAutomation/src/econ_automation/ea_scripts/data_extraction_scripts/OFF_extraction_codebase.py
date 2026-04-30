@@ -117,10 +117,12 @@ class CaseProfile:
     firm_address_1: str = ""
     firm_address_2: str = ""
 
-    # ── DERIVED: Claimant name ────────────────────────────────────────
+    # ── DERIVED: Claimant name / misc info ────────────────────────────────────────
     claimant_name_full: str = field(init=False, default="")
     claimant_name_first_initial: str = field(init=False, default="")
     claimant_name_last_initial: str = field(init=False, default="")
+    claimant_LCP_LE: str = field(init=False, default="")
+    claimant_econ_LE: str = field(init=False, default="")
 
     # ── DERIVED: Claimant gender / salutation ─────────────────────────
     claimant_salutation: str = field(init=False, default="")

@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from dataclasses import dataclass
 
 from econ_automation.ea_scripts.file_system_scripts.file_system_codebase import (
     FileSystemCore as fsc,
@@ -13,11 +12,6 @@ from econ_automation.ea_scripts.data_extraction_scripts.extraction_core_codebase
 
 # Module's logger instance
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class HHSPVData:
-    """Represents the data from the HHSPV workbook."""
 
 
 class HHSPVInfo(WorkbookInfoCore):
@@ -96,7 +90,6 @@ class HHSPVExtractor(DataExtractorCore):
             workbook_name="HHSPV",
             active_workbook=self.hhspv_info.active_workbook,
             workbook_variables_dict=self.workbook_variables_dict,
-            workbook_dataclass=HHSPVData(),
         )
 
         DataFormatterCore(

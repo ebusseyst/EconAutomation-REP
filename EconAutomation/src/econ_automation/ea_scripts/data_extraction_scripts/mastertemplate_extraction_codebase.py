@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import logging
 from pathlib import Path
 
@@ -14,18 +13,6 @@ from econ_automation.ea_scripts.file_system_scripts.file_system_codebase import 
 
 # Module's logger instance
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class MasterTemplateData:
-    """Represents the data from the MASTERTEMPLATE workbook."""
-
-    claimant_employer: str | None = None
-    job_title_1: str | None = None
-    job_title_2: str | None = None
-    wage_hourly: str | None = None
-    wage_weekly: str | None = None
-    LCP_expert: str | None = None
 
 
 class MasterTemplateInfo(WorkbookInfoCore):
@@ -91,7 +78,6 @@ class MasterTemplateExtractor(DataExtractorCore):
             workbook_name="MASTERTEMPLATE",
             active_workbook=mastertemplate_info.active_workbook,
             workbook_variables_dict=self.workbook_variables_dict,
-            workbook_dataclass=MasterTemplateData(),
         )
 
         DataFormatterCore(

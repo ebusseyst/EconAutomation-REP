@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import logging
 from pathlib import Path
 
@@ -14,11 +13,6 @@ from econ_automation.ea_scripts.file_system_scripts.file_system_codebase import 
 
 # Module's logger instance
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class PV2Data:
-    """Represents the data from the PV2 workbook."""
 
 
 class PV2Info(WorkbookInfoCore):
@@ -184,7 +178,6 @@ class PV2Extractor(DataExtractorCore):
             workbook_name="PV2",
             active_workbook=pv2_info.active_workbook,
             workbook_variables_dict=self.workbook_variables_dict,
-            workbook_dataclass=PV2Data(),
         )
 
         DataFormatterCore(

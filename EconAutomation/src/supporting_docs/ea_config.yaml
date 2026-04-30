@@ -12,8 +12,8 @@ workbook_filepaths:
   HHSPV: "supporting_docs/sorted_econ_files/HHS_PV_New (color coded).xlsx"
 
 template_filepaths:
-  PV_EARNINGS_MEDS_TEMPLATE: "supporting_docs/sorted_econ_files/Earnings and PV Meds Report Template (color coded).docx"
-  PVLCP_MASTERTEMPLATE: "supporting_docs/sorted_econ_files/PVLCP MASTERTEMPLATE (color coded).docx"
+  PV_EARNINGS_MEDS_TEMPLATE: "supporting_docs/econ_report_templates/PV_earnings_and_meds_report_template.docx"
+  PVLCP_TEMPLATE: "supporting_docs/econ_report_templates/PVLCP_report_template.docx"
 
 output_filepaths:
   OUTPUT_1: "ea_outputs/generated_reports"
