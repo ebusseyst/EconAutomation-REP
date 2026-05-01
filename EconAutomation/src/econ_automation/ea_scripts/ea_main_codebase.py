@@ -50,8 +50,7 @@ class EconWorkflowAutomation:
             "OFF",
         ],
         selected_templates_list: list[str] = [
-            "PV_EARNINGS_MEDS_TEMPLATE",
-            "PVLCP_MASTERTEMPLATE",
+            "PVLCP_TEMPLATE",
         ],
         selected_outputs_list: list[str] = ["OUTPUT_1", "OUTPUT_2"],
     ):

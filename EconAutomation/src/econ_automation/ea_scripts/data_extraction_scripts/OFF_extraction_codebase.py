@@ -122,7 +122,8 @@ class CaseProfile:
     claimant_name_first_initial: str = field(init=False, default="")
     claimant_name_last_initial: str = field(init=False, default="")
     claimant_LCP_LE: str = field(init=False, default="")
-    claimant_econ_LE: str = field(init=False, default="")
+    claimant_LE_at_DOI: str = field(init=False, default="")
+    claimant_LE_at_trial: str = field(init=False, default="")
 
     # ── DERIVED: Claimant gender / salutation ─────────────────────────
     claimant_salutation: str = field(init=False, default="")
