@@ -7,10 +7,6 @@ from econ_automation.ea_scripts.data_extraction_scripts.extraction_core_codebase
     WorkbookInfoCore,
 )
 
-from econ_automation.ea_scripts.file_system_scripts.file_system_codebase import (
-    FileSystemCore as fsc,
-)
-
 # Module's logger instance
 logger = logging.getLogger(__name__)
 
@@ -20,13 +16,23 @@ class MasterTemplateInfo(WorkbookInfoCore):
     Class to obtain variable_names and their cell locations from the MASTERTEMPLATE workbook.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        mastertemplate_filepath: Path,
+        workbook_outputs_sheet_name: str,
+    ):
         # INSTANTIATING SUPERCLASS WORKBOOK INFO ATTRIBUTES
-        self.mastertemplate_path = Path(fsc().workbook_filepaths["MASTERTEMPLATE"])
-        super().__init__(workbook_filepath=self.mastertemplate_path)
+        super().__init__(
+            workbook_filepath=mastertemplate_filepath,
+            workbook_outputs_sheet_name=workbook_outputs_sheet_name,
+        )
 
         # DEFINING CLASS ATTRIBUTES
-        self.workbook_variables_dict = self.define_workbook_variables_dict()
+        self.workbook_variables_dict = self.define_workbook_variables_dict(
+            workbook_name=self.workbook_name,
+            active_workbook=self.active_workbook,
+            workbook_outputs_sheet_name=self.workbook_outputs_sheet_name,
+        )
         self.reformatting_lists_dict = self.create_reformatting_lists_dict()
 
     def define_currency_values(self) -> list[str]:
@@ -66,18 +72,30 @@ class MasterTemplateInfo(WorkbookInfoCore):
 
 
 class MasterTemplateExtractor(DataExtractorCore):
-    def __init__(self):
+    def __init__(
+        self,
+        mastertemplate_filepath: Path,
+        workbook_outputs_sheet_name: str,
+        temp_dir_path: Path,
+    ):
         # INSTANTIATING WORKBOOK-SPECIFIC ATTRIBUTES
-        mastertemplate_info = MasterTemplateInfo()
+        mastertemplate_info = MasterTemplateInfo(
+            mastertemplate_filepath=mastertemplate_filepath,
+            workbook_outputs_sheet_name=workbook_outputs_sheet_name,
+        )
 
         # DEFINING CLASS ATTRIBUTES
         self.workbook_variables_dict = mastertemplate_info.workbook_variables_dict
         self.reformatting_lists_dict = mastertemplate_info.reformatting_lists_dict
+        self.workbook_charts_dict = mastertemplate_info.workbook_charts_dict
+        self.workbook_tables_dict = mastertemplate_info.workbook_tables_dict
 
         super().__init__(
-            workbook_name="MASTERTEMPLATE",
-            active_workbook=mastertemplate_info.active_workbook,
+            workbook_pathstr=str(mastertemplate_filepath),
             workbook_variables_dict=self.workbook_variables_dict,
+            workbook_charts_dict=self.workbook_charts_dict,
+            workbook_tables_dict=self.workbook_tables_dict,
+            temp_dir_path=temp_dir_path,
         )
 
         DataFormatterCore(

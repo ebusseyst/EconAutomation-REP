@@ -18,3 +18,6 @@ template_filepaths:
 output_filepaths:
   OUTPUT_1: "ea_outputs/generated_reports"
   OUTPUT_2: "ea_outputs/generated_reports_2"
+
+temp_dir_filepaths:
+  TEMP_DIR: "ea_outputs/temp_dir"

@@ -1,17 +1,15 @@
-from tempfile import TemporaryDirectory
 import datetime as dt
 import logging
 import locale
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
-from dataclasses import make_dataclass
+from typing import Any, Optional
 import platform
-import tempfile
+
+from pydantic import create_model, ConfigDict
 
 import openpyxl as opxl
 import xlwings as xw
-import pandas as pd
 
 # Module's logger instance
 logger = logging.getLogger(__name__)
@@ -29,27 +27,51 @@ class WorkbookInfoCore:
     ) -> None:
 
         # DEFINING CLASS ATTRIBUTES
-        self.workbook_name = Path(workbook_filepath).name
+        self.workbook_path = workbook_filepath
+        self.workbook_pathstr = str(workbook_filepath)
+        self.workbook_name = Path(workbook_filepath).name.split(".")[0]
         self.workbook_outputs_sheet_name = workbook_outputs_sheet_name
-        self.active_workbook = opxl.load_workbook(workbook_filepath, read_only=True, data_only=True)
+        self.active_workbook = opxl.load_workbook(
+            workbook_filepath, read_only=True, data_only=True
+        )
 
         # DEFINING WORKBOOK VARIABLES
         self.workbook_variables_dict = self.define_workbook_variables_dict(
+            workbook_name=self.workbook_name,
             active_workbook=self.active_workbook,
-            workbook_outputs_sheet_name=self.workbook_outputs_sheet_name
+            workbook_outputs_sheet_name=self.workbook_outputs_sheet_name,
         )
 
-    def define_workbook_variables_dict(self,
-                                       active_workbook: opxl.Workbook,
-                                       workbook_outputs_sheet_name: str
-                                       ) -> dict[str, tuple[str, str]]:
+        # DEFINING WORKBOOK CHARTS
+        self.workbook_charts_dict = self.define_workbook_charts(
+            workbook_name=self.workbook_name,
+            active_workbook=self.active_workbook,
+            workbook_outputs_sheet_name=self.workbook_outputs_sheet_name,
+        )
+
+        # DEFINING WORKBOOK TABLES
+        self.workbook_tables_dict = self.define_workbook_tables(
+            workbook_name=self.workbook_name,
+            active_workbook=self.active_workbook,
+            workbook_outputs_sheet_name=self.workbook_outputs_sheet_name,
+        )
+
+        # CLOSING THE WORKBOOK
+        self.active_workbook.close()
+
+    def define_workbook_variables_dict(
+        self,
+        workbook_name: str,
+        active_workbook: opxl.Workbook,
+        workbook_outputs_sheet_name: str,
+    ) -> dict[str, tuple[str, str]]:
         """
         Defines the target cells for the instanced workbook. Data is pulled from dedicated "REPORT_OUTPUTS" tab on each
         relevant worksheet and returned as a nested dictionary (e.g., {"variable_name": ("worksheet_name", "cell_address")}).
         """
         try:
             workbook_variables_dict = {}
-            workbook_outputs_sheet = self.active_workbook[workbook_outputs_sheet_name]
+            workbook_outputs_sheet = active_workbook[workbook_outputs_sheet_name]
             for row in workbook_outputs_sheet.iter_rows(
                 min_row=3, min_col=1, max_col=4, max_row=100, values_only=True
             ):
@@ -70,29 +92,31 @@ class WorkbookInfoCore:
                     f"{cell_address}",
                 )
             logger.info(
-                f"DataExtractorCore.define_workbook_variables_dict: {self.workbook_name} variables dict: {workbook_variables_dict}"
+                f"DataExtractorCore.define_workbook_variables_dict: {workbook_name} variables dict: {workbook_variables_dict}"
             )
             return workbook_variables_dict
         except KeyError:
             logger.exception(
-                f"DataExtractorCore.define_workbook_variables_dict: KeyError defining workbook variables for {self.workbook_name}"
+                f"DataExtractorCore.define_workbook_variables_dict: KeyError defining workbook variables for {workbook_name}"
             )
             raise
         except IndexError:
             logger.exception(
-                f"DataExtractorCore.define_workbook_variables_dict: IndexError defining workbook variables for {self.workbook_name}"
+                f"DataExtractorCore.define_workbook_variables_dict: IndexError defining workbook variables for {workbook_name}"
             )
             raise
         except TypeError:
             logger.exception(
-                f"DataExtractorCore.define_workbook_variables_dict: TypeError defining workbook variables for {self.workbook_name}"
+                f"DataExtractorCore.define_workbook_variables_dict: TypeError defining workbook variables for {workbook_name}"
             )
             raise
-    
-    def define_workbook_charts(self,
-                               active_workbook: opxl.Workbook,
-                               workbook_outputs_sheet_name: str
-                               ) -> dict[str, str]:
+
+    def define_workbook_charts(
+        self,
+        workbook_name: str,
+        active_workbook: opxl.Workbook,
+        workbook_outputs_sheet_name: str,
+    ) -> dict[str, str]:
         """
         Defines the worksheets with charts for the relevant workbook.
         """
@@ -111,29 +135,31 @@ class WorkbookInfoCore:
                     continue
                 workbook_charts_dict[str(worksheet_name)] = str(chart_name)
             logger.info(
-                f"DataExtractorCore.define_workbook_charts: {self.workbook_name} charts list: {workbook_charts_dict}"
+                f"DataExtractorCore.define_workbook_charts: {workbook_name} charts list: {workbook_charts_dict}"
             )
             return workbook_charts_dict
         except KeyError:
             logger.exception(
-                f"DataExtractorCore.define_workbook_charts: KeyError defining workbook charts for {self.workbook_name}"
+                f"DataExtractorCore.define_workbook_charts: KeyError defining workbook charts for {workbook_name}"
             )
             raise
         except IndexError:
             logger.exception(
-                f"DataExtractorCore.define_workbook_charts: IndexError defining workbook charts for {self.workbook_name}"
+                f"DataExtractorCore.define_workbook_charts: IndexError defining workbook charts for {workbook_name}"
             )
             raise
         except TypeError:
             logger.exception(
-                f"DataExtractorCore.define_workbook_charts: TypeError defining workbook charts for {self.workbook_name}"
+                f"DataExtractorCore.define_workbook_charts: TypeError defining workbook charts for {workbook_name}"
             )
             raise
-        
-    def define_workbook_tables(self,
-                               active_workbook: opxl.Workbook,
-                               workbook_outputs_sheet_name: str
-                               ) -> dict[str, str]:
+
+    def define_workbook_tables(
+        self,
+        workbook_name: str,
+        active_workbook: opxl.Workbook,
+        workbook_outputs_sheet_name: str,
+    ) -> dict[str, str]:
         """
         Defines the worksheets with tables for the relevant workbook.
         """
@@ -145,32 +171,36 @@ class WorkbookInfoCore:
             ):
                 worksheet_name = row[0]
                 table_name = row[1]
-                if (worksheet_name == "" or worksheet_name is None or table_name == "" or table_name is None):
+                if (
+                    worksheet_name == ""
+                    or worksheet_name is None
+                    or table_name == ""
+                    or table_name is None
+                ):
                     logger.debug(
                         "DataExtractorCore.define_workbook_tables: Empty column(s) found in REPORT_OUTPUTS tab."
                     )
                     continue
                 workbook_tables_dict[str(worksheet_name)] = str(table_name)
             logger.info(
-                f"DataExtractorCore.define_workbook_tables: {self.workbook_name} tables list: {workbook_tables_dict}"
+                f"DataExtractorCore.define_workbook_tables: {workbook_name} tables list: {workbook_tables_dict}"
             )
             return workbook_tables_dict
         except KeyError:
             logger.exception(
-                f"DataExtractorCore.define_workbook_tables: KeyError defining workbook tables for {self.workbook_name}"
+                f"DataExtractorCore.define_workbook_tables: KeyError defining workbook tables for {workbook_name}"
             )
             raise
         except IndexError:
             logger.exception(
-                f"DataExtractorCore.define_workbook_tables: IndexError defining workbook tables for {self.workbook_name}"
+                f"DataExtractorCore.define_workbook_tables: IndexError defining workbook tables for {workbook_name}"
             )
             raise
         except TypeError:
             logger.exception(
-                f"DataExtractorCore.define_workbook_tables: TypeError defining workbook tables for {self.workbook_name}"
+                f"DataExtractorCore.define_workbook_tables: TypeError defining workbook tables for {workbook_name}"
             )
             raise
-                
 
 
 class DataFormatterCore:
@@ -205,9 +235,7 @@ class DataFormatterCore:
                 "%m/%d/%Y",
                 "%m-%d-%y",
                 "%m/%d/%y",
-                "%B %#d, %Y",
                 "%B %d, %Y",
-                "%b %#d, %Y",
                 "%b %d, %Y",
             ]
             for fmt in formats:
@@ -270,7 +298,10 @@ class DataFormatterCore:
         Reprocesses currency values to ensure they are in the correct format.
         """
         # Set locale for currency formatting
-        locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
+        try:
+            locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
+        except locale.Error:
+            locale.setlocale(locale.LC_ALL, "English_United States.1252")
 
         def format_currency(money_value: float) -> str:
             """
@@ -419,56 +450,60 @@ class DataExtractorCore:
         workbook_variables_dict: dict[str, tuple[str, str]],
         workbook_charts_dict: dict[str, str],
         workbook_tables_dict: dict[str, str],
+        temp_dir_path: Path,
     ):
-        self.active_workbook = opxl.load_workbook(workbook_pathstr, read_only=True, data_only=True)
+        self.workbook_pathstr = workbook_pathstr
         self.workbook_variables_dict = workbook_variables_dict
         self.workbook_name = Path(workbook_pathstr).name.split(".")[0]
-        self.tmp_directory: TemporaryDirectory | None = None
-        self.tmp_path: Path | None = None
-        
-        self.workbook_dataclass = self.build_workbook_dataclass(
+        self.temp_dir_path = temp_dir_path
+
+        workbook_model_class = self.build_workbook_dataclass(
             self.workbook_name, self.workbook_variables_dict
         )
 
-        # CALLING EXTRACT DATA METHOD
-        self.extract_data(
-            self.active_workbook, self.workbook_variables_dict, self.workbook_dataclass
+        # CALLING EXTRACTION METHODS
+        self.workbook_dataclass = self.extract_data(
+            self.workbook_pathstr, self.workbook_variables_dict, workbook_model_class
         )
         self.extract_charts(
-            workbook_pathstr=workbook_pathstr,
+            workbook_pathstr=self.workbook_pathstr,
             workbook_name=self.workbook_name,
-            workbook_charts_dict=workbook_charts_dict
+            workbook_charts_dict=workbook_charts_dict,
+            temp_dir_path=self.temp_dir_path,
         )
         self.extract_tables(
-            workbook_pathstr=workbook_pathstr,
+            workbook_pathstr=self.workbook_pathstr,
             workbook_name=self.workbook_name,
-            workbook_tables_dict=workbook_tables_dict
+            workbook_tables_dict=workbook_tables_dict,
+            temp_dir_path=self.temp_dir_path,
         )
 
     def extract_data(
         self,
-        active_workbook: opxl.Workbook,
+        workbook_pathstr: str,
         workbook_variables_dict: dict[str, tuple[str, str]],
         workbook_dataclass: type[Any],
-    ) -> None:
+    ) -> Any:
         """
-        Extracts data from the specified worksheet based on its target cells subdictionaries.
+        Extracts data from the specified worksheet and returns a validated Pydantic model instance.
         """
-        dataclass_object = workbook_dataclass
         try:
+            active_workbook = opxl.load_workbook(
+                workbook_pathstr, read_only=True, data_only=True
+            )
+            data_dict = {}
             for variable_name, value_tuple in workbook_variables_dict.items():
                 worksheet_name, cell_address = value_tuple
-                setattr(
-                    dataclass_object,
-                    variable_name,
-                    active_workbook[worksheet_name][cell_address].value,
-                )
+                data_dict[variable_name] = active_workbook[worksheet_name][cell_address].value
+            active_workbook.close()
+            model_instance = workbook_dataclass(**data_dict)
             logger.info(
-                f"DataExtractorCore.extract_data: Extracted data variables: {workbook_variables_dict.keys()}"
+                f"DataExtractorCore.extract_data: Extracted data variables: {list(data_dict.keys())}"
             )
             logger.info(
-                f"DataExtractorCore.extract_data: Created dataclass object: {dataclass_object}"
+                f"DataExtractorCore.extract_data: Created model instance: {model_instance}"
             )
+            return model_instance
         except Exception as e:
             logger.exception(
                 f"DataExtractorCore.extract_data: Error extracting data: {e}"
@@ -481,71 +516,110 @@ class DataExtractorCore:
         workbook_variables_dict: dict[str, tuple[str, str]],
     ) -> type[Any]:
         """
-        Returns the workbook's dataclass object.
+        Returns a dynamically created Pydantic model class for the workbook's data fields.
+        All fields are Optional[Any] with a None default so they can be populated after construction.
+        validate_assignment=True triggers field validation when DataFormatterCore sets formatted values.
         """
-        return make_dataclass(
+        field_definitions: dict[str, Any] = {
+            key: (Optional[Any], None) for key in workbook_variables_dict.keys()
+        }
+        return create_model(
             f"{workbook_name}Data",
-            [(key, Any) for key in workbook_variables_dict.keys()],
+            __config__=ConfigDict(validate_assignment=True, arbitrary_types_allowed=True),
+            **field_definitions,
         )
 
-    def extract_charts(self, 
-                       workbook_pathstr: str,
-                       workbook_name: str, 
-                       workbook_charts_dict: dict[str, str]):
+    def open_xw_workbook(self, workbook_pathstr: str) -> tuple[xw.App, xw.Book]:
         """
-        Creates and assigns a temporary storage directory, extracts specified charts from the active workbook as pdf/png files.
+        Opens an Excel workbook using xlwings for chart/table extraction.
         """
-        tmp = tempfile.TemporaryDirectory()
-        tmp_path = Path(tmp.name)
+        app = xw.App(visible=False)
+        wb = app.books.open(workbook_pathstr)
+        return app, wb
+
+    def extract_charts(
+        self,
+        workbook_pathstr: str,
+        workbook_name: str,
+        workbook_charts_dict: dict[str, str],
+        temp_dir_path: Path,
+    ) -> None:
+        """
+        Extracts specified charts from the active workbook as pdf/png files.
+        """
         try:
-            app = xw.App(visible=False)
-            wb = app.books.open(workbook_pathstr)
-            # TO-DO: ADD AUTOMATIC DATA REFRESH (if wanted)
-            for sheet_name, chart_name in workbook_charts_dict.items():
-                sheet = wb.sheets[sheet_name]
-                if chart_name in sheet.charts:
-                    chart = sheet.charts[chart_name]
-                    if platform.system() == "Darwin":
-                        chart.to_pdf(tmp_path / f"{workbook_name} - {sheet_name} - {chart_name}.pdf")
-                    else:
-                        chart.to_png(tmp_path / f"{workbook_name} - {sheet_name} - {chart_name}.png")
-        
-            wb.close()
-            app.quit()
-            logger.info(f"DataExtractorCore.extract_charts: Extracted charts from {workbook_name}/{sheet_name}")
-            
-            self.tmp_directory = tmp
-            self.tmp_path = tmp_path
+            app, wb = self.open_xw_workbook(workbook_pathstr)
+            try:
+                # TO-DO: ADD AUTOMATIC DATA REFRESH (if wanted)
+                for sheet_name, chart_name in workbook_charts_dict.items():
+                    sheet = wb.sheets[sheet_name]
+                    if chart_name in sheet.charts:
+                        chart = sheet.charts[chart_name]
+                        if platform.system() == "Darwin":
+                            chart.to_pdf(
+                                temp_dir_path
+                                / f"{workbook_name} - {sheet_name} - {chart_name}.pdf"
+                            )
+                        else:
+                            chart.to_png(
+                                temp_dir_path
+                                / f"{workbook_name} - {sheet_name} - {chart_name}.png"
+                            )
+                logger.info(
+                    f"DataExtractorCore.extract_charts: Extracted charts from {workbook_name}"
+                )
+            finally:
+                wb.close()
+                app.quit()
+
         except FileNotFoundError:
-            logger.exception(f"DataExtractorCore.extract_charts: Error extracting charts: {workbook_pathstr} not found.")
+            logger.exception(
+                f"DataExtractorCore.extract_charts: Error extracting charts: {workbook_pathstr} not found."
+            )
             raise
         except Exception as e:
-            logger.exception(f"DataExtractorCore.extract_charts: Error extracting charts: {e}")
+            logger.exception(
+                f"DataExtractorCore.extract_charts: Error extracting charts: {e}"
+            )
             raise
 
-    def extract_tables(self,
-                       workbook_pathstr: str,
-                       workbook_name: str,
-                       active_workbook: 
-                       workbook_tables_dict: dict[str, str]):
+    def extract_tables(
+        self,
+        workbook_pathstr: str,
+        workbook_name: str,
+        workbook_tables_dict: dict[str, str],
+        temp_dir_path: Path,
+    ) -> None:
         """
         Extracts tables from the specified worksheets based on their target table subdictionaries.
         """
-        extracted_tables_dict = {}
         try:
-            app
-            for sheet_name, table_name in workbook_tables_dict.items():
-                if table_name not in self.active_workbook[sheet_name].tables:
-                    logger.error(f"DataExtractorCore.extract_tables: Table '{table_name}' not found in sheet '{sheet_name}'.")
-                    continue
-                table = self.active_workbook[sheet_name].tables[table_name]
-                
-                # Dump da
-                df = pd.read_excel(self.active_workbook_path, sheet_name=worksheet_name, header=0, usecols=table.ref)
-                extracted_tables_dict[worksheet_name][table_name] = df
-            logger.info(f"DataExtractorCore: Extracted tables from {self.active_workbook_path}")
-            logger.info(f"DataExtractorCore: Extracted tables dict: {extracted_tables_dict}")
-            return extracted_tables_dict
+            app, wb = self.open_xw_workbook(workbook_pathstr)
+            try:
+                for sheet_name, table_name in workbook_tables_dict.items():
+                    if table_name not in wb.sheets[sheet_name].tables:
+                        logger.error(
+                            f"DataExtractorCore.extract_tables: Table '{table_name}' not found in sheet '{sheet_name}'."
+                        )
+                        continue
+                    table = wb.sheets[sheet_name].tables[table_name]
+
+                    table_range = table.range.address
+                    wb.sheets[sheet_name].range(table_range).to_png(
+                        temp_dir_path
+                        / f"{workbook_name} - {sheet_name} - {table_name}.png"
+                    )
+                logger.info(
+                    f"DataExtractorCore.extract_tables: Extracted tables from {workbook_name}"
+                )
+            finally:
+                wb.close()
+                app.quit()
+        except FileNotFoundError:
+            logger.exception(
+                f"DataExtractorCore.extract_tables: Error - {workbook_pathstr} not found."
+            )
+            raise
         except Exception as e:
-            logger.exception(f"DataExtractorCore.extract_tables: Error extracting tables: {e}")
-            return None
+            logger.exception(f"DataExtractorCore.extract_tables: Error - {e}")
+            raise

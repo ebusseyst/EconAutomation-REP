@@ -6,9 +6,6 @@ from econ_automation.ea_scripts.data_extraction_scripts.extraction_core_codebase
     DataFormatterCore,
     WorkbookInfoCore,
 )
-from econ_automation.ea_scripts.file_system_scripts.file_system_codebase import (
-    FileSystemCore as fsc,
-)
 
 
 # Module's logger instance
@@ -20,14 +17,34 @@ class PV2Info(WorkbookInfoCore):
     Class to obtain variable_names and their cell locations from the PV2 workbook.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        pv2_filepath: Path,
+        workbook_outputs_sheet_name: str,
+    ):
         # INSTANTIATING SUPERCLASS WORKBOOK INFO ATTRIBUTES
-        self.pv2_path = Path(fsc().workbook_filepaths["PV2"])
-        super().__init__(workbook_filepath=self.pv2_path)
+        super().__init__(
+            workbook_filepath=pv2_filepath,
+            workbook_outputs_sheet_name=workbook_outputs_sheet_name,
+        )
 
         # DEFINING CLASS ATTRIBUTES
-        self.workbook_variables_dict = self.define_workbook_variables_dict()
+        self.workbook_variables_dict = self.define_workbook_variables_dict(
+            workbook_name=self.workbook_name,
+            active_workbook=self.active_workbook,
+            workbook_outputs_sheet_name=self.workbook_outputs_sheet_name,
+        )
         self.reformatting_lists_dict = self.create_reformatting_lists_dict()
+        self.workbook_charts_dict = self.define_workbook_charts(
+            workbook_name=self.workbook_name,
+            active_workbook=self.active_workbook,
+            workbook_outputs_sheet_name=self.workbook_outputs_sheet_name,
+        )
+        self.workbook_tables_dict = self.define_workbook_tables(
+            workbook_name=self.workbook_name,
+            active_workbook=self.active_workbook,
+            workbook_outputs_sheet_name=self.workbook_outputs_sheet_name,
+        )
 
     def define_short_form_dates(self) -> list[str]:
         """
@@ -167,17 +184,30 @@ class PV2Info(WorkbookInfoCore):
 
 
 class PV2Extractor(DataExtractorCore):
-    def __init__(self):
-        pv2_info = PV2Info()
+    def __init__(
+        self,
+        pv2_filepath: Path,
+        workbook_outputs_sheet_name: str,
+        temp_dir_path: Path,
+    ):
+        # INSTANTIATING WORKBOOK-SPECIFIC ATTRIBUTES
+        pv2_info = PV2Info(
+            pv2_filepath=pv2_filepath,
+            workbook_outputs_sheet_name=workbook_outputs_sheet_name,
+        )
 
         # DEFINING CLASS ATTRIBUTES
         self.workbook_variables_dict = pv2_info.workbook_variables_dict
         self.reformatting_lists_dict = pv2_info.reformatting_lists_dict
+        self.workbook_charts_dict = pv2_info.workbook_charts_dict
+        self.workbook_tables_dict = pv2_info.workbook_tables_dict
 
         super().__init__(
-            workbook_name="PV2",
-            active_workbook=pv2_info.active_workbook,
+            workbook_pathstr=str(pv2_filepath),
             workbook_variables_dict=self.workbook_variables_dict,
+            workbook_charts_dict=self.workbook_charts_dict,
+            workbook_tables_dict=self.workbook_tables_dict,
+            temp_dir_path=temp_dir_path,
         )
 
         DataFormatterCore(

@@ -1,9 +1,6 @@
 import logging
 from pathlib import Path
 
-from econ_automation.ea_scripts.file_system_scripts.file_system_codebase import (
-    FileSystemCore as fsc,
-)
 from econ_automation.ea_scripts.data_extraction_scripts.extraction_core_codebase import (
     DataExtractorCore,
     DataFormatterCore,
@@ -19,14 +16,40 @@ class HHSPVInfo(WorkbookInfoCore):
     Class to obtain variable_names and their cell locations from the HHS workbook.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        hhspv_filepath: Path,
+        workbook_outputs_sheet_name: str,
+    ):
         # INSTANTIATING SUPERCLASS WORKBOOK INFO ATTRIBUTES
-        self.hhspv_path = Path(fsc().workbook_filepaths["HHSPV"])
-        super().__init__(workbook_filepath=self.hhspv_path)
+        super().__init__(
+            workbook_filepath=hhspv_filepath,
+            workbook_outputs_sheet_name=workbook_outputs_sheet_name,
+        )
 
-        # DEFINING CLASS ATTRIBUTES
-        self.workbook_variables_dict = self.define_workbook_variables_dict()
+        # WORKBOOK VARIABLES DICTIONARY
+        self.workbook_variables_dict = self.define_workbook_variables_dict(
+            workbook_name=self.workbook_name,
+            active_workbook=self.active_workbook,
+            workbook_outputs_sheet_name=self.workbook_outputs_sheet_name,
+        )
+
+        # REFORMATTING LISTS DICTIONARY
         self.reformatting_lists_dict = self.create_reformatting_lists_dict()
+
+        # WORKBOOK CHARTS DICTIONARY
+        self.workbook_charts_dict = self.define_workbook_charts(
+            workbook_name=self.workbook_name,
+            active_workbook=self.active_workbook,
+            workbook_outputs_sheet_name=self.workbook_outputs_sheet_name,
+        )
+
+        # WORKBOOK TABLES DICTIONARY
+        self.workbook_tables_dict = self.define_workbook_tables(
+            workbook_name=self.workbook_name,
+            active_workbook=self.active_workbook,
+            workbook_outputs_sheet_name=self.workbook_outputs_sheet_name,
+        )
 
     def define_short_form_dates(self) -> list[str]:
         """
@@ -78,18 +101,30 @@ class HHSPVInfo(WorkbookInfoCore):
 
 
 class HHSPVExtractor(DataExtractorCore):
-    def __init__(self):
+    def __init__(
+        self,
+        hhspv_filepath: Path,
+        workbook_outputs_sheet_name: str,
+        temp_dir_path: Path,
+    ):
         # INSTANTIATING WORKBOOK-SPECIFIC ATTRIBUTES
-        self.hhspv_info = HHSPVInfo()
+        self.hhspv_info = HHSPVInfo(
+            hhspv_filepath=hhspv_filepath,
+            workbook_outputs_sheet_name=workbook_outputs_sheet_name,
+        )
 
         # DEFINING INSTANCE ATTRIBUTES
         self.workbook_variables_dict = self.hhspv_info.workbook_variables_dict
         self.reformatting_lists_dict = self.hhspv_info.reformatting_lists_dict
+        self.workbook_charts_dict = self.hhspv_info.workbook_charts_dict
+        self.workbook_tables_dict = self.hhspv_info.workbook_tables_dict
 
         super().__init__(
-            workbook_name="HHSPV",
-            active_workbook=self.hhspv_info.active_workbook,
+            workbook_pathstr=str(hhspv_filepath),
             workbook_variables_dict=self.workbook_variables_dict,
+            workbook_charts_dict=self.workbook_charts_dict,
+            workbook_tables_dict=self.workbook_tables_dict,
+            temp_dir_path=temp_dir_path,
         )
 
         DataFormatterCore(

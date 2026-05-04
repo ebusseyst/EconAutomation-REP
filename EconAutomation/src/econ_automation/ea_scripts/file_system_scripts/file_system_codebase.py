@@ -1,7 +1,7 @@
 import logging
 import sys
+import tempfile
 from pathlib import Path
-from typing import Any
 
 import yaml
 
@@ -43,52 +43,65 @@ def obtain_resource_path(relative_path: str, src_bool: bool = True) -> Path:
 
 class FileSystemCore:
     def __init__(self):
-        self.ea_config_data = self.load_ea_config()
+        # Load ea_config.yaml
+        self.main_filepaths_dict = self.load_ea_config()
 
-        self.OFF_filepaths = self.ea_config_data["OFFs"]
-        self.workbook_filepaths = self.ea_config_data["WORKBOOKS"]
-        self.template_filepaths = self.ea_config_data["TEMPLATES"]
-        self.output_filepaths = self.ea_config_data["OUTPUTS"]
+        # Create Temporary Directory
+        self.temp_dir, self.temp_dir_filepath = self.create_temp_directory(
+            self.main_filepaths_dict["temp_dir_filepaths"]["TEMP_DIR"]
+        )
 
-        self.main_filepaths_dict = {
-            "WORKBOOKS": self.workbook_filepaths,
-            "TEMPLATES": self.template_filepaths,
-            "OUTPUTS": self.output_filepaths,
-        }
+    def create_temp_directory(
+        self, temp_dir_filepath: Path
+    ) -> tuple[tempfile.TemporaryDirectory, Path]:
+        """
+        Creates a temporary directory for storing tables and charts prior to report merge.
+        """
+        temp_directory = tempfile.TemporaryDirectory(
+            dir=temp_dir_filepath, ignore_cleanup_errors=True
+        )
+        temp_dir_path = Path(temp_directory.name)
+        return temp_directory, temp_dir_path
 
-    def load_ea_config(self) -> dict[str, dict[str, Any]]:
+    def cleanup_temp_directory(self):
+        """
+        Deletes the temporary directory and its contents.
+        """
+        self.temp_dir.cleanup()
+
+    def load_ea_config(self) -> dict[str, dict[str, Path]]:
         """
         Loads ea_config.yaml and resolves paths to resources.
         """
+        filepaths_dict = {}
         with open(obtain_resource_path("supporting_docs/ea_config.yaml"), "r") as f:
             ea_config_data = yaml.safe_load(f)
 
-        OFF_filepaths = ea_config_data["OFF_filepaths"]
-        workbook_filepaths = ea_config_data["workbook_filepaths"]
-        template_filepaths = ea_config_data["template_filepaths"]
-        output_filepaths = ea_config_data["output_filepaths"]
+        for filepath_key, filepath_dict in ea_config_data.items():
+            if filepath_key == "output_filepaths":
+                filepaths_dict[filepath_key] = self._resolve_file_paths(
+                    filepath_dict, src_bool=False
+                )
 
-        for OFF_name, OFF_filepath in OFF_filepaths.items():
-            OFF_filepaths[OFF_name] = obtain_resource_path(OFF_filepath, src_bool=True)
+            elif filepath_key == "temp_dir_filepaths":
+                filepaths_dict[filepath_key] = self._resolve_file_paths(
+                    filepath_dict, src_bool=False
+                )
 
-        for workbook_name, workbook_filepath in workbook_filepaths.items():
-            workbook_filepaths[workbook_name] = obtain_resource_path(
-                workbook_filepath, src_bool=True
-            )
+            else:
+                filepaths_dict[filepath_key] = self._resolve_file_paths(
+                    filepath_dict, src_bool=True
+                )
 
-        for template_name, template_filepath in template_filepaths.items():
-            template_filepaths[template_name] = obtain_resource_path(
-                template_filepath, src_bool=True
-            )
+        return filepaths_dict
 
-        for output_name, output_filepath in output_filepaths.items():
-            output_filepaths[output_name] = obtain_resource_path(
-                output_filepath, src_bool=False
-            )
-
-        return {
-            "OFFs": OFF_filepaths,
-            "WORKBOOKS": workbook_filepaths,
-            "TEMPLATES": template_filepaths,
-            "OUTPUTS": output_filepaths,
-        }
+    def _resolve_file_paths(
+        self, filepath_dict: dict[str, str], src_bool: bool = True
+    ) -> dict[str, Path]:
+        """
+        Resolves paths to resources, including nested dictionaries.
+        """
+        resolved_filepaths = {}
+        for name, filepath in filepath_dict.items():
+            resolved_filepaths[name] = obtain_resource_path(filepath, src_bool=src_bool)
+        return resolved_filepaths
