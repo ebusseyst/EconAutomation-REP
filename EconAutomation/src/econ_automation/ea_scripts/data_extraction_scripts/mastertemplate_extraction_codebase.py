@@ -28,11 +28,6 @@ class MasterTemplateInfo(WorkbookInfoCore):
         )
 
         # DEFINING CLASS ATTRIBUTES
-        self.workbook_variables_dict = self.define_workbook_variables_dict(
-            workbook_name=self.workbook_name,
-            active_workbook=self.active_workbook,
-            workbook_outputs_sheet_name=self.workbook_outputs_sheet_name,
-        )
         self.reformatting_lists_dict = self.create_reformatting_lists_dict()
 
     def define_currency_values(self) -> list[str]:

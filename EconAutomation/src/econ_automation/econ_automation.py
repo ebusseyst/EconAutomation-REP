@@ -11,7 +11,8 @@ with open(r"src/logging_resources/logging_config.yaml", "r") as f:
     logging.config.dictConfig(config)
 
 logger = logging.getLogger(__name__)
-
+logger.error("This is an error log")
+logger.info("This is an info log")
 
 if __name__ == "__main__":
     econ_workflow_automation = EconWorkflowAutomation()

@@ -20,4 +20,4 @@ output_filepaths:
   OUTPUT_2: "ea_outputs/generated_reports_2"
 
 temp_dir_filepaths:
-  TEMP_DIR: "ea_outputs/temp_dir"
+  TEMP_DIR: "ea_outputs"

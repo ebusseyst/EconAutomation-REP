@@ -26,14 +26,24 @@ handlers:
   default_json_handler:
     class: logging.StreamHandler
     formatter: DefaultJSONFormatter
+    filters: [GlobalContextFilter]
     level: INFO
 
+  error_file_handler:
+    class: logging_resources.log_context.JSONFileHandler
+    filters: [GlobalContextFilter]
+    level: ERROR
+    maxBytes: 500000
+    backupCount: 5
+    mode: "a"
+    delay: True
+
 loggers:
-  assoc2_main:
-    handlers: [default_json_handler]
+  econ_automation:
+    handlers: [default_json_handler, error_file_handler]
     level: INFO
     propagate: False
 
 root:
-  handlers: [default_json_handler]
+  handlers: [default_json_handler, error_file_handler]
   level: INFO

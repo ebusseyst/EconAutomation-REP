@@ -1,6 +1,9 @@
 import logging
 import logging.config
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 import traceback
+import sys
 from importlib.metadata import version, metadata
 
 from pythonjsonlogger import jsonlogger
@@ -17,14 +20,9 @@ class GlobalContextFilter(logging.Filter):
         self._fields = {"app_name": APP_NAME, "version": APP_VERSION, **fields}
 
     def filter(self, record: logging.LogRecord):
-        record.app_name = APP_NAME
-        record.version = APP_VERSION
-        for (
-            key,
-            value,
-        ) in self._fields.items():  # Iterates through _fields dict and assigns each key-value pair as an attribute to the record
+        for key, value in self._fields.items():
             setattr(record, key, value)
-        return True  # Always passes through
+        return True
 
 
 class DefaultJSONFormatter(jsonlogger.JsonFormatter):
@@ -54,3 +52,22 @@ class DefaultConsoleFormatter(logging.Formatter):
 
     def formatException(self, ei) -> str:
         return "".join(traceback.format_exception(*ei)).rstrip()
+    
+_DEFAULT_LOG_PATH = str(Path(__file__).parent.parent.parent / "logs" / "crash.json")
+
+
+class JSONFileHandler(RotatingFileHandler):
+    def __init__(self, filename=_DEFAULT_LOG_PATH, maxBytes=500000, backupCount=5, mode='a', delay=True):
+        Path(filename).parent.mkdir(parents=True, exist_ok=True)
+        super().__init__(filename, maxBytes=maxBytes, backupCount=backupCount, mode=mode, delay=delay)
+        self.setFormatter(DefaultJSONFormatter())
+        sys.excepthook = self._handle_exception
+
+    def _handle_exception(self, exc_type, exc_value, exc_traceback):
+        if issubclass(exc_type, KeyboardInterrupt):
+            sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            return
+        logging.getLogger(__name__).critical(
+            "Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback)
+        )
+        

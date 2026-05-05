@@ -1,0 +1,104 @@
+{
+  "message": "This is an error log",
+  "app_name": "econ_automation",
+  "version": "0.1.0"
+}
+{
+  "message": "Uncaught exception",
+  "app_name": "econ_automation",
+  "version": "0.1.0",
+  "exception": {
+    "exception_type": "FileNotFoundError",
+    "exception_value": "[Errno 2] No such file or directory: '/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/ea_outputs/temp_dir/tmpx64a_xqd'",
+    "traceback": [
+      "Traceback (most recent call last):\n",
+      "  File \"<frozen runpy>\", line 198, in _run_module_as_main\n",
+      "  File \"<frozen runpy>\", line 88, in _run_code\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/econ_automation.py\", line 18, in <module>\n    econ_workflow_automation = EconWorkflowAutomation()\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/ea_scripts/ea_main_codebase.py\", line 57, in __init__\n    self.file_system_core = fsc()\n                            ~~~^^\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/ea_scripts/file_system_scripts/file_system_codebase.py\", line 50, in __init__\n    self.temp_dir, self.temp_dir_filepath = self.create_temp_directory(\n                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        self.main_filepaths_dict[\"temp_dir_filepaths\"][\"TEMP_DIR\"]\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/ea_scripts/file_system_scripts/file_system_codebase.py\", line 60, in create_temp_directory\n    temp_directory = tempfile.TemporaryDirectory(\n        dir=temp_dir_filepath, ignore_cleanup_errors=True\n    )\n",
+      "  File \"/opt/homebrew/Cellar/python@3.14/3.14.4/Frameworks/Python.framework/Versions/3.14/lib/python3.14/tempfile.py\", line 907, in __init__\n    self.name = mkdtemp(suffix, prefix, dir)\n                ~~~~~~~^^^^^^^^^^^^^^^^^^^^^\n",
+      "  File \"/opt/homebrew/Cellar/python@3.14/3.14.4/Frameworks/Python.framework/Versions/3.14/lib/python3.14/tempfile.py\", line 381, in mkdtemp\n    _os.mkdir(file, 0o700)\n    ~~~~~~~~~^^^^^^^^^^^^^\n",
+      "FileNotFoundError: [Errno 2] No such file or directory: '/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/ea_outputs/temp_dir/tmpx64a_xqd'\n"
+    ]
+  }
+}
+{
+  "message": "This is an error log",
+  "app_name": "econ_automation",
+  "version": "0.1.0"
+}
+{
+  "message": "Uncaught exception",
+  "app_name": "econ_automation",
+  "version": "0.1.0",
+  "exception": {
+    "exception_type": "ValueError",
+    "exception_value": "Attempt to use ZIP archive that was already closed",
+    "traceback": [
+      "Traceback (most recent call last):\n",
+      "  File \"<frozen runpy>\", line 198, in _run_module_as_main\n",
+      "  File \"<frozen runpy>\", line 88, in _run_code\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/econ_automation.py\", line 18, in <module>\n    econ_workflow_automation = EconWorkflowAutomation()\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/ea_scripts/ea_main_codebase.py\", line 72, in __init__\n    self.initialize_extractors(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        selected_OFF_filepaths=list(\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n            self.selected_filepaths_dict[\"OFF_filepaths\"].values()\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        )\n        ^\n    )\n    ^\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/ea_scripts/ea_main_codebase.py\", line 157, in initialize_extractors\n    self.mastertemplate_extractor = MasterTemplateExtractor(\n                                    ~~~~~~~~~~~~~~~~~~~~~~~^\n        mastertemplate_filepath=self.selected_filepaths_dict[\"workbook_filepaths\"][\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n        temp_dir_path=self.temp_dir_filepath,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/ea_scripts/data_extraction_scripts/mastertemplate_extraction_codebase.py\", line 82, in __init__\n    mastertemplate_info = MasterTemplateInfo(\n        mastertemplate_filepath=mastertemplate_filepath,\n        workbook_outputs_sheet_name=workbook_outputs_sheet_name,\n    )\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/ea_scripts/data_extraction_scripts/mastertemplate_extraction_codebase.py\", line 31, in __init__\n    self.workbook_variables_dict = self.define_workbook_variables_dict(\n                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        workbook_name=self.workbook_name,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        active_workbook=self.active_workbook,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        workbook_outputs_sheet_name=self.workbook_outputs_sheet_name,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/ea_scripts/data_extraction_scripts/extraction_core_codebase.py\", line 75, in define_workbook_variables_dict\n    for row in workbook_outputs_sheet.iter_rows(\n               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        min_row=3, min_col=1, max_col=4, max_row=100, values_only=True\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ):\n    ^\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/.venv/lib/python3.14/site-packages/openpyxl/worksheet/_read_only.py\", line 77, in _cells_by_row\n    with self._get_source() as src:\n         ~~~~~~~~~~~~~~~~^^\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/.venv/lib/python3.14/site-packages/openpyxl/worksheet/_read_only.py\", line 57, in _get_source\n    return self.parent._archive.open(self._worksheet_path)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^\n",
+      "  File \"/opt/homebrew/Cellar/python@3.14/3.14.4/Frameworks/Python.framework/Versions/3.14/lib/python3.14/zipfile/__init__.py\", line 1705, in open\n    raise ValueError(\n        \"Attempt to use ZIP archive that was already closed\")\n",
+      "ValueError: Attempt to use ZIP archive that was already closed\n"
+    ]
+  }
+}
+{
+  "message": "This is an error log",
+  "app_name": "econ_automation",
+  "version": "0.1.0"
+}
+{
+  "message": "Uncaught exception",
+  "app_name": "econ_automation",
+  "version": "0.1.0",
+  "exception": {
+    "exception_type": "ValueError",
+    "exception_value": "Attempt to use ZIP archive that was already closed",
+    "traceback": [
+      "Traceback (most recent call last):\n",
+      "  File \"<frozen runpy>\", line 198, in _run_module_as_main\n",
+      "  File \"<frozen runpy>\", line 88, in _run_code\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/econ_automation.py\", line 18, in <module>\n    econ_workflow_automation = EconWorkflowAutomation()\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/ea_scripts/ea_main_codebase.py\", line 72, in __init__\n    self.initialize_extractors(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        selected_OFF_filepaths=list(\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n            self.selected_filepaths_dict[\"OFF_filepaths\"].values()\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        )\n        ^\n    )\n    ^\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/ea_scripts/ea_main_codebase.py\", line 164, in initialize_extractors\n    self.working_calc_extractor = WorkingCalcExtractor(\n                                  ~~~~~~~~~~~~~~~~~~~~^\n        working_calc_filepath=self.selected_filepaths_dict[\"workbook_filepaths\"][\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ...<3 lines>...\n        temp_dir_path=self.temp_dir_filepath,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/ea_scripts/data_extraction_scripts/working_calc_extraction_codebase.py\", line 95, in __init__\n    working_calc_info = WorkingCalcInfo(\n        working_calc_path=working_calc_filepath,\n        workbook_outputs_sheet_name=workbook_outputs_sheet_name,\n    )\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/ea_scripts/data_extraction_scripts/working_calc_extraction_codebase.py\", line 31, in __init__\n    self.workbook_variables_dict = self.define_workbook_variables_dict(\n                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        workbook_name=self.workbook_name,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        active_workbook=self.active_workbook,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        workbook_outputs_sheet_name=self.workbook_outputs_sheet_name,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/ea_scripts/data_extraction_scripts/extraction_core_codebase.py\", line 75, in define_workbook_variables_dict\n    for row in workbook_outputs_sheet.iter_rows(\n               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        min_row=3, min_col=1, max_col=4, max_row=100, values_only=True\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    ):\n    ^\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/.venv/lib/python3.14/site-packages/openpyxl/worksheet/_read_only.py\", line 77, in _cells_by_row\n    with self._get_source() as src:\n         ~~~~~~~~~~~~~~~~^^\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/.venv/lib/python3.14/site-packages/openpyxl/worksheet/_read_only.py\", line 57, in _get_source\n    return self.parent._archive.open(self._worksheet_path)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^\n",
+      "  File \"/opt/homebrew/Cellar/python@3.14/3.14.4/Frameworks/Python.framework/Versions/3.14/lib/python3.14/zipfile/__init__.py\", line 1705, in open\n    raise ValueError(\n        \"Attempt to use ZIP archive that was already closed\")\n",
+      "ValueError: Attempt to use ZIP archive that was already closed\n"
+    ]
+  }
+}
+{
+  "message": "This is an error log",
+  "app_name": "econ_automation",
+  "version": "0.1.0"
+}
+{
+  "message": "DataExtractorCore.reprocess_percentages - Error reprocessing percentages: could not convert string to float: '$0'",
+  "app_name": "econ_automation",
+  "version": "0.1.0",
+  "exception": {
+    "exception_type": "ValueError",
+    "exception_value": "could not convert string to float: '$0'",
+    "traceback": [
+      "Traceback (most recent call last):\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/ea_scripts/data_extraction_scripts/extraction_core_codebase.py\", line 394, in reprocess_percentages\n    self._parse_percentage_value(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        getattr(self.workbook_dataclass, percentage_variable)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n",
+      "  File \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/econ_automation/ea_scripts/data_extraction_scripts/extraction_core_codebase.py\", line 266, in _parse_percentage_value\n    return float(percentage_value)\n",
+      "ValueError: could not convert string to float: '$0'\n"
+    ]
+  }
+}

@@ -27,29 +27,8 @@ class HHSPVInfo(WorkbookInfoCore):
             workbook_outputs_sheet_name=workbook_outputs_sheet_name,
         )
 
-        # WORKBOOK VARIABLES DICTIONARY
-        self.workbook_variables_dict = self.define_workbook_variables_dict(
-            workbook_name=self.workbook_name,
-            active_workbook=self.active_workbook,
-            workbook_outputs_sheet_name=self.workbook_outputs_sheet_name,
-        )
-
         # REFORMATTING LISTS DICTIONARY
         self.reformatting_lists_dict = self.create_reformatting_lists_dict()
-
-        # WORKBOOK CHARTS DICTIONARY
-        self.workbook_charts_dict = self.define_workbook_charts(
-            workbook_name=self.workbook_name,
-            active_workbook=self.active_workbook,
-            workbook_outputs_sheet_name=self.workbook_outputs_sheet_name,
-        )
-
-        # WORKBOOK TABLES DICTIONARY
-        self.workbook_tables_dict = self.define_workbook_tables(
-            workbook_name=self.workbook_name,
-            active_workbook=self.active_workbook,
-            workbook_outputs_sheet_name=self.workbook_outputs_sheet_name,
-        )
 
     def define_short_form_dates(self) -> list[str]:
         """
