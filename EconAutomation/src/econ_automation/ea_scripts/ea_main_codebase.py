@@ -38,7 +38,7 @@ APP_FULL_NAME = f"{APP_NAME} v{APP_VERSION}"
 logger = logging.getLogger(__name__)
 
 
-class EconWorkflowAutomation:
+class EconReportGenerator:
     def __init__(
         self,
         selected_files_dict: dict[str, list[str]] = {
