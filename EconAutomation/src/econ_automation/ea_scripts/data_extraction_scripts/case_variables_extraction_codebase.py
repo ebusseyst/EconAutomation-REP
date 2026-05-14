@@ -11,7 +11,7 @@ from econ_automation.ea_scripts.data_extraction_scripts.extraction_core_codebase
 logger = logging.getLogger(__name__)
 
 
-class MasterTemplateInfo(WorkbookInfoCore):
+class CaseVariablesInfo(WorkbookInfoCore):
     """
     Class to obtain variable_names and their cell locations from the MASTERTEMPLATE workbook.
     """
@@ -66,7 +66,7 @@ class MasterTemplateInfo(WorkbookInfoCore):
         return reformatting_lists_dict
 
 
-class MasterTemplateExtractor(DataExtractorCore):
+class CaseVariablesExtractor(DataExtractorCore):
     def __init__(
         self,
         mastertemplate_filepath: Path,
@@ -74,7 +74,7 @@ class MasterTemplateExtractor(DataExtractorCore):
         temp_dir_path: Path,
     ):
         # INSTANTIATING WORKBOOK-SPECIFIC ATTRIBUTES
-        mastertemplate_info = MasterTemplateInfo(
+        mastertemplate_info = CaseVariablesInfo(
             mastertemplate_filepath=mastertemplate_filepath,
             workbook_outputs_sheet_name=workbook_outputs_sheet_name,
         )

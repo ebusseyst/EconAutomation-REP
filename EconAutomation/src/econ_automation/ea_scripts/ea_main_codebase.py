@@ -9,8 +9,8 @@ from pydantic import BaseModel
 from econ_automation.ea_scripts.file_system_scripts.file_system_codebase import (
     FileSystemCore as fsc,
 )
-from econ_automation.ea_scripts.data_extraction_scripts.mastertemplate_extraction_codebase import (
-    MasterTemplateExtractor,
+from econ_automation.ea_scripts.data_extraction_scripts.case_variables_extraction_codebase import (
+    CaseVariablesExtractor,
 )
 from econ_automation.ea_scripts.data_extraction_scripts.working_calc_extraction_codebase import (
     WorkingCalcExtractor,
@@ -21,11 +21,11 @@ from econ_automation.ea_scripts.data_extraction_scripts.pv2_extraction_codebase 
 from econ_automation.ea_scripts.data_extraction_scripts.hhspv_extraction_codebase import (
     HHSPVExtractor,
 )
-from econ_automation.ea_scripts.data_extraction_scripts.OFF_extraction_codebase import (
+from econ_automation.ea_scripts.case_setup_scripts.OFF_extraction_codebase import (
     OFFExtractor,
 )
 
-from econ_automation.ea_scripts.output_gen_scripts.output_core_codebase import (
+from econ_automation.ea_scripts.report_merge_scripts.report_merge_codebase import (
     AutofillWordTemplates,
 )
 
@@ -44,7 +44,7 @@ class EconReportGenerator:
         selected_files_dict: dict[str, list[str]] = {
             "OFF_filepaths": ["OFF_FILE_A"],
             "workbook_filepaths": [
-                "MASTERTEMPLATE",
+                "CASE_VARIABLES",
                 "WORKING_CALC",
                 "PV2",
                 "HHSPV",
@@ -154,9 +154,9 @@ class EconReportGenerator:
 
         workbook_outputs_sheet_name = "REPORT_OUTPUTS"
 
-        self.mastertemplate_extractor = MasterTemplateExtractor(
-            mastertemplate_filepath=self.selected_filepaths_dict["workbook_filepaths"][
-                "MASTERTEMPLATE"
+        self.case_variables_extractor = CaseVariablesExtractor(
+            case_variables_filepath=self.selected_filepaths_dict["workbook_filepaths"][
+                "CASE_VARIABLES"
             ],
             workbook_outputs_sheet_name=workbook_outputs_sheet_name,
             temp_dir_path=self.temp_dir_filepath,
@@ -185,7 +185,7 @@ class EconReportGenerator:
         """
         return [
             self.off_extractor.case_profile,
-            self.mastertemplate_extractor.workbook_dataclass,
+            self.case_variables_extractor.workbook_dataclass,
             self.working_calc_extractor.workbook_dataclass,
             self.pv2_extractor.workbook_dataclass,
             self.hhspv_extractor.workbook_dataclass,

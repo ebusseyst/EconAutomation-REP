@@ -6,8 +6,12 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
 import yaml
 
-from econ_automation.ea_scripts.gui_files.gui_core.current_ea_gui import Ui_ea_MainWindow
-from econ_automation.ea_scripts.update_scripts.update_codebase import check_and_apply_update
+from econ_automation.ea_scripts.gui_files.gui_core.current_ea_gui import (
+    Ui_ea_MainWindow,
+)
+from econ_automation.ea_scripts.update_scripts.update_codebase import (
+    check_and_apply_update,
+)
 
 # Top-level logger instance
 with open(r"src/logging_resources/logging_config.yaml", "r") as f:
@@ -18,12 +22,15 @@ logger = logging.getLogger(__name__)
 logger.error("This is an error log")
 logger.info("This is an info log")
 
+
 def _update_prompt(message: str) -> bool:
     """Show a QMessageBox asking the user whether to install an available update."""
     dialog = QMessageBox()
     dialog.setWindowTitle("Update Available")
     dialog.setText(message)
-    dialog.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+    dialog.setStandardButtons(
+        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+    )
     dialog.setDefaultButton(QMessageBox.StandardButton.Yes)
     return dialog.exec() == QMessageBox.StandardButton.Yes
 
