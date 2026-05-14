@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="/icons">
     <file>add_new_profile_icon.png</file>
+    <file>bolt_boost_icon.png</file>
   </qresource>
 </RCC>
