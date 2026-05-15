@@ -1,8 +1,28 @@
 from pathlib import Path
 from typing import Any
+import shutil
 
+from econ_automation.ea_scripts.case_setup_scripts.OFF_extraction_codebase import OFFExtractor
+from econ_automation.ea_scripts.case_setup_scripts.case_variables_creation_codebase import create_case_variables_excel_sheet
 
-def setup_case_folders(case_profile: Any, base_filepaths: list[Path]) -> None:
+def setup_new_case(sel_OFF_filepath: Path, base_filepaths: list[Path], wb_template_dir: Path) -> None:
+    """
+    Fully sets up private and public claimant folders for new claimant.
+    """
+    case_profile = create_case_profile(sel_OFF_filepath)
+    
+    private_claimant_dir, public_claimant_dir = initialize_case_folders(case_profile, base_filepaths)
+    
+    save_claimant_workbook_templates(case_profile, wb_template_dir, private_claimant_dir)
+
+def create_case_profile(sel_OFF_filepath: Path) -> Any:
+    """
+    Creates an instance of the case_profile dataclass from the selected OFF.
+    """
+    OFF_extractor = OFFExtractor(sel_OFF_filepath)
+    return OFF_extractor.case_profile
+
+def initialize_case_folders(case_profile: Any, base_filepaths: list[Path]) -> tuple[Path, Path]:
     """
     Creates the case folder structure based on the case_profile dataclass.
     """
@@ -13,14 +33,35 @@ def setup_case_folders(case_profile: Any, base_filepaths: list[Path]) -> None:
     attorney_name_first_initial = case_profile.attorney_name_first_initial
 
     # "Private" claimant folder
-    private_econ_folder_dir = base_filepaths[0]
-    private_claimant_folder_dir = f"{claimant_name_last_initial}/{claimant_name_last}, {claimant_name_first} ({attorney_name_first_initial}. {attorney_name_last})"
-    # THIS IS WHERE I LEFT OFF
-
-    Path.joinpath(private_econ_folder_dir, private_claimant_folder_dir).mkdir(
-        parents=True, exist_ok=True
+    private_econ_folder_base = base_filepaths[0]
+    private_claimant_dir_filepath = f"{claimant_name_last_initial}/{claimant_name_last}, {claimant_name_first} ({attorney_name_first_initial}. {attorney_name_last})"
+    private_claimant_dir = Path.joinpath(
+        private_econ_folder_base, private_claimant_dir_filepath
     )
 
+    private_claimant_dir.mkdir(parents=True, exist_ok=True)
+
     # "Public" claimant folder
-    public_base_dir = base_filepaths[1]
-    Path.joinpath(output_base_dir, case_name).mkdir(parents=True, exist_ok=True)
+    public_econ_folder_base = base_filepaths[1]
+    public_claimant_dir_filepath = f"{claimant_name_last_initial}/{claimant_name_last}, {claimant_name_first} ({attorney_name_first_initial}. {attorney_name_last})"
+    public_claimant_dir = Path.joinpath(
+        public_econ_folder_base, public_claimant_dir_filepath
+    )
+
+    public_claimant_dir.mkdir(parents=True, exist_ok=True)
+
+    return private_claimant_dir, public_claimant_dir
+
+def save_claimant_workbook_templates(case_profile: Any, wb_template_dir: Path, private_claimant_dir: Path) -> None:
+    """
+    Saves claimant-specific template workbooks to private claimant folder.
+    """
+    for wb_template in wb_template_dir.iterdir():
+        if wb_template.is_file() and wb_template.suffix == ".xlsx":
+            if wb_template.name == "Case Variables.xlsx":
+                create_case_variables_excel_sheet(case_profile, wb_template, private_claimant_dir)
+            else:
+                claimant_wb = shutil.copy2(wb_template, private_claimant_dir)
+                claimant_wb_path = Path(claimant_wb)
+                new_wb_name = f"{case_profile.claimant_name_last}{case_profile.claimant_name_first_initial} - {Path(wb_template).name}"
+                claimant_wb_path.rename(claimant_wb_path.parent.joinpath(new_wb_name))

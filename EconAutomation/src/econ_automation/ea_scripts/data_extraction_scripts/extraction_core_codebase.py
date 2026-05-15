@@ -72,6 +72,20 @@ class WorkbookInfoCore:
         try:
             workbook_variables_dict = {}
             workbook_outputs_sheet = active_workbook[workbook_outputs_sheet_name]
+            if workbook_name == "Case Variables":
+                for row in workbook_outputs_sheet.iter_rows(
+                    min_row=3, min_col=1, max_col=2, max_row=110, values_only=False
+                ):
+                    if isinstance(row[0], opxl.cell.cell.MergedCell):
+                        continue
+                    variable_name = row[0].value
+                    variable_value = row[1].value
+                    if (
+                        (variable_name == "" or variable_name is None)
+                        or (variable_value == "" or variable_value is None)
+                    ):
+                        continue
+                    workbook_variables_dict[f"{variable_name}"] = (f"{workbook_outputs_sheet}", f"{row[1].coordinate}")
             for row in workbook_outputs_sheet.iter_rows(
                 min_row=3, min_col=1, max_col=4, max_row=100, values_only=True
             ):

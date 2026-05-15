@@ -2,12 +2,13 @@ from pathlib import Path
 from typing import Any
 
 import openpyxl as opxl
+from openpyxl.cell.cell import MergedCell
 
 
 def create_case_variables_excel_sheet(
     case_profile: Any,
-    template_workbook: Path,
-    output_filepath: Path,
+    case_var_wb_path: Path,
+    private_claimant_dir: Path,
 ) -> None:
     """
     Creates a new Excel workbook with the same structure as the template workbook.
@@ -15,13 +16,30 @@ def create_case_variables_excel_sheet(
     """
 
     # 1. Load the template workbook
-    workbook = opxl.load_workbook(template_workbook)
+    workbook = opxl.load_workbook(str(case_var_wb_path))
 
     # 2. Get the one worksheet
     sheet = workbook["REPORT_OUTPUTS"]
 
     # 3. Populate the worksheet with data from the case_profile dataclass
+    label_to_row = {cell.value: cell.row for cell in sheet["A"] if cell.value is not None}
     for field in case_profile.__dataclass_fields__.values():
-        sheet[field.name] = getattr(case_profile, field.name)
+        row = label_to_row.get(field.name)
+        if row is not None:
+            cell = sheet.cell(row=row, column=2)
+            if isinstance(cell, MergedCell):
+                for merge_range in sheet.merged_cells.ranges:
+                    if (merge_range.min_row <= row <= merge_range.max_row and
+                            merge_range.min_col <= 2 <= merge_range.max_col):
+                        top_left = sheet.cell(row=merge_range.min_row, column=merge_range.min_col)
+                        if not isinstance(top_left, MergedCell):
+                            top_left.value = getattr(case_profile, field.name)
+                        break
+            else:
+                cell.value = getattr(case_profile, field.name)
 
-    workbook.save(output_filepath)
+    # 4. Save the workbook to the claimant's private directory
+    case_var_new_name = f"{case_profile.claimant_name_last}{case_profile.claimant_name_first_initial} - Case Variables.xlsx"
+    output_filepath = private_claimant_dir.joinpath(case_var_new_name)
+
+    workbook.save(str(output_filepath))

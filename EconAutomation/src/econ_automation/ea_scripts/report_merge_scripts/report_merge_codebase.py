@@ -7,7 +7,6 @@ from docxtpl import DocxTemplate
 
 logger = logging.getLogger(__name__)
 
-
 def determine_variable_map(ea_main_dataclass: Any) -> dict[str, Any]:
     """
     Builds the Jinja2 render context from the ea_main_dataclass.
@@ -71,7 +70,7 @@ def save_output_document(
         raise
 
 
-def AutofillWordTemplates(
+def merge_reports(
     ea_main_dataclass: Any,
     selected_template_filepaths: list[Path],
     selected_output_filepaths: list[Path],

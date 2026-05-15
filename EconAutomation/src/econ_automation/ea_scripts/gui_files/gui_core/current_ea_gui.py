@@ -19,8 +19,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFrame,
     QGridLayout, QHBoxLayout, QLabel, QMainWindow,
     QPushButton, QSizePolicy, QVBoxLayout, QWidget)
-from gui_files.gui_core import ea_fontset1
-from gui_files.gui_core import ea_iconset1
+from econ_automation.ea_scripts.gui_files.gui_core import ea_fontset1
+from econ_automation.ea_scripts.gui_files.gui_core import ea_iconset1
 
 # Get the folder where this script lives
 basedir = Path(__file__).resolve().parent.parent

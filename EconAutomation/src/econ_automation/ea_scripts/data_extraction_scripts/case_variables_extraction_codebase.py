@@ -13,17 +13,17 @@ logger = logging.getLogger(__name__)
 
 class CaseVariablesInfo(WorkbookInfoCore):
     """
-    Class to obtain variable_names and their cell locations from the MASTERTEMPLATE workbook.
+    Class to obtain variable_names and their cell locations from the Case Variables workbook.
     """
 
     def __init__(
         self,
-        mastertemplate_filepath: Path,
+        case_variables_filepath: Path,
         workbook_outputs_sheet_name: str,
     ):
         # INSTANTIATING SUPERCLASS WORKBOOK INFO ATTRIBUTES
         super().__init__(
-            workbook_filepath=mastertemplate_filepath,
+            workbook_filepath=case_variables_filepath,
             workbook_outputs_sheet_name=workbook_outputs_sheet_name,
         )
 
@@ -34,10 +34,7 @@ class CaseVariablesInfo(WorkbookInfoCore):
         """
         Defines the currency values for the relevant workbook.
         """
-        currency_values_list = [
-            "wage_hourly",
-            "wage_weekly",
-        ]
+        currency_values_list = []
         return currency_values_list
 
     def define_percentages(self) -> list[str]:
@@ -58,35 +55,31 @@ class CaseVariablesInfo(WorkbookInfoCore):
         """
         Creates a dictionary of the reformatting lists for the relevant workbook.
         """
-        reformatting_lists_dict = {
-            "currency_values": self.define_currency_values(),
-            "percentages": self.define_percentages(),
-            "floats": self.define_reformatted_floats(),
-        }
+        reformatting_lists_dict = {}
         return reformatting_lists_dict
 
 
 class CaseVariablesExtractor(DataExtractorCore):
     def __init__(
         self,
-        mastertemplate_filepath: Path,
+        case_variables_filepath: Path,
         workbook_outputs_sheet_name: str,
         temp_dir_path: Path,
     ):
         # INSTANTIATING WORKBOOK-SPECIFIC ATTRIBUTES
-        mastertemplate_info = CaseVariablesInfo(
-            mastertemplate_filepath=mastertemplate_filepath,
+        case_variables_info = CaseVariablesInfo(
+            case_variables_filepath=case_variables_filepath,
             workbook_outputs_sheet_name=workbook_outputs_sheet_name,
         )
 
         # DEFINING CLASS ATTRIBUTES
-        self.workbook_variables_dict = mastertemplate_info.workbook_variables_dict
-        self.reformatting_lists_dict = mastertemplate_info.reformatting_lists_dict
-        self.workbook_charts_dict = mastertemplate_info.workbook_charts_dict
-        self.workbook_tables_dict = mastertemplate_info.workbook_tables_dict
+        self.workbook_variables_dict = case_variables_info.workbook_variables_dict
+        self.reformatting_lists_dict = case_variables_info.reformatting_lists_dict
+        self.workbook_charts_dict = case_variables_info.workbook_charts_dict
+        self.workbook_tables_dict = case_variables_info.workbook_tables_dict
 
         super().__init__(
-            workbook_pathstr=str(mastertemplate_filepath),
+            workbook_pathstr=str(case_variables_filepath),
             workbook_variables_dict=self.workbook_variables_dict,
             workbook_charts_dict=self.workbook_charts_dict,
             workbook_tables_dict=self.workbook_tables_dict,

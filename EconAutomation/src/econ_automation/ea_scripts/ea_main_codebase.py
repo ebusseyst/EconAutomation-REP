@@ -9,6 +9,10 @@ from pydantic import BaseModel
 from econ_automation.ea_scripts.file_system_scripts.file_system_codebase import (
     FileSystemCore as fsc,
 )
+from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase import (
+    setup_new_case,
+)
+
 from econ_automation.ea_scripts.data_extraction_scripts.case_variables_extraction_codebase import (
     CaseVariablesExtractor,
 )
@@ -26,7 +30,7 @@ from econ_automation.ea_scripts.case_setup_scripts.OFF_extraction_codebase impor
 )
 
 from econ_automation.ea_scripts.report_merge_scripts.report_merge_codebase import (
-    AutofillWordTemplates,
+    merge_reports,
 )
 
 # Setting application name and version
@@ -37,8 +41,45 @@ APP_FULL_NAME = f"{APP_NAME} v{APP_VERSION}"
 # Module's logger instance
 logger = logging.getLogger(__name__)
 
+class NewCaseFileHandler:
+    def __init__(self, sel_OFF_filepath: Path, base_filepaths: list[Path], wb_template_dir: Path) -> None:
+        
 
-class EconReportGenerator:
+        
+        
+class UserSelectionHandler:
+    def __init__(self, sel_OFF_filepath: Path, base_filepaths: list[Path], wb_template_dir: Path, sel_report_types: list[str]) -> None:
+        # DEFINING INSTANCE ATTRIBUTES
+        self.sel_OFF_filepath = sel_OFF_filepath
+        self.base_filepaths = base_filepaths
+        self.wb_template_dir = wb_template_dir
+        self.sel_report_types = sel_report_types
+        
+    def _handle_new_case_creation(self, sel_OFF_filepath: Path) -> None:
+        """
+        Connects to PySide6 widgets and accepts user selection of OFF file to begin new case setup.
+        """
+        if sel_OFF_filepath.is_file():
+            setup_new_case(self.sel_OFF_filepath, self.base_filepaths, self.wb_template_dir)
+        
+
+        self._parse_user_selections()
+
+        self._validate_user_selections()
+
+        # THIS IS WHERE I LEFT OFF
+        
+    def _validate_user_selections():
+        """
+        Validates the user's selections using Pydantic models.
+        """
+        
+    def _parse_user_selections():
+        """
+        Parses the user's selections into a Pydantic model.
+        """
+
+class EconLightning:
     def __init__(
         self,
         selected_files_dict: dict[str, list[str]] = {
@@ -102,7 +143,7 @@ class EconReportGenerator:
         Utilizes extracted/reformatted data to autofill and saved each selected report template.
         """
         try:
-            AutofillWordTemplates(
+            merge_reports(
                 ea_main_dataclass=ea_main_dataclass,
                 selected_template_filepaths=selected_template_filepaths,
                 selected_output_filepaths=selected_output_filepaths,
