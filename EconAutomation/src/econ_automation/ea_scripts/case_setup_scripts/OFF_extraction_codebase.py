@@ -77,10 +77,13 @@ class CaseProfile:
     claimant_address_1: str = ""
     claimant_address_2: str = ""
     claimant_phone: str = ""
-    claimant_DOB: str = ""
+    claimant_DOB_short: str = ""
+    claimant_DOB_long: str = ""
     claimant_age: str = ""
-    claimant_DOI: str = ""
-    claimant_DOI_2: str = ""
+    claimant_DOI_short: str = ""
+    claimant_DOI_long: str = ""
+    claimant_DOI_2_short: str = ""
+    claimant_DOI_2_long: str = ""
     claimant_injury_types: str = ""
 
     # ── INPUT: Case ───────────────────────────────────────────────────
@@ -217,8 +220,9 @@ class CaseProfile:
             self.claimant_phone = f"{n[:3]}-{n[3:6]}-{n[6:]}"
 
         # Claimant DOI deduplication
-        if self.claimant_DOI_2 == self.claimant_DOI:
-            self.claimant_DOI_2 = ""
+        if self.claimant_DOI_2_short == self.claimant_DOI_short:
+            self.claimant_DOI_2_short = ""
+            self.claimant_DOI_2_long = ""
 
         # Case type normalization
         self.case_type = _normalize_case_type(self.case_type)
@@ -458,6 +462,16 @@ class OFFExtractor:
         )
 
         # Date parsing
+        claimant_DOB_short, claimant_DOB_long = self._format_date(
+            up.get("Date of Birth:", "")
+        )
+        claimant_DOI_short, claimant_DOI_long = self._format_date(
+            up.get("Injury Date:", "")
+        )
+        claimant_DOI_2_short, claimant_DOI_2_long = self._format_date(
+            up.get("Injury Date 2:", "")
+        )
+
         report_deadline_short, report_deadline_long = self._format_date(
             up.get("Report Deadline:", "")
         )
@@ -490,10 +504,13 @@ class OFFExtractor:
             claimant_address_1=claimant_addr_1,
             claimant_address_2=claimant_addr_2,
             claimant_phone=up.get("Phone:", ""),
-            claimant_DOB=up.get("Date of Birth:", ""),
+            claimant_DOB_short=claimant_DOB_short,
+            claimant_DOB_long=claimant_DOB_long,
             claimant_age=up.get("Age:", ""),
-            claimant_DOI=up.get("Injury Date:", ""),
-            claimant_DOI_2=up.get("Injury Date 2:", ""),
+            claimant_DOI_short=claimant_DOI_short,
+            claimant_DOI_long=claimant_DOI_long,
+            claimant_DOI_2_short=claimant_DOI_2_short,
+            claimant_DOI_2_long=claimant_DOI_2_long,
             claimant_injury_types=up.get("Injury Type:", ""),
             # Case
             case_number=up.get("Case #:", ""),

@@ -1,5 +1,10 @@
 <RCC>
   <qresource prefix="/icons">
+    <file>add_note_icon.png</file>
+    <file>dropdown_arrow_icon.png</file>
+    <file>dropup_arrow_icon.png</file>
+    <file>checkmark_icon.png</file>
+    <file>starfire_icon.png</file>
     <file>add_new_profile_icon.png</file>
     <file>bolt_boost_icon.png</file>
   </qresource>

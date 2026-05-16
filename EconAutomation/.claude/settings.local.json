@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pyside6-rcc fontset1.qrc -o ../gui_core/ea_fontset1.py)"
+    ]
+  }
+}
