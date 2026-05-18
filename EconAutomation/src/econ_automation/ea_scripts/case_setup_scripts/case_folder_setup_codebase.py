@@ -2,18 +2,30 @@ from pathlib import Path
 from typing import Any
 import shutil
 
-from econ_automation.ea_scripts.case_setup_scripts.OFF_extraction_codebase import OFFExtractor
-from econ_automation.ea_scripts.case_setup_scripts.case_variables_creation_codebase import create_case_variables_excel_sheet
+from econ_automation.ea_scripts.case_setup_scripts.OFF_extraction_codebase import (
+    OFFExtractor,
+)
+from econ_automation.ea_scripts.case_setup_scripts.case_variables_creation_codebase import (
+    create_case_variables_excel_sheet,
+)
 
-def setup_new_case(sel_OFF_filepath: Path, base_filepaths: dict[str, Path], wb_template_dir: Path) -> None:
+
+def setup_new_case(
+    sel_OFF_filepath: Path, base_filepaths: dict[str, Path], wb_template_dir: Path
+) -> None:
     """
     Fully sets up private and public claimant folders for new claimant.
     """
     case_profile = create_case_profile(sel_OFF_filepath)
-    
-    private_claimant_dir, public_claimant_dir = initialize_case_folders(case_profile, base_filepaths)
-    
-    save_claimant_workbook_templates(case_profile, wb_template_dir, private_claimant_dir)
+
+    private_claimant_dir, public_claimant_dir = initialize_case_folders(
+        case_profile, base_filepaths
+    )
+
+    save_claimant_workbook_templates(
+        case_profile, wb_template_dir, private_claimant_dir
+    )
+
 
 def create_case_profile(sel_OFF_filepath: Path) -> Any:
     """
@@ -22,7 +34,10 @@ def create_case_profile(sel_OFF_filepath: Path) -> Any:
     OFF_extractor = OFFExtractor(sel_OFF_filepath)
     return OFF_extractor.case_profile
 
-def initialize_case_folders(case_profile: Any, base_filepaths: dict[str, Path]) -> tuple[Path, Path]:
+
+def initialize_case_folders(
+    case_profile: Any, base_filepaths: dict[str, Path]
+) -> tuple[Path, Path]:
     """
     Creates the case folder structure based on the case_profile dataclass.
     """
@@ -52,14 +67,19 @@ def initialize_case_folders(case_profile: Any, base_filepaths: dict[str, Path]) 
 
     return private_claimant_dir, public_claimant_dir
 
-def save_claimant_workbook_templates(case_profile: Any, wb_template_dir: Path, private_claimant_dir: Path) -> None:
+
+def save_claimant_workbook_templates(
+    case_profile: Any, wb_template_dir: Path, private_claimant_dir: Path
+) -> None:
     """
     Saves claimant-specific template workbooks to private claimant folder.
     """
     for wb_template in wb_template_dir.iterdir():
         if wb_template.is_file() and wb_template.suffix == ".xlsx":
             if wb_template.name == "Case Variables.xlsx":
-                create_case_variables_excel_sheet(case_profile, wb_template, private_claimant_dir)
+                create_case_variables_excel_sheet(
+                    case_profile, wb_template, private_claimant_dir
+                )
             else:
                 claimant_wb = shutil.copy2(wb_template, private_claimant_dir)
                 claimant_wb_path = Path(claimant_wb)

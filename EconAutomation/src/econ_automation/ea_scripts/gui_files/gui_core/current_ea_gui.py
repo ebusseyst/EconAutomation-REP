@@ -519,10 +519,16 @@ class Ui_ea_MainWindow(object):
         self.ea_reportmerge_bases_GLayout.setAlignment(
             Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft
         )
-        self.ea_reportmerge_credit2_checkbox = QCheckBox(self.ea_reportmerge_bases_sub3frame)
-        self.ea_reportmerge_credit2_checkbox.setObjectName("checkBox_9")
+        self.ea_reportmerge_credit2_checkbox = QCheckBox(
+            self.ea_reportmerge_bases_sub3frame
+        )
+        self.ea_reportmerge_credit2_checkbox.setObjectName(
+            "ea_reportmerge_credit2_checkbox"
+        )
 
-        self.ea_reportmerge_bases_GLayout.addWidget(self.ea_reportmerge_credit2_checkbox, 2, 1, 1, 1)
+        self.ea_reportmerge_bases_GLayout.addWidget(
+            self.ea_reportmerge_credit2_checkbox, 2, 1, 1, 1
+        )
 
         self.ea_reportmerge_base1_checkbox = QCheckBox(
             self.ea_reportmerge_bases_sub3frame
@@ -535,10 +541,16 @@ class Ui_ea_MainWindow(object):
             self.ea_reportmerge_base1_checkbox, 1, 0, 1, 1
         )
 
-        self.ea_reportmerge_credit3_checkbox = QCheckBox(self.ea_reportmerge_bases_sub3frame)
-        self.ea_reportmerge_credit3_checkbox.setObjectName("checkBox_10")
+        self.ea_reportmerge_credit3_checkbox = QCheckBox(
+            self.ea_reportmerge_bases_sub3frame
+        )
+        self.ea_reportmerge_credit3_checkbox.setObjectName(
+            "ea_reportmerge_credit3_checkbox"
+        )
 
-        self.ea_reportmerge_bases_GLayout.addWidget(self.ea_reportmerge_credit3_checkbox, 3, 1, 1, 1)
+        self.ea_reportmerge_bases_GLayout.addWidget(
+            self.ea_reportmerge_credit3_checkbox, 3, 1, 1, 1
+        )
 
         self.ea_reportmerge_bases_label = QLabel(self.ea_reportmerge_bases_sub3frame)
         self.ea_reportmerge_bases_label.setObjectName("ea_reportmerge_bases_label")
@@ -547,30 +559,60 @@ class Ui_ea_MainWindow(object):
             self.ea_reportmerge_bases_label, 0, 0, 1, 1
         )
 
-        self.ea_reportmerge_base2_checkbox = QCheckBox(self.ea_reportmerge_bases_sub3frame)
-        self.ea_reportmerge_base2_checkbox.setObjectName("checkBox")
+        self.ea_reportmerge_base2_checkbox = QCheckBox(
+            self.ea_reportmerge_bases_sub3frame
+        )
+        self.ea_reportmerge_base2_checkbox.setObjectName(
+            "ea_reportmerge_base2_checkbox"
+        )
 
-        self.ea_reportmerge_bases_GLayout.addWidget(self.ea_reportmerge_base2_checkbox, 2, 0, 1, 1)
+        self.ea_reportmerge_bases_GLayout.addWidget(
+            self.ea_reportmerge_base2_checkbox, 2, 0, 1, 1
+        )
 
-        self.ea_reportmerge_base3_checkbox = QCheckBox(self.ea_reportmerge_bases_sub3frame)
-        self.ea_reportmerge_base3_checkbox.setObjectName("checkBox_2")
+        self.ea_reportmerge_base3_checkbox = QCheckBox(
+            self.ea_reportmerge_bases_sub3frame
+        )
+        self.ea_reportmerge_base3_checkbox.setObjectName(
+            "ea_reportmerge_base3_checkbox"
+        )
 
-        self.ea_reportmerge_bases_GLayout.addWidget(self.ea_reportmerge_base3_checkbox, 3, 0, 1, 1)
+        self.ea_reportmerge_bases_GLayout.addWidget(
+            self.ea_reportmerge_base3_checkbox, 3, 0, 1, 1
+        )
 
-        self.ea_reportmerge_credit1_checkbox = QCheckBox(self.ea_reportmerge_bases_sub3frame)
-        self.ea_reportmerge_credit1_checkbox.setObjectName("checkBox_3")
+        self.ea_reportmerge_credit1_checkbox = QCheckBox(
+            self.ea_reportmerge_bases_sub3frame
+        )
+        self.ea_reportmerge_credit1_checkbox.setObjectName(
+            "ea_reportmerge_credit1_checkbox"
+        )
 
-        self.ea_reportmerge_bases_GLayout.addWidget(self.ea_reportmerge_credit1_checkbox, 1, 1, 1, 1)
+        self.ea_reportmerge_bases_GLayout.addWidget(
+            self.ea_reportmerge_credit1_checkbox, 1, 1, 1, 1
+        )
 
-        self.ea_reportmerge_meals_checkbox = QCheckBox(self.ea_reportmerge_bases_sub3frame)
-        self.ea_reportmerge_meals_checkbox.setObjectName("checkBox_11")
+        self.ea_reportmerge_meals_checkbox = QCheckBox(
+            self.ea_reportmerge_bases_sub3frame
+        )
+        self.ea_reportmerge_meals_checkbox.setObjectName(
+            "ea_reportmerge_meals_checkbox"
+        )
 
-        self.ea_reportmerge_bases_GLayout.addWidget(self.ea_reportmerge_meals_checkbox, 4, 0, 1, 1)
+        self.ea_reportmerge_bases_GLayout.addWidget(
+            self.ea_reportmerge_meals_checkbox, 4, 0, 1, 1
+        )
 
-        self.checkBox_12 = QCheckBox(self.ea_reportmerge_bases_sub3frame)
-        self.checkBox_12.setObjectName("checkBox_12")
+        self.ea_reportmerge_benefits_checkbox = QCheckBox(
+            self.ea_reportmerge_bases_sub3frame
+        )
+        self.ea_reportmerge_benefits_checkbox.setObjectName(
+            "ea_reportmerge_benefits_checkbox"
+        )
 
-        self.ea_reportmerge_bases_GLayout.addWidget(self.checkBox_12, 4, 1, 1, 1)
+        self.ea_reportmerge_bases_GLayout.addWidget(
+            self.ea_reportmerge_benefits_checkbox, 4, 1, 1, 1
+        )
 
         self.ea_reportmerge_sub2frame_GLayout.addWidget(
             self.ea_reportmerge_bases_sub3frame, 2, 0, 1, 1
@@ -604,10 +646,14 @@ class Ui_ea_MainWindow(object):
             self.ea_reportmerge_reporttypes_PVLCP_checkbox, 1, 0, 1, 1
         )
 
-        self.ea_reportmerge_reporttypes_label = QLabel(self.ea_reportmerge_reporttypes_sub3frame)
+        self.ea_reportmerge_reporttypes_label = QLabel(
+            self.ea_reportmerge_reporttypes_sub3frame
+        )
         self.ea_reportmerge_reporttypes_label.setObjectName("label_2")
 
-        self.ea_reportmerge_reporttypes_GLayout.addWidget(self.ea_reportmerge_reporttypes_label, 0, 0, 1, 1)
+        self.ea_reportmerge_reporttypes_GLayout.addWidget(
+            self.ea_reportmerge_reporttypes_label, 0, 0, 1, 1
+        )
 
         self.ea_reportmerge_reporttypes_PVearnings_checkbox = QCheckBox(
             self.ea_reportmerge_reporttypes_sub3frame
@@ -840,8 +886,8 @@ class Ui_ea_MainWindow(object):
         self.ea_reportmerge_meals_checkbox.setText(
             QCoreApplication.translate("ea_MainWindow", "Meals", None)
         )
-        self.checkBox_12.setText(
-            QCoreApplication.translate("ea_MainWindow", "Placeholder", None)
+        self.ea_reportmerge_benefits_checkbox.setText(
+            QCoreApplication.translate("ea_MainWindow", "Benefits", None)
         )
         self.ea_reportmerge_reporttypes_PVLCP_checkbox.setText(
             QCoreApplication.translate("ea_MainWindow", "PVLCP", None)

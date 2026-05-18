@@ -1,4 +1,8 @@
 # EA_CONFIG:
+
+# -------------------------
+# Filepaths:
+# -------------------------
 OFF_filepaths:
   OFF_FILE_A: "supporting_docs/sorted_econ_files/McGinty, B -- Open File Form.docx"
   OFF_FILE_B: ""
@@ -21,3 +25,11 @@ output_filepaths:
 
 temp_dir_filepaths:
   TEMP_DIR: "ea_outputs"
+
+# -------------------------
+# Case Folder Setup:
+# -------------------------
+base_filepaths:
+  Public_Directory: "" 
+  Private_Directory: ""
+  

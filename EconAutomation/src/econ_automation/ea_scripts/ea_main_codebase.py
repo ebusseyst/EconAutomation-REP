@@ -49,6 +49,14 @@ class NewCaseHandler:
         base_filepaths: list[Path],
         wb_template_dir: Path,
     ) -> None:
+        """
+        Initializes the NewCaseHandler with essential file paths for new case setup.
+
+        Args:
+            sel_OFF_filepath (Path): The file path to the selected OFF file.
+            base_filepaths (list[Path]): List of base file paths.
+            wb_template_dir (Path): The directory path for workbook templates.
+        """
         # DEFINING INSTANCE ATTRIBUTES
         self.sel_OFF_filepath = sel_OFF_filepath
         self.base_filepaths = base_filepaths
@@ -56,7 +64,14 @@ class NewCaseHandler:
 
     def _handle_new_case_creation(self, sel_OFF_filepath: Path) -> None:
         """
-        Connects to PySide6 widgets and accepts user selection of OFF file to begin new case setup.
+        Handles new case creation by invoking the setup_new_case function
+        from the case_folder_setup_codebase.
+
+        This method acts as the bridge between user selection in the frontend
+        and the backend case setup logic.
+
+        Args:
+            sel_OFF_filepath (Path): The file path to the selected OFF file.
         """
         if sel_OFF_filepath.is_file():
             setup_new_case(

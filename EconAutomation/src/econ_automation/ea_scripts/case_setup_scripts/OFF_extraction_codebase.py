@@ -514,7 +514,7 @@ class OFFExtractor:
             claimant_injury_types=up.get("Injury Type:", ""),
             # Case
             case_number=up.get("Case #:", ""),
-            case_type=_normalize_case_type(up.get("Case Type:", "")),
+            case_type=up.get("Case Type:", ""),
             case_manager_name_full=up.get("Counselor:", ""),
             court_jurisdiction=up.get("Court:", ""),
             billing_rate=up.get("Billing Rate:", ""),
