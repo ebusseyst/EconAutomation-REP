@@ -40,23 +40,26 @@ def _update_prompt(message: str) -> bool:
     dialog.setDefaultButton(QMessageBox.StandardButton.Yes)
     return dialog.exec() == QMessageBox.StandardButton.Yes
 
+class eaApp(QApplication):
+    def __init__(self, argv):
+        super().__init__(argv)
+        
+        # Set the color scheme to Light manually
+        self.styleHints().setColorScheme(Qt.ColorScheme.Light)
+        
+        # Assign user-facing app name
+        self.setApplicationDisplayName("StarFire")
+        self.setApplicationName("StarFire")
+
+        # Check for updates before showing the main window
+        check_and_apply_update(prompt_fn=_update_prompt)
+        
+        self.ea_main_window = QMainWindow()
+        self.ea_main_window_ui = Ui_ea_MainWindow(ea_MainWindow=self.ea_main_window)
+        self.ea_main_window_ui.setupUi()
+        
+        self.ea_main_window.show()
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    # Set the color scheme to Light manually
-    app.styleHints().setColorScheme(Qt.ColorScheme.Light)
-
-    # Assign user-facing app name
-    app.setApplicationDisplayName("StarFire")
-    app.setApplicationName("StarFire")
-
-    # Check for updates before showing the main window
-    check_and_apply_update(prompt_fn=_update_prompt)
-
-    main_window = QMainWindow()
-    main_window_ui = Ui_ea_MainWindow(ea_MainWindow=main_window)
-    main_window_ui.setupUi()
-
-    main_window.show()
-    app.exec()
+    ea_app = eaApp(argv=sys.argv)
+    ea_app.exec()

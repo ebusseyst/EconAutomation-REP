@@ -5,7 +5,7 @@ import shutil
 from econ_automation.ea_scripts.case_setup_scripts.OFF_extraction_codebase import OFFExtractor
 from econ_automation.ea_scripts.case_setup_scripts.case_variables_creation_codebase import create_case_variables_excel_sheet
 
-def setup_new_case(sel_OFF_filepath: Path, base_filepaths: list[Path], wb_template_dir: Path) -> None:
+def setup_new_case(sel_OFF_filepath: Path, base_filepaths: dict[str, Path], wb_template_dir: Path) -> None:
     """
     Fully sets up private and public claimant folders for new claimant.
     """
@@ -17,12 +17,12 @@ def setup_new_case(sel_OFF_filepath: Path, base_filepaths: list[Path], wb_templa
 
 def create_case_profile(sel_OFF_filepath: Path) -> Any:
     """
-    Creates an instance of the case_profile dataclass from the selected OFF.
+    Returns the case_profile dataclass from the selected OFF.
     """
     OFF_extractor = OFFExtractor(sel_OFF_filepath)
     return OFF_extractor.case_profile
 
-def initialize_case_folders(case_profile: Any, base_filepaths: list[Path]) -> tuple[Path, Path]:
+def initialize_case_folders(case_profile: Any, base_filepaths: dict[str, Path]) -> tuple[Path, Path]:
     """
     Creates the case folder structure based on the case_profile dataclass.
     """
@@ -33,7 +33,7 @@ def initialize_case_folders(case_profile: Any, base_filepaths: list[Path]) -> tu
     attorney_name_first_initial = case_profile.attorney_name_first_initial
 
     # "Private" claimant folder
-    private_econ_folder_base = base_filepaths[0]
+    private_econ_folder_base = base_filepaths["Private Directory"]
     private_claimant_dir_filepath = f"{claimant_name_last_initial}/{claimant_name_last}, {claimant_name_first} ({attorney_name_first_initial}. {attorney_name_last})"
     private_claimant_dir = Path.joinpath(
         private_econ_folder_base, private_claimant_dir_filepath
@@ -42,7 +42,7 @@ def initialize_case_folders(case_profile: Any, base_filepaths: list[Path]) -> tu
     private_claimant_dir.mkdir(parents=True, exist_ok=True)
 
     # "Public" claimant folder
-    public_econ_folder_base = base_filepaths[1]
+    public_econ_folder_base = base_filepaths["Public Directory"]
     public_claimant_dir_filepath = f"{claimant_name_last_initial}/{claimant_name_last}, {claimant_name_first} ({attorney_name_first_initial}. {attorney_name_last})"
     public_claimant_dir = Path.joinpath(
         public_econ_folder_base, public_claimant_dir_filepath

@@ -6,7 +6,7 @@ from datetime import datetime, date
 from docxtpl import DocxTemplate
 
 logger = logging.getLogger(__name__)
-
+    
 
 def determine_variable_map(ea_main_dataclass: Any) -> dict[str, Any]:
     """
@@ -20,7 +20,7 @@ def determine_variable_map(ea_main_dataclass: Any) -> dict[str, Any]:
         variable_map = {
             k: v
             for k, v in variable_map.items()
-            if isinstance(v, (str, int, float, datetime, date))
+            if isinstance(v, (str, int, float, datetime, date,))
         }
     except TypeError:
         logger.exception("determine_variable_map() TypeError")

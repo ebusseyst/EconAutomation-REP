@@ -66,7 +66,7 @@ class NewCaseHandler:
         # NEED TO CALL PARSE AND VALIDATE USER SELECTIONS HERE
 
 
-class EconLightning:
+class StarFire:
     def __init__(
         self,
         selected_files_dict: dict[str, list[str]] = {
