@@ -1,7 +1,6 @@
 import logging
 import logging.config
 
-from PySide6.QtWidgets import QMainWindow
 import yaml
 
 from econ_automation.ea_scripts.gui_files.gui_core.gui_core_codebase import (

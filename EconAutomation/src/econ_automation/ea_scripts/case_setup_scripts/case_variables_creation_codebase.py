@@ -22,16 +22,22 @@ def create_case_variables_excel_sheet(
     sheet = workbook["REPORT_OUTPUTS"]
 
     # 3. Populate the worksheet with data from the case_profile dataclass
-    label_to_row = {cell.value: cell.row for cell in sheet["A"] if cell.value is not None}
+    label_to_row = {
+        cell.value: cell.row for cell in sheet["A"] if cell.value is not None
+    }
     for field in case_profile.__dataclass_fields__.values():
         row = label_to_row.get(field.name)
         if row is not None:
             cell = sheet.cell(row=row, column=2)
             if isinstance(cell, MergedCell):
                 for merge_range in sheet.merged_cells.ranges:
-                    if (merge_range.min_row <= row <= merge_range.max_row and
-                            merge_range.min_col <= 2 <= merge_range.max_col):
-                        top_left = sheet.cell(row=merge_range.min_row, column=merge_range.min_col)
+                    if (
+                        merge_range.min_row <= row <= merge_range.max_row
+                        and merge_range.min_col <= 2 <= merge_range.max_col
+                    ):
+                        top_left = sheet.cell(
+                            row=merge_range.min_row, column=merge_range.min_col
+                        )
                         if not isinstance(top_left, MergedCell):
                             top_left.value = getattr(case_profile, field.name)
                         break
