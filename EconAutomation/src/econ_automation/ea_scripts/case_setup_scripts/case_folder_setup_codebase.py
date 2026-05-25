@@ -9,6 +9,11 @@ from econ_automation.ea_scripts.case_setup_scripts.case_variables_creation_codeb
     create_case_variables_excel_sheet,
 )
 
+from econ_automation.ea_scripts.case_setup_scripts.workbook_setup_scripts import (
+    set_PV2_case_variables,
+    set_WC_case_variables,
+)
+
 
 def setup_new_case(
     sel_OFF_filepath: Path, base_filepaths: dict[str, Path], wb_template_dir: Path
@@ -67,7 +72,6 @@ def initialize_case_folders(
 
     return private_claimant_dir, public_claimant_dir
 
-
 def save_claimant_workbook_templates(
     case_profile: Any, wb_template_dir: Path, private_claimant_dir: Path
 ) -> None:
@@ -75,13 +79,29 @@ def save_claimant_workbook_templates(
     Saves claimant-specific template workbooks to private claimant folder.
     """
     for wb_template in wb_template_dir.iterdir():
-        if wb_template.is_file() and wb_template.suffix == ".xlsx":
-            if wb_template.name == "Case Variables.xlsx":
+        if wb_template.is_file() and (
+            wb_template.suffix == ".xlsx" or wb_template.suffix == ".xlsm"
+        ):
+            if wb_template.name == "Case_Variables.xlsx":
                 create_case_variables_excel_sheet(
                     case_profile, wb_template, private_claimant_dir
                 )
             else:
                 claimant_wb = shutil.copy2(wb_template, private_claimant_dir)
                 claimant_wb_path = Path(claimant_wb)
-                new_wb_name = f"{case_profile.claimant_name_last}{case_profile.claimant_name_first_initial} - {Path(wb_template).name}"
-                claimant_wb_path.rename(claimant_wb_path.parent.joinpath(new_wb_name))
+                prepare_claimant_workbooks(case_profile, claimant_wb_path)
+
+def prepare_claimant_workbooks(
+    case_profile: Any, claimant_wb_path: Path
+) -> None:
+    """
+    Processes each non-"Case_Variables" workbook saved in the private claimant folder, adding case variable info where appropriate.
+    """
+    if claimant_wb_path.name == "PV2_Current.xlsm":
+        set_PV2_case_variables(case_profile, claimant_wb_path)
+        new_wb_name = f"{case_profile.claimant_name_last}{case_profile.claimant_name_first_initial} - {claimant_wb_path.name}"
+        claimant_wb_path.rename(claimant_wb_path.parent.joinpath(new_wb_name))
+    elif claimant_wb_path.name == "WorkingCalc_Current.xlsm":
+        set_WC_case_variables(case_profile, claimant_wb_path)
+        new_wb_name = f"{case_profile.claimant_name_last}{case_profile.claimant_name_first_initial} - {claimant_wb_path.name}"
+        claimant_wb_path.rename(claimant_wb_path.parent.joinpath(new_wb_name))

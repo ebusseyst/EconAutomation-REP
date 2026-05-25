@@ -4,24 +4,23 @@
 # Filepaths:
 # -------------------------
 OFF_filepaths:
-  OFF_FILE_A: "supporting_docs/sorted_econ_files/McGinty, B -- Open File Form.docx"
+  OFF_FILE_A: "supporting_docs/sample_OFFs/Gaston, C -- TEST Open File Form.docx"
   OFF_FILE_B: ""
   OFF_FILE_C: ""
   OFF_FILE_D: ""
 
 workbook_filepaths:
-  MASTERTEMPLATE: "supporting_docs/sorted_econ_files/MASTERTEMPLATE (color coded).xlsx"
-  WORKING_CALC: "supporting_docs/sorted_econ_files/Working_CALC_VER1.11 (color coded).xlsx"
-  PV2: "supporting_docs/sorted_econ_files/PV2 (color coded).xlsx"
-  HHSPV: "supporting_docs/sorted_econ_files/HHS_PV_New (color coded).xlsx"
+  CASE_VARIABLES: "supporting_docs/econ_wb_templates/Case_Variables.xlsx"
+  PV2: "supporting_docs/econ_wb_templates/PV2_Current.xlsm"
+  WORKING_CALC: "supporting_docs/econ_wb_templates/WorkingCalc_Current.xlsx"
+  HHSPV: "supporting_docs/econ_wb_templates/HHS_PV_New (color coded).xlsx"
 
 template_filepaths:
-  PV_EARNINGS_MEDS_TEMPLATE: "supporting_docs/econ_report_templates/PV_earnings_and_meds_report_template.docx"
-  PVLCP_TEMPLATE: "supporting_docs/econ_report_templates/PVLCP_report_template.docx"
+  PV_EARNINGS_TEMPLATE: "supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx"
+  PVLCP_TEMPLATE: "supporting_docs/econ_report_templates/PVLCP_Report_Template.docx"
 
 output_filepaths:
-  OUTPUT_1: "ea_outputs/generated_reports"
-  OUTPUT_2: "ea_outputs/generated_reports_2"
+  SAMPLE_CLAIMANT_DIR: "ea_outputs/private_claimant_directories/G/Gaston, Casper (J. D'Attorney)"
 
 temp_dir_filepaths:
   TEMP_DIR: "ea_outputs"

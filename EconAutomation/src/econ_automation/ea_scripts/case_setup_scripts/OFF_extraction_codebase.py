@@ -238,7 +238,7 @@ class CaseProfile:
             "MAS": "Molly Struble, MA, CRC, CLCP",
             "CCS": "Claytoon Stroop, BSN, RN, CCM, CLCP, LNCC",
         }
-        self.LCP_expert_initials = re.split(r"\(\d)", self.case_number, maxsplit=1)[0]
+        self.LCP_expert_initials = re.split(r"\d", self.case_number, maxsplit=1)[0]
         self.LCP_expert_name_full_with_titles = _LCP_expert_name_map.get(
             self.LCP_expert_initials, ""
         )

@@ -1,14 +1,13 @@
 import ctypes
 import logging
-import logging.config
 import sys
 from pathlib import Path
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
-import yaml
 
+from logging_resources.log_context import setup_logging
 from econ_automation.ea_scripts.gui_files.gui_core.current_ea_gui import (
     Ui_ea_MainWindow,
 )
@@ -16,6 +15,7 @@ from econ_automation.ea_scripts.update_scripts.update_codebase import (
     check_and_apply_update,
 )
 
+setup_logging()
 
 class EconAutomationMainWindow(QMainWindow):
     def __init__(self):
@@ -23,11 +23,6 @@ class EconAutomationMainWindow(QMainWindow):
         self.ui = Ui_ea_MainWindow(self)
         self.ui.setupUi()
 
-
-# Top-level logger instance
-with open(r"src/logging_resources/logging_config.yaml", "r") as f:
-    config = yaml.safe_load(f.read())
-    logging.config.dictConfig(config)
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pyside6-rcc fontset1.qrc -o ../gui_core/ea_fontset1.py)"
+      "Bash(pyside6-rcc fontset1.qrc -o ../gui_core/ea_fontset1.py)",
+      "Read(//private/tmp/**)",
+      "Bash(cp \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx\" .)",
+      "Bash(unzip -o PV_Earnings_Report_Template.docx -d pv_template_inspect)",
+      "Bash(python3 -c ' *)",
+      "Bash(cp /tmp/PV_Earnings_Report_Template_fixed.docx \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx\")",
+      "Bash(.venv/bin/python -c ' *)",
+      "Bash(unzip -o template.docx -d template_xml)",
+      "Bash(unzip -o output.docx -d output_xml)"
+    ],
+    "additionalDirectories": [
+      "/private/tmp"
     ]
   }
 }

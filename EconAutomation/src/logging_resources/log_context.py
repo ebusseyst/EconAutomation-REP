@@ -1,19 +1,36 @@
 import logging
 import logging.config
+import os
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 import traceback
 import sys
-from importlib.metadata import version, metadata
 
+import yaml
 from pythonjsonlogger import jsonlogger
 
-# Load app name and version from package metadata
-APP_NAME = metadata("econ_automation").get("Name")
-APP_VERSION = version("econ_automation")
+try:
+    from importlib.metadata import version, metadata as pkg_metadata
+    APP_NAME = pkg_metadata("econ_automation").get("Name", "EconAutomation")
+    APP_VERSION = version("econ_automation")
+except Exception:
+    APP_NAME = "EconAutomation"
+    APP_VERSION = "unknown"
 
 
-# Set global attribute, which is then injected via handler filter
+def _get_log_dir() -> Path:
+    if sys.platform == "win32":
+        base = Path(os.environ.get("APPDATA") or (Path.home() / "AppData" / "Roaming"))
+        return base / APP_NAME / "logs"
+    elif sys.platform == "darwin":
+        return Path.home() / "Library" / "Logs" / APP_NAME
+    else:
+        return Path.home() / ".local" / "share" / APP_NAME / "logs"
+
+
+_DEFAULT_LOG_PATH = str(_get_log_dir() / "econ_automation.log")
+
+
 class GlobalContextFilter(logging.Filter):
     def __init__(self, name="", **fields):
         super().__init__(name)
@@ -41,7 +58,6 @@ class DefaultJSONFormatter(jsonlogger.JsonFormatter):
                     exc_type, exc_value, exc_traceback
                 ),
             }
-
             log_data.pop("exc_info", None)
             log_data.pop("exc_text", None)
 
@@ -52,8 +68,6 @@ class DefaultConsoleFormatter(logging.Formatter):
 
     def formatException(self, ei) -> str:
         return "".join(traceback.format_exception(*ei)).rstrip()
-    
-_DEFAULT_LOG_PATH = str(Path(__file__).parent.parent.parent / "logs" / "crash.json")
 
 
 class JSONFileHandler(RotatingFileHandler):
@@ -61,6 +75,7 @@ class JSONFileHandler(RotatingFileHandler):
         Path(filename).parent.mkdir(parents=True, exist_ok=True)
         super().__init__(filename, maxBytes=maxBytes, backupCount=backupCount, mode=mode, delay=delay)
         self.setFormatter(DefaultJSONFormatter())
+        self.terminator = "\n\n"
         sys.excepthook = self._handle_exception
 
     def _handle_exception(self, exc_type, exc_value, exc_traceback):
@@ -70,4 +85,11 @@ class JSONFileHandler(RotatingFileHandler):
         logging.getLogger(__name__).critical(
             "Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback)
         )
-        
+
+
+def setup_logging():
+    config_path = Path(__file__).parent / "logging_config.yaml"
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+    logging.config.dictConfig(config)
+    logging.getLogger(__name__).debug("Log file: %s", _DEFAULT_LOG_PATH)

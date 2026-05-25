@@ -72,7 +72,7 @@ class WorkbookInfoCore:
         try:
             workbook_variables_dict = {}
             workbook_outputs_sheet = active_workbook[workbook_outputs_sheet_name]
-            if workbook_name == "Case Variables":
+            if "Case Variables" in workbook_name:
                 for row in workbook_outputs_sheet.iter_rows(
                     min_row=3, min_col=1, max_col=2, max_row=110, values_only=False
                 ):
@@ -85,7 +85,7 @@ class WorkbookInfoCore:
                         or (variable_value == "" or variable_value is None)
                     ):
                         continue
-                    workbook_variables_dict[f"{variable_name}"] = (f"{workbook_outputs_sheet}", f"{row[1].coordinate}")
+                    workbook_variables_dict[f"{variable_name}"] = (workbook_outputs_sheet_name, f"{row[1].coordinate}")
             for row in workbook_outputs_sheet.iter_rows(
                 min_row=3, min_col=1, max_col=4, max_row=100, values_only=True
             ):
@@ -260,14 +260,15 @@ class DataFormatterCore:
             raise ValueError(f"Unable to parse date value: {date_value}")
 
     @staticmethod
-    def _parse_currency_value(currency_value: str | float) -> float:
+    def _parse_currency_value(currency_value: str | float | int) -> float:
         """
         Parses a currency value to ensure it is in the correct format.
         """
-        if isinstance(currency_value, float):
-            return currency_value
-        else:
+        if isinstance(currency_value, (int, float)):
             return float(currency_value)
+        else:
+            cleaned = currency_value.replace("$", "").replace(",", "").strip()
+            return float(cleaned)
 
     @staticmethod
     def _parse_percentage_value(percentage_value: str | float) -> float:
@@ -277,7 +278,8 @@ class DataFormatterCore:
         if isinstance(percentage_value, float):
             return percentage_value
         else:
-            return float(percentage_value)
+            cleaned = percentage_value.replace("$", "").replace(",", "").replace("%", "").strip()
+            return float(cleaned)
 
     @staticmethod
     def _parse_float_value(float_value: str | float) -> float:
@@ -287,7 +289,8 @@ class DataFormatterCore:
         if isinstance(float_value, float):
             return float_value
         else:
-            return float(float_value)
+            cleaned = float_value.replace("$", "").replace(",", "").replace("%", "").strip()
+            return float(cleaned)
 
     # ── Main reformatting methods ───────────────────────────────────────
 
@@ -325,18 +328,13 @@ class DataFormatterCore:
 
         try:
             for value_name in currency_values_list:
-                if getattr(
-                    self.workbook_dataclass, value_name, None
-                ) == "" or not hasattr(self.workbook_dataclass, value_name):
+                val = getattr(self.workbook_dataclass, value_name, None)
+                if val is None or val == "":
                     continue
                 setattr(
                     self.workbook_dataclass,
                     value_name,
-                    format_currency(
-                        self._parse_currency_value(
-                            getattr(self.workbook_dataclass, value_name)
-                        )
-                    ),
+                    format_currency(self._parse_currency_value(val)),
                 )
             logger.debug(
                 f"DataExtractorCore.reprocess_currency_values: Reprocessed currency values: {self.workbook_dataclass}"
@@ -564,13 +562,12 @@ class DataExtractorCore:
         try:
             app, wb = self.open_xw_workbook(workbook_pathstr)
             try:
-                # TO-DO: ADD AUTOMATIC DATA REFRESH (if wanted)
                 for sheet_name, chart_name in workbook_charts_dict.items():
                     sheet = wb.sheets[sheet_name]
                     if chart_name in sheet.charts:
                         chart = sheet.charts[chart_name]
                         if platform.system() == "Darwin":
-                            chart.to_pdf(
+                            sheet.to_pdf(
                                 temp_dir_path
                                 / f"{workbook_name} - {sheet_name} - {chart_name}.pdf"
                             )

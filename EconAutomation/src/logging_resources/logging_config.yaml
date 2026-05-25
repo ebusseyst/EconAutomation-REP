@@ -16,7 +16,7 @@ formatters:
       lineno: line_number
       module: module_name
       funcName: function_name
-  
+
   DefaultConsoleFormatter:
     (): logging_resources.log_context.DefaultConsoleFormatter
     style: "{"
@@ -29,10 +29,10 @@ handlers:
     filters: [GlobalContextFilter]
     level: INFO
 
-  error_file_handler:
+  file_handler:
     class: logging_resources.log_context.JSONFileHandler
     filters: [GlobalContextFilter]
-    level: ERROR
+    level: INFO
     maxBytes: 500000
     backupCount: 5
     mode: "a"
@@ -40,10 +40,10 @@ handlers:
 
 loggers:
   econ_automation:
-    handlers: [default_json_handler, error_file_handler]
+    handlers: [default_json_handler, file_handler]
     level: INFO
     propagate: False
 
 root:
-  handlers: [default_json_handler, error_file_handler]
+  handlers: [default_json_handler, file_handler]
   level: INFO

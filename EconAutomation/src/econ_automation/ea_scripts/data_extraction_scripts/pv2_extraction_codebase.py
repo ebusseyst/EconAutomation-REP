@@ -50,6 +50,7 @@ class PV2Info(WorkbookInfoCore):
         Defines the currency values for the relevant workbook.
         """
         currency_values_list = [
+            "b1e_WLE_earnings",
             "b1e_WLE_pretrial_loss_notax",
             "b1e_WLE_pretrial_loss_adj",
             "b1e_WLE_posttrial_loss_notax",

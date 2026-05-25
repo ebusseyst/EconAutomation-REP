@@ -4,8 +4,17 @@ from typing import Any
 from datetime import datetime, date
 
 from docxtpl import DocxTemplate
+from jinja2 import Environment, Undefined
 
 logger = logging.getLogger(__name__)
+
+
+class _DebugUndefined(Undefined):
+    """Renders as [[ variable_name ]] so missing template variables are visible in output."""
+    __slots__ = ()
+
+    def __str__(self) -> str:
+        return f"[[ {self._undefined_name} ]]"
 
 
 def determine_variable_map(ea_main_dataclass: Any) -> dict[str, Any]:
@@ -13,23 +22,10 @@ def determine_variable_map(ea_main_dataclass: Any) -> dict[str, Any]:
     Builds the Jinja2 render context from the ea_main_dataclass.
     Keys are plain variable names matching {{ variable_name }} tokens in templates.
     """
-    variable_map = ea_main_dataclass.__dict__
-
     try:
-        # Filter out any non-string or non-numeric values to prevent docxtpl errors
         variable_map = {
-            k: v
-            for k, v in variable_map.items()
-            if isinstance(
-                v,
-                (
-                    str,
-                    int,
-                    float,
-                    datetime,
-                    date,
-                ),
-            )
+            k: (v if isinstance(v, (str, int, float, datetime, date)) else f"[[ {k} ]]")
+            for k, v in ea_main_dataclass.__dict__.items()
         }
     except TypeError:
         logger.exception("determine_variable_map() TypeError")
@@ -40,7 +36,6 @@ def determine_variable_map(ea_main_dataclass: Any) -> dict[str, Any]:
 
 def save_output_document(
     doc: DocxTemplate,
-    variable_map: dict[str, Any],
     report_type: str,
     selected_output_filepaths: list[Path],
 ) -> None:
@@ -49,11 +44,10 @@ def save_output_document(
     """
     try:
         for output_filepath in selected_output_filepaths:
-            base_stem = (
-                f"{variable_map['claimant_name_last']}"
-                f"{variable_map['claimant_name_first_initial']}"
-                f" - {report_type}"
-            )
+            dir_name = output_filepath.name  # e.g. "Gaston, Casper (J. D'Attorney)"
+            name_last = dir_name.split(",")[0].strip() if "," in dir_name else dir_name
+            name_first_initial = dir_name.split(",")[1].strip()[0] if "," in dir_name else ""
+            base_stem = f"{name_last}{name_first_initial} - {report_type}"
             final_output_path = output_filepath / f"{base_stem}.docx"
 
             output_filepath.mkdir(parents=True, exist_ok=True)
@@ -92,12 +86,12 @@ def merge_reports_core(
     variable_map = determine_variable_map(ea_main_dataclass)
 
     try:
+        jinja_env = Environment(undefined=_DebugUndefined)
         for template_filepath in selected_template_filepaths:
             doc = DocxTemplate(str(template_filepath))
-            doc.render(variable_map)
+            doc.render(variable_map, jinja_env=jinja_env)
             save_output_document(
                 doc=doc,
-                variable_map=variable_map,
                 report_type=template_filepath.stem,
                 selected_output_filepaths=selected_output_filepaths,
             )
