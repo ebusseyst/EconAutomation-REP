@@ -82,6 +82,7 @@ def setup_new_case_workflow(
 
 def run_extraction_and_report_merge(
     selected_files_dict: dict[str, dict[str, Path]] = _DEFAULT_SELECTED_FILES,
+    gui_overrides: dict[str, Any] | None = None,
 ) -> None:
     """
     Runs the full data extraction and report merge workflow: initializes the
@@ -92,6 +93,10 @@ def run_extraction_and_report_merge(
         selected_files_dict: Maps file-category keys to lists of named file
             identifiers as defined in ea_config.yaml. Defaults to
             _DEFAULT_SELECTED_FILES.
+        gui_overrides: Maps template stem → PVEarningsToggles (or analogous
+            toggles object for other templates).  When provided, the context
+            builder for that template uses GUI widget state instead of
+            inferring toggles from the extracted dataclass.
     """
     file_system_core = fsc()
     main_filepaths_dict = file_system_core.main_filepaths_dict
@@ -116,6 +121,7 @@ def run_extraction_and_report_merge(
         selected_output_filepaths=list(
             selected_filepaths_dict["output_filepaths"].values()
         ),
+        gui_overrides=gui_overrides,
     )
 
 
@@ -237,6 +243,7 @@ def _generate_reports(
     ea_main_dataclass: Any,
     selected_template_filepaths: list[Path],
     selected_output_filepaths: list[Path],
+    gui_overrides: dict[str, Any] | None = None,
 ) -> None:
     """
     Renders each selected report template with extracted data and saves output files.
@@ -245,12 +252,15 @@ def _generate_reports(
         ea_main_dataclass: Flattened dataclass containing all extracted/reformatted data.
         selected_template_filepaths: Paths to Word template files (.docx).
         selected_output_filepaths: Paths to output directories for each template.
+        gui_overrides: Forwarded to merge_reports_core; maps template stem →
+            toggles object.
     """
     try:
         merge_reports_core(
             ea_main_dataclass=ea_main_dataclass,
             selected_template_filepaths=selected_template_filepaths,
             selected_output_filepaths=selected_output_filepaths,
+            gui_overrides=gui_overrides,
         )
     except TypeError:
         logger.exception("_generate_reports: Input data type error.")

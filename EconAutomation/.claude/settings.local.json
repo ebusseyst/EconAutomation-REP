@@ -9,7 +9,14 @@
       "Bash(cp /tmp/PV_Earnings_Report_Template_fixed.docx \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx\")",
       "Bash(.venv/bin/python -c ' *)",
       "Bash(unzip -o template.docx -d template_xml)",
-      "Bash(unzip -o output.docx -d output_xml)"
+      "Bash(unzip -o output.docx -d output_xml)",
+      "Bash(mkdir -p /Users/ericmacbook/.claude/projects/-Users-ericmacbook-Documents-GitHub-EconAutomation-REP/memory)",
+      "Read(//Users/ericmacbook/.claude/projects/-Users-ericmacbook-Documents-GitHub-EconAutomation-REP/memory/**)",
+      "Read(//Users/ericmacbook/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/ae127e2a-a425-4776-a540-7f20b101e4e4/ff48b7ee-70e6-439f-9795-8259bc06dc27/skills/docx/**)",
+      "Bash(python scripts/office/unpack.py \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx\" /tmp/pv_earnings_unpacked/)",
+      "Bash(python3 scripts/office/unpack.py \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx\" /tmp/pv_earnings_unpacked/)",
+      "Bash(pandoc \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx\" -t markdown --wrap=none)",
+      "Bash(python3 -)"
     ],
     "additionalDirectories": [
       "/private/tmp"

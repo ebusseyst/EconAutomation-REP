@@ -6,7 +6,25 @@ from datetime import datetime, date
 from docxtpl import DocxTemplate
 from jinja2 import Environment, Undefined
 
+from econ_automation.ea_scripts.report_merge_scripts.run_consolidation_codebase import (
+    consolidate_all_runs,
+)
+from econ_automation.ea_scripts.report_merge_scripts.pv_earnings_context_codebase import (
+    build_pv_earnings_context,
+)
+from econ_automation.ea_scripts.report_merge_scripts.pvlcp_context_codebase import (
+    build_pvlcp_context,
+)
+
 logger = logging.getLogger(__name__)
+
+# Maps template stem → context-builder function.
+# Each builder has signature: (ea_main_dataclass, gui_toggles=None) -> dict.
+# Add an entry here whenever a new template gets its own context builder.
+_CONTEXT_BUILDERS: dict[str, Any] = {
+    "PV_Earnings_Report_Template": build_pv_earnings_context,
+    "PVLCP_Report_Template": build_pvlcp_context,
+}
 
 
 class _DebugUndefined(Undefined):
@@ -19,8 +37,9 @@ class _DebugUndefined(Undefined):
 
 def determine_variable_map(ea_main_dataclass: Any) -> dict[str, Any]:
     """
-    Builds the Jinja2 render context from the ea_main_dataclass.
-    Keys are plain variable names matching {{ variable_name }} tokens in templates.
+    Fallback context builder: passes all primitive fields through as-is.
+    Non-primitive values are replaced with [[ key ]] so they appear visibly
+    in output rather than crashing the render.
     """
     try:
         variable_map = {
@@ -78,18 +97,37 @@ def merge_reports_core(
     ea_main_dataclass: Any,
     selected_template_filepaths: list[Path],
     selected_output_filepaths: list[Path],
+    gui_overrides: dict[str, Any] | None = None,
 ) -> None:
     """
     Renders all Word document templates via docxtpl and saves the outputs.
     Templates must use Jinja2 syntax: {{ variable_name }}.
-    """
-    variable_map = determine_variable_map(ea_main_dataclass)
 
+    Per-template context builders are dispatched via _CONTEXT_BUILDERS; any
+    template without an entry falls back to determine_variable_map().
+    Run consolidation is applied to every loaded template before rendering to
+    repair any same-rPr tag splits introduced by Word editing.
+
+    ``gui_overrides`` maps template stem → PVEarningsToggles.  When an entry
+    is present for a template, its toggles are forwarded to the context
+    builder so GUI widget state drives the report rather than dataclass
+    inference.
+    """
     try:
         jinja_env = Environment(undefined=_DebugUndefined)
         for template_filepath in selected_template_filepaths:
+            builder = _CONTEXT_BUILDERS.get(template_filepath.stem)
+            if builder is not None:
+                toggles = (gui_overrides or {}).get(template_filepath.stem)
+                context = builder(ea_main_dataclass, toggles)
+                logger.info(f"merge_reports_core: using context builder for {template_filepath.stem}")
+            else:
+                context = determine_variable_map(ea_main_dataclass)
+                logger.info(f"merge_reports_core: using fallback variable map for {template_filepath.stem}")
+
             doc = DocxTemplate(str(template_filepath))
-            doc.render(variable_map, jinja_env=jinja_env)
+            consolidate_all_runs(doc)
+            doc.render(context, jinja_env=jinja_env)
             save_output_document(
                 doc=doc,
                 report_type=template_filepath.stem,
