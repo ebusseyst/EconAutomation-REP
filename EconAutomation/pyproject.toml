@@ -1,7 +1,7 @@
 # Pyrefly header
 [tool.pyrefly]
 
-# Confirguring type checks and import sources
+# Configuring type checks and import sources
 project-includes = [
     "**/*.py*"
 ]
@@ -27,6 +27,7 @@ authors = [
 maintainers = [
     {name = "Eric Bussey", email = "ebussey@stokes-associates.com"}
 ]
+# Last updated: 5/28/2026
 dependencies = [
     "annotated-types==0.7.0",
     "appscript==1.4.0",

@@ -58,6 +58,7 @@ class PVEarningsContextBuilder:
         ctx.update(self._all_fields())
         ctx.update(self._toggles())
         ctx.update(self._rehab_report_types())
+        ctx.update(self._derived_fields())
         ctx.update(self._aliases())
         return ctx
 
@@ -174,15 +175,22 @@ class PVEarningsContextBuilder:
         """
         toggles = self._toggles()
         return {
+            # Maps projection_type_toggle → the string the template checks against.
+            # GUI stores "toage"; template was authored against "TR".
+            "earnings_projection_type": "WLE" if toggles["projection_type_toggle"] == "WLE" else "TR",
+            # This template is always the PV Earnings report; the outer {%p if %} wrapper
+            # in the template checks 'PV Earnings' in report_templates.
+            "report_templates": ["PV Earnings"],
+
             "single_base": (True if toggles["base1_toggle"] and not toggles["base2_toggle"] and not toggles["base3_toggle"] else False),
             "single_credit": (True if toggles["credit1_toggle"] and not toggles["credit2_toggle"] and not toggles["credit3_toggle"] else False),
 
             "multi_base": (True if toggles["base1_toggle"] and (toggles["base2_toggle"] or toggles["base3_toggle"]) else False),
             "multi_credit": (True if toggles["credit1_toggle"] and (toggles["credit2_toggle"] or toggles["credit3_toggle"]) else False),
-            
-            "ssa_projection": (True if ((toggles["projection_type_toggle"] == "WLE" and int(self._raw.get("claimant_WLE_from_trial_int")) >= 11) or (toggles["projection_type_toggle"] == "toage" and int(self._raw.get("claimant_retire_from_trial_int")) >= 11)) else False),
-            "cbo_projection": (True if ((toggles["projection_type_toggle"] == "WLE" and int(self._raw.get("claimant_WLE_from_trial_int")) < 11) or (toggles["projection_type_toggle"] == "toage" and int(self._raw.get("claimant_retire_from_trial_int")) < 11)) else False),
-            
+
+            "ssa_projection": (True if ((toggles["projection_type_toggle"] == "WLE" and int(self._get("claimant_WLE_from_trial_int")) >= 11) or (toggles["projection_type_toggle"] == "toage" and int(self._get("claimant_retire_from_trial_int")) >= 11)) else False),
+            "cbo_projection": (True if ((toggles["projection_type_toggle"] == "WLE" and int(self._get("claimant_WLE_from_trial_int")) < 11) or (toggles["projection_type_toggle"] == "toage" and int(self._get("claimant_retire_from_trial_int")) < 11)) else False),
+
             # THIS IS WHERE I LEFT OFF
         }
 

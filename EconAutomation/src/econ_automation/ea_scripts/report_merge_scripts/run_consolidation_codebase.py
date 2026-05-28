@@ -7,13 +7,14 @@ from copy import deepcopy
 from docx.document import Document as DocxDocument
 from docx.table import _Cell
 
+
 def consolidate_runs_in_paragraph(paragraph):
     """
     Merge adjacent runs with identical rPr within a paragraph.
     Operates directly on the lxml element tree.
     """
     p = paragraph._p
-    runs = p.findall(qn('w:r'))
+    runs = p.findall(qn("w:r"))
     if len(runs) < 2:
         return
 
@@ -29,33 +30,33 @@ def consolidate_runs_in_paragraph(paragraph):
             i += 1
             continue
 
-        rpr_current = r_current.find(qn('w:rPr'))
-        rpr_next = r_next.find(qn('w:rPr'))
+        rpr_current = r_current.find(qn("w:rPr"))
+        rpr_next = r_next.find(qn("w:rPr"))
 
         # Compare rPr serializations (None == None is fine too)
         def rpr_xml(rpr):
-            return etree.tostring(rpr) if rpr is not None else b''
+            return etree.tostring(rpr) if rpr is not None else b""
 
         if rpr_xml(rpr_current) == rpr_xml(rpr_next):
             # Merge: append all w:t (and w:br, w:tab) from next into current
             for child in list(r_next):
-                if child.tag != qn('w:rPr'):
+                if child.tag != qn("w:rPr"):
                     r_current.append(deepcopy(child))
 
             # Consolidate w:t elements — combine text, preserve xml:space
-            t_elements = r_current.findall(qn('w:t'))
+            t_elements = r_current.findall(qn("w:t"))
             if len(t_elements) > 1:
-                combined = ''.join((t.text or '') for t in t_elements)
+                combined = "".join((t.text or "") for t in t_elements)
                 for t in t_elements:
                     r_current.remove(t)
-                new_t = OxmlElement('w:t')
+                new_t = OxmlElement("w:t")
                 new_t.text = combined
                 if combined != combined.strip():
-                    new_t.set('{http://www.w3.org/XML/1998/namespace}space', 'preserve')
+                    new_t.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
                 r_current.append(new_t)
 
             p.remove(r_next)
-            runs = p.findall(qn('w:r'))  # refresh after mutation
+            runs = p.findall(qn("w:r"))  # refresh after mutation
         else:
             i += 1
 
@@ -77,8 +78,13 @@ def consolidate_all_runs(doc: DocxTemplate):
     # Also handle headers/footers
     # pyrefly: ignore [missing-attribute]
     for section in docx.sections:
-        for hf in (section.header, section.footer,
-                   section.even_page_header, section.even_page_footer,
-                   section.first_page_header, section.first_page_footer):
+        for hf in (
+            section.header,
+            section.footer,
+            section.even_page_header,
+            section.even_page_footer,
+            section.first_page_header,
+            section.first_page_footer,
+        ):
             if hf and not hf.is_linked_to_previous:
                 process_paragraphs(hf)

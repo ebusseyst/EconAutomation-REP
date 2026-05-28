@@ -16,7 +16,8 @@
       "Bash(python scripts/office/unpack.py \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx\" /tmp/pv_earnings_unpacked/)",
       "Bash(python3 scripts/office/unpack.py \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx\" /tmp/pv_earnings_unpacked/)",
       "Bash(pandoc \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx\" -t markdown --wrap=none)",
-      "Bash(python3 -)"
+      "Bash(python3 -)",
+      "Bash(python -c ' *)"
     ],
     "additionalDirectories": [
       "/private/tmp"

@@ -8,9 +8,9 @@ from econ_automation.ea_scripts.gui_files.gui_core.gui_core_codebase import (
 )
 
 from econ_automation.ea_scripts.gui_files.gui_connections.gui_formatted_functions import (
-    OFF_select_function,
+    select_OFF_file_modal,
+    select_claimant_folder_modal,
     create_case_function,
-    set_selected_OFF_label,
 )
 
 
