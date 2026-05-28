@@ -75,6 +75,7 @@ def consolidate_all_runs(doc: DocxTemplate):
 
     process_paragraphs(docx)
     # Also handle headers/footers
+    # pyrefly: ignore [missing-attribute]
     for section in docx.sections:
         for hf in (section.header, section.footer,
                    section.even_page_header, section.even_page_footer,

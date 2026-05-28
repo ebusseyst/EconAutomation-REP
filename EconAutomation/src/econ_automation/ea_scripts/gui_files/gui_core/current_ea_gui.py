@@ -48,6 +48,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QFrame,
+    QGraphicsDropShadowEffect,
     QGridLayout,
     QHBoxLayout,
     QLabel,
@@ -87,11 +88,11 @@ class Ui_ea_MainWindow(object):
         if not self.ea_MainWindow.objectName():
             self.ea_MainWindow.setObjectName("ea_MainWindow")
 
-        horizontal_spacer = QSpacerItem(
+        horizontal_spacer_l = QSpacerItem(
             40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
         )
-        vertical_spacer = QSpacerItem(
-            20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
+        horizontal_spacer_r = QSpacerItem(
+            40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
         )
 
         # 1. Load the font file
@@ -119,207 +120,211 @@ class Ui_ea_MainWindow(object):
             "light_gold": "#D0BC34",
             "dark_gold": "#8D7B00",
             "gold_border": "rgba(141,123,0,0.4)",
+            "gold_highlight": "rgba(255,245,150,0.65)",
+            "gold_shadow_border": "rgba(0,0,0,0.32)",
         }
 
-        # Predefined stylesheets for specific widgets
-        ea_CentralWidget_style = """
-                                #ea_CentralWidget_frame {{
-                                    border: none;
-                                    border-radius: 0px;
-                                    background-color: {dark_navy};
-                                }}
-                                """.format(
-            **{key: value for key, value in color_dict.items()}
-        )
+        icon_fmt = {
+            **color_dict,
+            "checkmark_icon": icon_dict.get("checkmark_icon", "").replace("\\", "/"),
+            "dropdown_arrow_icon": icon_dict.get("dropdown_arrow_icon", "").replace("\\", "/"),
+        }
 
-        ea_subframe_style = """
-                                QFrame {{
-                                    border: 0px;
-                                    border-radius: 10px;
-                                    background-color: {gold};
-                                    font-family: Figtree;
-                                    font-size: 15pt;
-                                    font-weight: 500;
-                                    color: {dark_navy};
-                                }}
-                                QLabel {{
-                                    background-color: {light_gold};
-                                    border: 2px solid {gold_border};
-                                    border-radius: 4px;
-                                    font-family: DM Sans;
-                                    font-size: 15pt;
-                                    font-weight: 500;
-                                    color: {dark_navy};
-                                }}
-                                QPushButton {{
-                                    border: 1px solid {dark_navy};
-                                    border-radius: 4px;
-                                    background-color: white;
-                                    font-family: Figtree;
-                                    font-size: 12pt;
-                                    font-weight: 500;
-                                    color: {dark_navy};
-                                }}
-                                QPushButton:hover {{
-                                    background-color: {off_white};
-                                }}
-                                
-                                #ea_CentralWidget_label_frame {{
-                                    border: 2px solid {gold_border};
-                                }}
-                                #ea_CentralWidget_label {{
-                                    background-color: {light_gold};
-                                    border: 2px solid {gold_border};
-                                    border-radius: 4px;
-                                    font-family: DM Sans;
-                                    font-size: 18pt;
-                                    font-weight: 800;
-                                    font-style: italic;
-                                    color: {dark_navy};
-                                }}
-                                
-                                #ea_setupcase_frame {{
-                                    border: 2px solid {gold_border};
-                                    background-color: {gold};
-                                    font-family: Figtree;
-                                    font-size: 13pt;
-                                    font-weight: 400;
-                                    color: {dark_navy};
-                                }}
-                                #ea_setupcase_frame #ea_setupcase_label {{
-                                    font-family: DM Sans;
-                                    font-size: 13pt;
-                                    font-weight: 600;
-                                    padding: 3px;
-                                }}
-                                #ea_setupcase_frame #ea_setupcase_createcase_button {{
-                                    font-family: Figtree;
-                                    font-size: 10pt;
-                                    font-weight: 400;
-                                    color: {dark_navy};
-                                    padding: 3px;
-                                }}
+        ea_background_style = """
+            #ea_CentralWidget_frame {{
+                border: none;
+                background-color: {dark_navy};
+            }}
+        """.format(**color_dict)
 
-                                #ea_setupcase_sub2frame {{
-                                    border: 0px;
-                                    background-color: transparent;
-                                    font-family: Figtree;
-                                    font-size: 11pt;
-                                    font-weight: 400;
-                                    color: {dark_navy};
-                                }}
-                                #ea_setupcase_sub2frame QFrame {{
-                                    border: 0px;
-                                    background-color: transparent;
-                                    font-family: Figtree;
-                                    font-size: 13pt;
-                                    font-weight: 400;
-                                    color: {dark_navy};
-                                }}
-                                #ea_setupcase_sub2frame QLabel {{
-                                    background-color: transparent;
-                                    border: 0px;
-                                    font-family: Figtree;
-                                    font-size: 11pt;
-                                    font-weight: 400;
-                                    color: {dark_navy};
-                                }}
-                                #ea_setupcase_sub2frame #ea_setupcase_selectedOFF_label {{
-                                    background-color: white;
-                                    border: 1px solid {dark_navy};
-                                    border-radius: 4px;
-                                    font-family: Figtree;
-                                    font-size: 10pt;
-                                    font-weight: 300;
-                                    color: {dark_navy};
-                                }}
-                                
-                                #ea_reportmerge_frame {{
-                                    border: 2px solid {gold_border};
-                                    background-color: {gold};
-                                    font-family: Figtree;
-                                    font-size: 13pt;
-                                    font-weight: 500;
-                                    color: {dark_navy};
-                                }}
-                                #ea_reportmerge_label_frame {{
-                                    border: 2px solid {gold_border};
-                                    background-color: {light_gold};
-                                }}
-                                #ea_reportmerge_label {{
-                                    font-family: DM Sans;
-                                    font-size: 13pt;
-                                    font-weight: 600;
-                                    padding: 3px;
-                                }}
-                                #ea_reportmerge_sub2frame {{
-                                    border: 2px solid {gold_border};
-                                    background-color: {light_gold};
-                                    font-family: Figtree;
-                                    font-size: 11pt;
-                                    font-weight: 400;
-                                    color: {dark_navy};
-                                }}
-                                #ea_reportmerge_sub2frame QFrame {{
-                                    background-color: transparent;
-                                    border: 0px;
-                                }}
-                                #ea_reportmerge_sub2frame QLabel {{
-                                    background-color: transparent;
-                                    border: 0px;
-                                    font-family: Figtree;
-                                    font-size: 10pt;
-                                    font-weight: 400;
-                                    color: {dark_navy};
-                                }}
-                                #ea_reportmerge_sub2frame QCheckBox::indicator {{
-                                    width: 14px;
-                                    height: 14px;
-                                    background-color: white;
-                                    border: 1px solid {dark_navy};
-                                    border-radius: 4px;
-                                    color: {dark_navy};
-                                }}
-                                #ea_reportmerge_sub2frame QCheckBox::indicator:unchecked {{
-                                    background-color: white;
-                                }}
-                                #ea_reportmerge_sub2frame QCheckBox::indicator:disabled {{
-                                    background-color: lightgray;
-                                }}
-                                #ea_reportmerge_sub2frame QCheckBox::indicator:checked {{
-                                    background-color: white;
-                                    image: url(src/econ_automation/ea_scripts/gui_files/icons/checkmark_icon.png);
-                                }}
-                                #ea_reportmerge_sub2frame QComboBox {{
-                                    background-color: white;
-                                    border: 1px solid {dark_navy};
-                                    border-radius: 4px;
-                                    color: {dark_navy};
-                                }}
-                                #ea_reportmerge_sub2frame QComboBox::drop-down {{
-                                    subcontrol-origin: padding;
-                                    subcontrol-position: center right;
-                                    background-color: transparent;
-                                }}
-                                #ea_reportmerge_sub2frame QComboBox::down-arrow {{
-                                    background-color: transparent;
-                                    image: url(src/econ_automation/ea_scripts/gui_files/icons/dropdown_arrow_icon.png);
-                                }}
-                                #ea_reportmerge_sub2frame QComboBox QAbstractItemView {{
-                                    border: 1px solid {dark_navy};
-                                    selection-background-color: {light_blue};
-                                    background-color: white;
-                                    color: {dark_navy};
-                                }}
-                                """.format(
-            **{key: value for key, value in color_dict.items()}
-        )
+        ea_header_style = """
+            #ea_CentralWidget_label_frame {{
+                border-top: 1px solid {gold_highlight};
+                border-left: 1px solid {gold_highlight};
+                border-bottom: 1px solid {gold_shadow_border};
+                border-right: 1px solid {gold_shadow_border};
+                border-radius: 10px;
+                background-color: {gold};
+            }}
+            #ea_CentralWidget_label {{
+                background-color: {light_gold};
+                border: 2px solid {gold_border};
+                border-radius: 4px;
+                font-family: DM Sans;
+                font-size: 18pt;
+                font-weight: 800;
+                font-style: italic;
+                color: {dark_navy};
+            }}
+        """.format(**color_dict)
+
+        ea_setupcase_style = """
+            #ea_setupcase_frame {{
+                border-top: 1px solid {gold_highlight};
+                border-left: 1px solid {gold_highlight};
+                border-bottom: 1px solid {gold_shadow_border};
+                border-right: 1px solid {gold_shadow_border};
+                border-radius: 10px;
+                background-color: {gold};
+            }}
+            #ea_setupcase_label {{
+                background-color: {light_gold};
+                border: 2px solid {gold_border};
+                border-radius: 4px;
+                font-family: DM Sans;
+                font-size: 13pt;
+                font-weight: 600;
+                color: {dark_navy};
+                padding: 3px;
+            }}
+            #ea_setupcase_sub2frame {{
+                border: none;
+                background-color: transparent;
+            }}
+            #ea_setupcase_sub2frame QLabel {{
+                background-color: transparent;
+                border: none;
+                font-family: Figtree;
+                font-size: 11pt;
+                font-weight: 400;
+                color: {dark_navy};
+            }}
+            #ea_setupcase_selectedOFF_label {{
+                background-color: white;
+                border: 1px solid {dark_navy};
+                border-radius: 4px;
+                font-family: Figtree;
+                font-size: 10pt;
+                font-weight: 300;
+                color: {dark_navy};
+            }}
+            #ea_setupcase_OFFSelect_button {{
+                border: 1px solid {dark_navy};
+                border-radius: 4px;
+                background-color: white;
+                font-family: Figtree;
+                font-size: 12pt;
+                font-weight: 500;
+                color: {dark_navy};
+            }}
+            #ea_setupcase_OFFSelect_button:hover {{
+                background-color: {off_white};
+            }}
+            #ea_setupcase_createcase_button {{
+                border: 1px solid {dark_navy};
+                border-radius: 4px;
+                background-color: white;
+                font-family: Figtree;
+                font-size: 10pt;
+                font-weight: 400;
+                color: {dark_navy};
+                padding: 3px;
+            }}
+            #ea_setupcase_createcase_button:hover {{
+                background-color: {off_white};
+            }}
+        """.format(**color_dict)
+
+        ea_reportmerge_style = """
+            #ea_reportmerge_frame {{
+                border-top: 1px solid {gold_highlight};
+                border-left: 1px solid {gold_highlight};
+                border-bottom: 1px solid {gold_shadow_border};
+                border-right: 1px solid {gold_shadow_border};
+                border-radius: 10px;
+                background-color: {gold};
+            }}
+            #ea_reportmerge_label {{
+                background-color: {light_gold};
+                border: 2px solid {gold_border};
+                border-radius: 4px;
+                font-family: DM Sans;
+                font-size: 13pt;
+                font-weight: 600;
+                color: {dark_navy};
+                padding: 3px;
+            }}
+            #ea_reportmerge_sub2frame {{
+                border: 2px solid {gold_border};
+                border-radius: 10px;
+                background-color: {light_gold};
+            }}
+            #ea_reportmerge_sub2frame QFrame {{
+                background-color: transparent;
+                border: none;
+            }}
+            #ea_reportmerge_sub2frame QLabel {{
+                background-color: transparent;
+                border: none;
+                font-family: Figtree;
+                font-size: 10pt;
+                font-weight: 400;
+                color: {dark_navy};
+            }}
+            #ea_reportmerge_sub2frame QCheckBox {{
+                font-family: Figtree;
+                font-size: 10pt;
+                font-weight: 400;
+                color: {dark_navy};
+            }}
+            #ea_reportmerge_sub2frame QCheckBox::indicator {{
+                width: 14px;
+                height: 14px;
+                background-color: white;
+                border: 1px solid {dark_navy};
+                border-radius: 4px;
+            }}
+            #ea_reportmerge_sub2frame QCheckBox::indicator:unchecked {{
+                background-color: white;
+            }}
+            #ea_reportmerge_sub2frame QCheckBox::indicator:disabled {{
+                background-color: lightgray;
+            }}
+            #ea_reportmerge_sub2frame QCheckBox::indicator:checked {{
+                background-color: white;
+                image: url({checkmark_icon});
+            }}
+            #ea_reportmerge_sub2frame QComboBox {{
+                background-color: white;
+                border: 1px solid {dark_navy};
+                border-radius: 4px;
+                font-family: Figtree;
+                font-size: 10pt;
+                color: {dark_navy};
+            }}
+            #ea_reportmerge_sub2frame QComboBox::drop-down {{
+                subcontrol-origin: padding;
+                subcontrol-position: center right;
+                background-color: transparent;
+            }}
+            #ea_reportmerge_sub2frame QComboBox::down-arrow {{
+                background-color: transparent;
+                image: url({dropdown_arrow_icon});
+            }}
+            #ea_reportmerge_sub2frame QComboBox QAbstractItemView {{
+                border: 1px solid {dark_navy};
+                selection-background-color: {light_blue};
+                background-color: white;
+                color: {dark_navy};
+            }}
+            #ea_reportmerge_button {{
+                border: 1px solid {dark_navy};
+                border-radius: 4px;
+                background-color: white;
+                font-family: Figtree;
+                font-size: 12pt;
+                font-weight: 500;
+                color: {dark_navy};
+            }}
+            #ea_reportmerge_button:hover {{
+                background-color: {off_white};
+            }}
+        """.format(**icon_fmt)
 
         self.ea_MainWindow.resize(550, 600)
         self.ea_MainWindow.setWindowIcon(QIcon(icon_dict["starfire_icon"]))
         self.ea_MainWindow.setWindowTitle("StarFire")
         self.ea_CentralWidget = QWidget(self.ea_MainWindow)
-        self.ea_CentralWidget.setStyleSheet(ea_CentralWidget_style)
         self.ea_CentralWidget.setObjectName("ea_CentralWidget")
         self.ea_CentralWidget_GLayout = QGridLayout(self.ea_CentralWidget)
         self.ea_CentralWidget_GLayout.setObjectName("ea_CentralWidget_GLayout")
@@ -328,8 +333,9 @@ class Ui_ea_MainWindow(object):
         self.ea_CentralWidget_frame.setObjectName("ea_CentralWidget_frame")
         self.ea_CentralWidget_frame.setFrameShape(QFrame.Shape.StyledPanel)
         self.ea_CentralWidget_frame.setFrameShadow(QFrame.Shadow.Raised)
+        self.ea_CentralWidget_frame.setStyleSheet(ea_background_style)
         self.ea_CentralWidgetframe_GLayout = QGridLayout(self.ea_CentralWidget_frame)
-        self.ea_CentralWidgetframe_GLayout.setObjectName("ea_CentralWidget_GLayout")
+        self.ea_CentralWidgetframe_GLayout.setObjectName("ea_CentralWidgetframe_GLayout")
         self.ea_CentralWidgetframe_GLayout.setHorizontalSpacing(5)
         self.ea_CentralWidgetframe_GLayout.setVerticalSpacing(5)
         self.ea_CentralWidgetframe_GLayout.setContentsMargins(8, 8, 8, 8)
@@ -340,7 +346,7 @@ class Ui_ea_MainWindow(object):
         self.ea_setupcase_frame.setObjectName("ea_setupcase_frame")
         self.ea_setupcase_frame.setFrameShape(QFrame.Shape.StyledPanel)
         self.ea_setupcase_frame.setFrameShadow(QFrame.Shadow.Raised)
-        self.ea_setupcase_frame.setStyleSheet(ea_subframe_style)
+        self.ea_setupcase_frame.setStyleSheet(ea_setupcase_style)
         self.ea_setupfile_GLayout = QGridLayout(self.ea_setupcase_frame)
         self.ea_setupfile_GLayout.setObjectName("ea_setupfile_GLayout")
         self.ea_setupfile_GLayout.setHorizontalSpacing(5)
@@ -385,11 +391,11 @@ class Ui_ea_MainWindow(object):
         self.ea_setupcase_createcase_button.setObjectName(
             "ea_setupcase_createcase_button"
         )
-        self.ea_setupfile_GLayout.addItem(horizontal_spacer, 2, 0, 1, 1)
+        self.ea_setupfile_GLayout.addItem(horizontal_spacer_l, 2, 0, 1, 1)
         self.ea_setupfile_GLayout.addWidget(
             self.ea_setupcase_createcase_button, 2, 1, 1, 1
         )
-        self.ea_setupfile_GLayout.addItem(horizontal_spacer, 2, 2, 1, 1)
+        self.ea_setupfile_GLayout.addItem(horizontal_spacer_r, 2, 2, 1, 1)
 
         self.ea_setupfile_GLayout.setRowStretch(0, 1)
         self.ea_setupfile_GLayout.setRowStretch(1, 10)
@@ -402,7 +408,7 @@ class Ui_ea_MainWindow(object):
         self.ea_reportmerge_frame.setObjectName("ea_reportmerge_frame")
         self.ea_reportmerge_frame.setFrameShape(QFrame.Shape.StyledPanel)
         self.ea_reportmerge_frame.setFrameShadow(QFrame.Shadow.Raised)
-        self.ea_reportmerge_frame.setStyleSheet(ea_subframe_style)
+        self.ea_reportmerge_frame.setStyleSheet(ea_reportmerge_style)
         self.ea_reportmerge_GLayout = QGridLayout(self.ea_reportmerge_frame)
         self.ea_reportmerge_GLayout.setObjectName("ea_reportmerge_GLayout")
         self.ea_reportmerge_GLayout.setHorizontalSpacing(0)
@@ -798,7 +804,7 @@ class Ui_ea_MainWindow(object):
         self.ea_CentralWidget_label_frame.setObjectName("ea_CentralWidget_label_frame")
         self.ea_CentralWidget_label_frame.setFrameShape(QFrame.Shape.StyledPanel)
         self.ea_CentralWidget_label_frame.setFrameShadow(QFrame.Shadow.Raised)
-        self.ea_CentralWidget_label_frame.setStyleSheet(ea_subframe_style)
+        self.ea_CentralWidget_label_frame.setStyleSheet(ea_header_style)
         self.ea_CentralWidget_label_VLayout = QVBoxLayout(
             self.ea_CentralWidget_label_frame
         )
@@ -820,6 +826,18 @@ class Ui_ea_MainWindow(object):
         self.ea_CentralWidgetframe_GLayout.setColumnStretch(0, 1)
 
         self.ea_CentralWidget_GLayout.addWidget(self.ea_CentralWidget_frame)
+
+        def _frame_shadow():
+            effect = QGraphicsDropShadowEffect()
+            effect.setBlurRadius(8)
+            effect.setXOffset(1)
+            effect.setYOffset(2)
+            effect.setColor(QColor(0, 0, 0, 60))
+            return effect
+
+        self.ea_CentralWidget_label_frame.setGraphicsEffect(_frame_shadow())
+        self.ea_setupcase_frame.setGraphicsEffect(_frame_shadow())
+        self.ea_reportmerge_frame.setGraphicsEffect(_frame_shadow())
 
         self.ea_MainWindow.setCentralWidget(self.ea_CentralWidget)
 

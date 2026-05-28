@@ -78,9 +78,9 @@ class EconAutomationMainWindow(QMainWindow):
         # When a Voc checkbox is added: if ui.<voc_checkbox>.isChecked(): rehab.append("Voc")
 
         return PVEarningsToggles(
-            base_1_toggle=ui.ea_reportmerge_base1_checkbox.isChecked(),
-            base_2_toggle=ui.ea_reportmerge_base2_checkbox.isChecked(),
-            base_3_toggle=ui.ea_reportmerge_base3_checkbox.isChecked(),
+            base1_toggle=ui.ea_reportmerge_base1_checkbox.isChecked(),
+            base2_toggle=ui.ea_reportmerge_base2_checkbox.isChecked(),
+            base3_toggle=ui.ea_reportmerge_base3_checkbox.isChecked(),
             credit1_toggle=ui.ea_reportmerge_credit1_checkbox.isChecked(),
             credit2_toggle=ui.ea_reportmerge_credit2_checkbox.isChecked(),
             credit3_toggle=ui.ea_reportmerge_credit3_checkbox.isChecked(),

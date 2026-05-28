@@ -15,9 +15,9 @@ class PVEarningsToggles:
     dataclass inference.  All fields default to a conservative "off" state
     so a partially-constructed instance is safe to use.
     """
-    base_1_toggle: bool = True
-    base_2_toggle: bool = False
-    base_3_toggle: bool = False
+    base1_toggle: bool = True
+    base2_toggle: bool = False
+    base3_toggle: bool = False
     credit1_toggle: bool = False
     credit2_toggle: bool = False
     credit3_toggle: bool = False
@@ -106,9 +106,9 @@ class PVEarningsContextBuilder:
         """
         if self._gui is not None:
             return {
-                "base_1_toggle": self._gui.base_1_toggle,
-                "base_2_toggle": self._gui.base_2_toggle,
-                "base_3_toggle": self._gui.base_3_toggle,
+                "base1_toggle": self._gui.base1_toggle,
+                "base2_toggle": self._gui.base2_toggle,
+                "base3_toggle": self._gui.base3_toggle,
                 "projection_type_toggle": self._gui.projection_type_toggle,
                 "credit1_toggle": self._gui.credit1_toggle,
                 "credit2_toggle": self._gui.credit2_toggle,
@@ -120,9 +120,9 @@ class PVEarningsContextBuilder:
 
         # Fallback: infer from extracted dataclass values
         return {
-            "base_1_toggle": self._is_populated("b1e_WLE_earnings"),
-            "base_2_toggle": self._is_populated("b2e_WLE_earnings"),
-            "base_3_toggle": self._is_populated("b3e_WLE_earnings"),
+            "base1_toggle": self._is_populated("b1e_WLE_earnings"),
+            "base2_toggle": self._is_populated("b2e_WLE_earnings"),
+            "base3_toggle": self._is_populated("b3e_WLE_earnings"),
             "projection_type_toggle": "WLE",
             "credit1_toggle": self._is_populated("credit1_WLE_earnings"),
             "credit2_toggle": self._is_populated("credit2_WLE_earnings"),
@@ -174,10 +174,10 @@ class PVEarningsContextBuilder:
         """
         toggles = self._toggles()
         return {
-            "single_base": (True if toggles["base_1_toggle"] and not toggles["base_2_toggle"] and not toggles["base_3_toggle"] else False),
+            "single_base": (True if toggles["base1_toggle"] and not toggles["base2_toggle"] and not toggles["base3_toggle"] else False),
             "single_credit": (True if toggles["credit1_toggle"] and not toggles["credit2_toggle"] and not toggles["credit3_toggle"] else False),
 
-            "multi_base": (True if toggles["base_1_toggle"] and (toggles["base_2_toggle"] or toggles["base_3_toggle"]) else False),
+            "multi_base": (True if toggles["base1_toggle"] and (toggles["base2_toggle"] or toggles["base3_toggle"]) else False),
             "multi_credit": (True if toggles["credit1_toggle"] and (toggles["credit2_toggle"] or toggles["credit3_toggle"]) else False),
             
             "ssa_projection": (True if ((toggles["projection_type_toggle"] == "WLE" and int(self._raw.get("claimant_WLE_from_trial_int")) >= 11) or (toggles["projection_type_toggle"] == "toage" and int(self._raw.get("claimant_retire_from_trial_int")) >= 11)) else False),
