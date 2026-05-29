@@ -1,4 +1,6 @@
+import json
 import logging
+import os
 import subprocess
 import sys
 import tempfile
@@ -11,9 +13,48 @@ from packaging.version import Version
 
 logger = logging.getLogger(__name__)
 
-CURRENT_VERSION = version("econ_automation")
+try:
+    CURRENT_VERSION = version("econ_automation")
+except Exception:
+    CURRENT_VERSION = "0.3.0"
 VERSION_URL = "https://github.com/ebusseyst/EconAutomation-REP/releases/latest/download/version.json"
 REQUEST_TIMEOUT = 5
+
+
+_INSTALL_CONFIG = "install_config.json"
+
+
+def _user_data_dir() -> Path:
+    if platform.system() == "Windows":
+        return Path(os.environ.get("LOCALAPPDATA", Path.home())) / "EconAutomation"
+    return Path.home() / "Library" / "Application Support" / "EconAutomation"
+
+
+def save_install_location() -> None:
+    """
+    Persist the current exe's parent directory to the user-data dir.
+    Called once at startup (frozen builds only) so future update installers
+    can silently reinstall to the same path via /DIR=.
+    """
+    if not hasattr(sys, "_MEIPASS"):
+        return
+    install_dir = Path(sys.executable).parent
+    config_path = _user_data_dir() / _INSTALL_CONFIG
+    try:
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(json.dumps({"install_dir": str(install_dir)}))
+    except Exception:
+        logger.warning("save_install_location: could not write %s", config_path)
+
+
+def get_saved_install_dir() -> Path | None:
+    """Return the saved install directory, or None if not recorded yet."""
+    config_path = _user_data_dir() / _INSTALL_CONFIG
+    try:
+        data = json.loads(config_path.read_text())
+        return Path(data["install_dir"])
+    except Exception:
+        return None
 
 
 def fetch_remote_version() -> dict | None:
@@ -67,8 +108,13 @@ def launch_installer(installer_path: Path) -> None:
     """
     if platform.system() == "Windows":
         DETACHED_PROCESS = 0x00000008
+        # /DIR= reinstalls to the same location the user originally chose.
+        # Fall back to the exe's own directory if the config hasn't been written yet.
+        install_dir = get_saved_install_dir() or Path(sys.executable).parent
+        # /CLOSEAPPLICATIONS: lets InnoSetup close any still-open handles
+        # before overwriting files in the install directory.
         subprocess.Popen(
-            [str(installer_path)],
+            [str(installer_path), "/CLOSEAPPLICATIONS", f"/DIR={install_dir}"],
             creationflags=DETACHED_PROCESS,
             close_fds=True,
         )
@@ -78,6 +124,13 @@ def launch_installer(installer_path: Path) -> None:
         installer_path.chmod(installer_path.stat().st_mode | 0o111)
         subprocess.Popen([str(installer_path)])
 
+    try:
+        from PySide6.QtWidgets import QApplication
+        app = QApplication.instance()
+        if app is not None:
+            app.quit()
+    except ImportError:
+        pass
     sys.exit(0)
 
 

@@ -47,8 +47,11 @@ def select_OFF_file_modal(ea_main_window: QMainWindow):
         path_obj = Path(file_path)
         parent_dir = path_obj.parent
         claimant_dir_name = parent_dir.stem
-        claimant_name_last, claimant_name_first = claimant_dir_name.split(",")
-        claimant_name = claimant_name_first.strip() + " " + claimant_name_last.strip()
+        parts = claimant_dir_name.split(",", 1)
+        if len(parts) == 2:
+            claimant_name = parts[1].strip() + " " + parts[0].strip()
+        else:
+            claimant_name = claimant_dir_name.strip()
 
     return claimant_name, file_path
 

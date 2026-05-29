@@ -101,7 +101,7 @@ def merge_reports_core(
 ) -> None:
     """
     Renders all Word document templates via docxtpl and saves the outputs.
-    Templates must use Jinja2 syntax: {{ variable_name }}.
+    Templates must use docxtpl/Jinja2 syntax: {{ variable_name }}.
 
     Per-template context builders are dispatched via _CONTEXT_BUILDERS; any
     template without an entry falls back to determine_variable_map().

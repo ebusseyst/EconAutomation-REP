@@ -1,8 +1,11 @@
 from pathlib import Path
 from typing import Any
+import logging
 
 import openpyxl as opxl
 from openpyxl.cell.cell import MergedCell
+
+logger = logging.getLogger(__name__)
 
 
 def create_case_variables_excel_sheet(
@@ -46,6 +49,10 @@ def create_case_variables_excel_sheet(
 
     # 4. Save the workbook to the claimant's private directory
     case_var_new_name = f"{case_profile.claimant_name_last}{case_profile.claimant_name_first_initial} - Case Variables.xlsx"
-    output_filepath = private_claimant_dir.joinpath(case_var_new_name)
+    output_filepath = private_claimant_dir / case_var_new_name
+
+    if output_filepath.exists():
+        logger.warning("Skipping Case Variables: %s already exists.", output_filepath)
+        return
 
     workbook.save(str(output_filepath))

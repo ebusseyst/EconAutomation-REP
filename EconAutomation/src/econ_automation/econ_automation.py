@@ -5,7 +5,7 @@ from pathlib import Path
 import platform
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QIcon
+
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
 
 from logging_resources.log_context import setup_logging
@@ -15,6 +15,7 @@ from econ_automation.ea_scripts.gui_files.gui_core.current_ea_gui import (
 )
 from econ_automation.ea_scripts.update_scripts.update_codebase import (
     check_and_apply_update,
+    save_install_location,
 )
 from econ_automation.ea_scripts.report_merge_scripts.pv_earnings_context_codebase import (
     PVEarningsToggles,
@@ -22,7 +23,10 @@ from econ_automation.ea_scripts.report_merge_scripts.pv_earnings_context_codebas
 from econ_automation.ea_scripts.report_merge_scripts.pvlcp_context_codebase import (
     PVLCPToggles,
 )
-from econ_automation.ea_scripts.ea_main_codebase import run_extraction_and_report_merge
+from econ_automation.ea_scripts.ea_main_codebase import (
+    run_extraction_and_report_merge,
+    build_selected_files_dict,
+)
 
 from econ_automation.ea_scripts.gui_files.gui_connections.gui_formatted_functions import (
     select_OFF_file_modal,
@@ -43,6 +47,7 @@ class EconAutomationMainWindow(QMainWindow):
         self.ui.setupUi()
         self.econ_cases_path = Path.home()
         self._selected_off_path: str = ""
+        self._selected_claimant_dir: Path | None = None
         self._resize_timer = QTimer(self)
         self._resize_timer.setSingleShot(True)
         self._resize_timer.timeout.connect(self._on_resize_settled)
@@ -86,22 +91,39 @@ class EconAutomationMainWindow(QMainWindow):
 
     def _on_claimantdir_select(self) -> None:
         result = select_claimant_folder_modal(self, "Select Econ Claimant Folder")
+        if result:
+            self._selected_claimant_dir = Path(result)
         label = self.ui.ea_reportmerge_selectedclaimantdir_label
         label.setText(
             Path(result).name if result else "No Econ claimant folder selected."
         )
 
     def _on_merge_clicked(self) -> None:
+        if self._selected_claimant_dir is None:
+            logger.warning("_on_merge_clicked: no claimant directory selected.")
+            return
+
         ui = self.ui
         gui_overrides: dict = {}
+        requested_template_keys: list[str] = []
+
         if ui.ea_reportmerge_reporttypes_PVearnings_checkbox.isChecked():
-            gui_overrides["PV_Earnings_Report_Template"] = (
-                self._collect_pv_earnings_toggles()
-            )
+            gui_overrides["PV_Earnings_Report_Template"] = self._collect_pv_earnings_toggles()
+            requested_template_keys.append("PV_EARNINGS_TEMPLATE")
         if ui.ea_reportmerge_reporttypes_PVLCP_checkbox.isChecked():
             gui_overrides["PVLCP_Report_Template"] = self._collect_pvlcp_toggles()
+            requested_template_keys.append("PVLCP_TEMPLATE")
+
+        selected_files = build_selected_files_dict(
+            self._selected_claimant_dir,
+            requested_template_keys=requested_template_keys or None,
+        )
+
         try:
-            run_extraction_and_report_merge(gui_overrides=gui_overrides or None)
+            run_extraction_and_report_merge(
+                selected_files_dict=selected_files,
+                gui_overrides=gui_overrides or None,
+            )
         except Exception:
             logger.exception("Report merge failed")
 
@@ -146,8 +168,8 @@ class EconAutomationMainWindow(QMainWindow):
         return PVLCPToggles(rehab_report_types=rehab)
 
 
-def _update_prompt(message: str) -> bool:
-    dialog = QMessageBox()
+def _update_prompt(message: str, parent=None) -> bool:
+    dialog = QMessageBox(parent)
     dialog.setWindowTitle("Update Available")
     dialog.setText(message)
     dialog.setStandardButtons(
@@ -163,21 +185,23 @@ class eaApp(QApplication):
 
         self.styleHints().setColorScheme(Qt.ColorScheme.Light)
 
-        self.setApplicationDisplayName("StarFire")
-        self.setApplicationName("StarFire")
+        self.setApplicationDisplayName("EconAutomation")
+        self.setApplicationName("EconAutomation")
 
-        check_and_apply_update(prompt_fn=_update_prompt)
+        save_install_location()
 
         self.ea_main_window = EconAutomationMainWindow()
-        self.ea_main_window.setWindowIcon(
-            QIcon(str(Path(r"src/gui_resources/images/starfire.png")))
-        )
-
         self.ea_main_window.show()
+
+        # Check after show() so the dialog has a rendered parent window and
+        # appears centered on it rather than as an orphaned system dialog.
+        check_and_apply_update(
+            prompt_fn=lambda msg: _update_prompt(msg, self.ea_main_window)
+        )
 
 
 if __name__ == "__main__":
-    myappid = "StarFire"
+    myappid = "EconAutomation"
     if platform.system() == "Windows":
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     ea_app = eaApp(argv=sys.argv)

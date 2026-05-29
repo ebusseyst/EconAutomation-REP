@@ -38,6 +38,15 @@ WORKBOOK_OUTPUTS_SHEET_NAME: str = "REPORT_OUTPUTS"
 
 logger = logging.getLogger(__name__)
 
+# Glob patterns used by build_selected_files_dict to locate workbooks inside a
+# claimant directory.  Each list is tried in order; first match wins.
+_WORKBOOK_GLOB_PATTERNS: dict[str, list[str]] = {
+    "CASE_VARIABLES": ["*Case Variables*.xlsx", "*Case_Variables*.xlsx"],
+    "WORKING_CALC":   ["*WorkingCalc*.xlsm", "*WorkingCalc*.xlsx"],
+    "PV2":            ["*PV2*.xlsm"],
+    "HHSPV":          ["*HHS_PV*.xlsx"],
+}
+
 _DEFAULT_SELECTED_FILES: dict[str, dict[str, Path]] = {
     "workbook_filepaths": {
         "CASE_VARIABLES": Path("/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/ea_outputs/private_claimant_directories/G/Gaston, Casper (J. D’Attorney)/GastonC - Case Variables.xlsx"),
@@ -78,6 +87,48 @@ def setup_new_case_workflow(
     if not sel_OFF_filepath.is_file():
         raise ValueError(f"OFF file not found: {sel_OFF_filepath}")
     setup_new_case(sel_OFF_filepath, base_filepaths, wb_template_dir)
+
+
+def build_selected_files_dict(
+    claimant_dir: Path,
+    requested_template_keys: list[str] | None = None,
+) -> dict[str, dict[str, Path]]:
+    """
+    Builds a selected_files_dict for run_extraction_and_report_merge by
+    scanning claimant_dir for known workbook patterns and resolving template
+    paths from ea_config.yaml.
+
+    Args:
+        claimant_dir: Path to the selected claimant's working directory.
+        requested_template_keys: Template keys to include (e.g.
+            ["PV_EARNINGS_TEMPLATE"]).  None includes all configured templates.
+
+    Returns:
+        A dict with "workbook_filepaths", "template_filepaths", and
+        "output_filepaths" ready for run_extraction_and_report_merge.
+    """
+    workbook_fps: dict[str, Path] = {}
+    for key, patterns in _WORKBOOK_GLOB_PATTERNS.items():
+        for pattern in patterns:
+            matches = list(claimant_dir.glob(pattern))
+            if matches:
+                workbook_fps[key] = matches[0]
+                break
+        else:
+            logger.warning("build_selected_files_dict: no match for %s in %s", key, claimant_dir)
+
+    fs = fsc()
+    all_template_fps: dict[str, Path] = fs.main_filepaths_dict["template_filepaths"]
+    if requested_template_keys is not None:
+        template_fps = {k: v for k, v in all_template_fps.items() if k in requested_template_keys}
+    else:
+        template_fps = all_template_fps
+
+    return {
+        "workbook_filepaths": workbook_fps,
+        "template_filepaths": template_fps,
+        "output_filepaths": {"CLAIMANT_DIR": claimant_dir},
+    }
 
 
 def run_extraction_and_report_merge(

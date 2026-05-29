@@ -1,6 +1,9 @@
 from pathlib import Path
 from typing import Any
+import logging
 import shutil
+
+logger = logging.getLogger(__name__)
 
 from econ_automation.ea_scripts.case_setup_scripts.OFF_extraction_codebase import (
     OFFExtractor,
@@ -98,10 +101,20 @@ def prepare_claimant_workbooks(
     Processes each non-"Case_Variables" workbook saved in the private claimant folder, adding case variable info where appropriate.
     """
     if claimant_wb_path.name == "PV2_Current.xlsm":
+        new_wb_name = f"{case_profile.claimant_name_last}{case_profile.claimant_name_first_initial} - {claimant_wb_path.name}"
+        final_path = claimant_wb_path.parent / new_wb_name
+        if final_path.exists():
+            logger.warning("Skipping %s: %s already exists.", claimant_wb_path.name, final_path)
+            claimant_wb_path.unlink()
+            return
         set_PV2_case_variables(case_profile, claimant_wb_path)
+        claimant_wb_path.rename(final_path)
+    elif claimant_wb_path.name in ("WorkingCalc_Current.xlsm", "WorkingCalc_Current.xlsx"):
         new_wb_name = f"{case_profile.claimant_name_last}{case_profile.claimant_name_first_initial} - {claimant_wb_path.name}"
-        claimant_wb_path.rename(claimant_wb_path.parent.joinpath(new_wb_name))
-    elif claimant_wb_path.name == "WorkingCalc_Current.xlsm":
+        final_path = claimant_wb_path.parent / new_wb_name
+        if final_path.exists():
+            logger.warning("Skipping %s: %s already exists.", claimant_wb_path.name, final_path)
+            claimant_wb_path.unlink()
+            return
         set_WC_case_variables(case_profile, claimant_wb_path)
-        new_wb_name = f"{case_profile.claimant_name_last}{case_profile.claimant_name_first_initial} - {claimant_wb_path.name}"
-        claimant_wb_path.rename(claimant_wb_path.parent.joinpath(new_wb_name))
+        claimant_wb_path.rename(final_path)

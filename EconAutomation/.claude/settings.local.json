@@ -17,7 +17,14 @@
       "Bash(python3 scripts/office/unpack.py \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx\" /tmp/pv_earnings_unpacked/)",
       "Bash(pandoc \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx\" -t markdown --wrap=none)",
       "Bash(python3 -)",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(cp \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template_Updated.docx\" pv_template.docx)",
+      "Bash(unzip -o pv_template.docx -d pv_template_extracted/)",
+      "Bash(python3)",
+      "Bash(rm -rf pv_template_extracted)",
+      "Bash(zip -r /tmp/PV_Earnings_Report_Template_Updated_fixed.docx . -x \"*.DS_Store\")",
+      "Bash(cp /tmp/PV_Earnings_Report_Template_Updated_fixed.docx \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template_Updated.docx\")",
+      "Bash(xargs cat)"
     ],
     "additionalDirectories": [
       "/private/tmp"

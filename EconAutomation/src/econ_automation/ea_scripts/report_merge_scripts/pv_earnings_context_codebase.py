@@ -137,10 +137,10 @@ class PVEarningsContextBuilder:
         """
         Builds the ``rehab_report_types`` list consumed by:
             {% if 'LCP' in rehab_report_types %}
+            {% if 'MCP' in rehab_report_types %}
             {% if 'Voc' in rehab_report_types %}
 
-        When GUI toggles are present the list comes directly from them
-        (driven by the PVLCP checkbox and any future Voc checkbox).
+        When GUI toggles are present the list comes directly from them.
         Otherwise the list is inferred from the extracted dataclass.
         """
         if self._gui is not None:
@@ -150,7 +150,9 @@ class PVEarningsContextBuilder:
         types: list[str] = []
         if self._is_populated("LCP_expert_name_full_with_titles"):
             types.append("LCP")
-        # if self._is_populated("voc_expert_name_full_with_titles"):
+        if self._is_populated("MCP_expert_name_full_with_titles"):
+            types.append("MCP")
+        # if self._is_populated("Voc_expert_name_full_with_titles"):
         #     types.append("Voc")
         return {"rehab_report_types": types}
 

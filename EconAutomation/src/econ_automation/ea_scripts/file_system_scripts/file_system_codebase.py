@@ -1,4 +1,6 @@
 import logging
+import os
+import platform
 import sys
 import tempfile
 from pathlib import Path
@@ -31,9 +33,23 @@ PROJECT_ROOT = obtain_project_root()
 def obtain_resource_path(relative_path: str, src_bool: bool = True) -> Path:
     """
     Resolve path to a bundled resource; works in dev and PyInstaller exe.
+
+    src_bool=True  → bundled read-only asset (templates, config): resolves
+                     into sys._MEIPASS when frozen.
+    src_bool=False → user-writable output/temp path: resolves into a
+                     per-user app-data directory when frozen so the app can
+                     write files even when installed under Program Files.
     """
     if hasattr(sys, "_MEIPASS"):
-        return Path(sys._MEIPASS) / relative_path
+        if src_bool:
+            return Path(sys._MEIPASS) / relative_path
+        # Route writable paths to a user-owned directory.
+        if platform.system() == "Windows":
+            base = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "EconAutomation"
+        else:
+            base = Path.home() / "Library" / "Application Support" / "EconAutomation"
+        base.mkdir(parents=True, exist_ok=True)
+        return base / relative_path
 
     if src_bool:
         return Path(PROJECT_ROOT / "src" / relative_path)
