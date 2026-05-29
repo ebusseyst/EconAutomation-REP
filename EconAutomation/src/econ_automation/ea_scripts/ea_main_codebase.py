@@ -47,22 +47,6 @@ _WORKBOOK_GLOB_PATTERNS: dict[str, list[str]] = {
     "HHSPV":          ["*HHS_PV*.xlsx"],
 }
 
-_DEFAULT_SELECTED_FILES: dict[str, dict[str, Path]] = {
-    "workbook_filepaths": {
-        "CASE_VARIABLES": Path("/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/ea_outputs/private_claimant_directories/G/Gaston, Casper (J. D’Attorney)/GastonC - Case Variables.xlsx"),
-        "WORKING_CALC": Path("/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/ea_outputs/private_claimant_directories/G/Gaston, Casper (J. D’Attorney)/GastonC - WorkingCalc_Current.xlsm"),
-        "PV2": Path("/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/ea_outputs/private_claimant_directories/G/Gaston, Casper (J. D’Attorney)/GastonC - PV2_Current.xlsm"),
-        "HHSPV": Path("/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/ea_outputs/private_claimant_directories/G/Gaston, Casper (J. D’Attorney)/HHS_PV_New (color coded).xlsx")
-    },
-    "template_filepaths": {
-        "PV_EARNINGS_TEMPLATE": Path("/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx"),
-        "PVLCP_TEMPLATE": Path("/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PVLCP_Report_Template.docx")
-    },
-    "output_filepaths": {
-        "SAMPLE_CLAIMANT_DIR": Path("/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/ea_outputs/private_claimant_directories/G/Gaston, Casper (J. D’Attorney)")
-    }
-}
-
 
 # ── Primary entry points ──────────────────────────────────────────────────────
 
@@ -132,7 +116,7 @@ def build_selected_files_dict(
 
 
 def run_extraction_and_report_merge(
-    selected_files_dict: dict[str, dict[str, Path]] = _DEFAULT_SELECTED_FILES,
+    selected_files_dict: dict[str, dict[str, Path]],
     gui_overrides: dict[str, Any] | None = None,
 ) -> None:
     """

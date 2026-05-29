@@ -7,29 +7,28 @@ from pathlib import Path
 
 import yaml
 
-# Module's logger instance
 logger = logging.getLogger(__name__)
 
+EA_CONFIG_PATH = Path(
+    r"S:/Shared Folders/Shared Documents/Economics Claimant Folder"
+    r"/00-EconAutomation Reference Files/ea_config.yaml"
+)
 
-# Load Project Root Directory
+
 def obtain_project_root(marker_filename: str = "pyproject.toml") -> Path:
     """
     Resolve path to the project root directory.
     """
     current = Path(__file__).resolve()
-
     for parent in current.parents:
         if (parent / marker_filename).exists():
             return parent
-
     return current.parent
 
 
-# Assigns Project Root Directory to constant
 PROJECT_ROOT = obtain_project_root()
 
 
-# Resource path function
 def obtain_resource_path(relative_path: str, src_bool: bool = True) -> Path:
     """
     Resolve path to a bundled resource; works in dev and PyInstaller exe.
@@ -43,7 +42,6 @@ def obtain_resource_path(relative_path: str, src_bool: bool = True) -> Path:
     if hasattr(sys, "_MEIPASS"):
         if src_bool:
             return Path(sys._MEIPASS) / relative_path
-        # Route writable paths to a user-owned directory.
         if platform.system() == "Windows":
             base = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "EconAutomation"
         else:
@@ -59,27 +57,18 @@ def obtain_resource_path(relative_path: str, src_bool: bool = True) -> Path:
 
 class FileSystemCore:
     def __init__(self):
-        # Load ea_config.yaml
         self.main_filepaths_dict = self.load_ea_config()
+        self.temp_dir, self.temp_dir_filepath = self.create_temp_directory()
 
-        # Create Temporary Directory
-        self.temp_dir, self.temp_dir_filepath = self.create_temp_directory(
-            self.main_filepaths_dict["temp_dir_filepaths"]["TEMP_DIR"]
-        )
-
-    def create_temp_directory(
-        self, temp_dir_filepath: Path
-    ) -> tuple[tempfile.TemporaryDirectory, Path]:
+    def create_temp_directory(self) -> tuple[tempfile.TemporaryDirectory, Path]:
         """
-        Creates a temporary directory for storing tables and charts prior to report merge.
+        Creates a temporary directory in the OS default temp location for
+        storing charts and tables prior to report merge.
         """
-        temp_directory = tempfile.TemporaryDirectory(
-            dir=temp_dir_filepath, ignore_cleanup_errors=True
-        )
-        temp_dir_path = Path(temp_directory.name)
-        return temp_directory, temp_dir_path
+        temp_directory = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+        return temp_directory, Path(temp_directory.name)
 
-    def cleanup_temp_directory(self):
+    def cleanup_temp_directory(self) -> None:
         """
         Deletes the temporary directory and its contents.
         """
@@ -87,37 +76,25 @@ class FileSystemCore:
 
     def load_ea_config(self) -> dict[str, dict[str, Path]]:
         """
-        Loads ea_config.yaml and resolves paths to resources.
+        Loads ea_config.yaml and resolves all paths.
         """
-        filepaths_dict = {}
-        with open(obtain_resource_path("supporting_docs/ea_config.yaml"), "r") as f:
+        with open(EA_CONFIG_PATH, "r") as f:
             ea_config_data = yaml.safe_load(f)
 
-        for filepath_key, filepath_dict in ea_config_data.items():
-            if filepath_key == "output_filepaths":
-                filepaths_dict[filepath_key] = self._resolve_file_paths(
-                    filepath_dict, src_bool=False
-                )
-
-            elif filepath_key == "temp_dir_filepaths":
-                filepaths_dict[filepath_key] = self._resolve_file_paths(
-                    filepath_dict, src_bool=False
-                )
-
-            else:
-                filepaths_dict[filepath_key] = self._resolve_file_paths(
-                    filepath_dict, src_bool=True
-                )
-
-        return filepaths_dict
+        return {
+            key: self._resolve_file_paths(filepath_dict)
+            for key, filepath_dict in ea_config_data.items()
+        }
 
     def _resolve_file_paths(
-        self, filepath_dict: dict[str, str], src_bool: bool = True
+        self, filepath_dict: dict[str, str]
     ) -> dict[str, Path]:
         """
-        Resolves paths to resources, including nested dictionaries.
+        Resolves each path string to a Path via obtain_resource_path.
+        Absolute paths (e.g. S:/...) resolve correctly because Path joining
+        replaces the base when the right-hand side is absolute.
         """
-        resolved_filepaths = {}
-        for name, filepath in filepath_dict.items():
-            resolved_filepaths[name] = obtain_resource_path(filepath, src_bool=src_bool)
-        return resolved_filepaths
+        return {
+            name: obtain_resource_path(filepath)
+            for name, filepath in filepath_dict.items()
+        }
