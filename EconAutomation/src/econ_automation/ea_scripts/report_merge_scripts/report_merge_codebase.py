@@ -3,7 +3,9 @@ from pathlib import Path
 from typing import Any
 from datetime import datetime, date
 
-from docxtpl import DocxTemplate
+from docx.shared import Mm
+
+from docxtpl import DocxTemplate, InlineImage
 from jinja2 import Environment, Undefined
 
 from econ_automation.ea_scripts.report_merge_scripts.run_consolidation_codebase import (
@@ -98,6 +100,7 @@ def merge_reports_core(
     selected_template_filepaths: list[Path],
     selected_output_filepaths: list[Path],
     gui_overrides: dict[str, Any] | None = None,
+    image_paths: dict[str, Path] | None = None,
 ) -> None:
     """
     Renders all Word document templates via docxtpl and saves the outputs.
@@ -112,6 +115,10 @@ def merge_reports_core(
     is present for a template, its toggles are forwarded to the context
     builder so GUI widget state drives the report rather than dataclass
     inference.
+
+    ``image_paths`` maps template variable name → Path for chart/table images
+    extracted from workbooks. Each path is converted to an InlineImage bound
+    to the current DocxTemplate before rendering.
     """
     try:
         jinja_env = Environment(undefined=_DebugUndefined)
@@ -126,6 +133,16 @@ def merge_reports_core(
                 logger.info(f"merge_reports_core: using fallback variable map for {template_filepath.stem}")
 
             doc = DocxTemplate(str(template_filepath))
+
+            if image_paths:
+                for var_name, img_path in image_paths.items():
+                    if img_path.exists():
+                        context[var_name] = InlineImage(doc, str(img_path), width=Mm(150))
+                    else:
+                        logger.warning(
+                            f"merge_reports_core: image not found, skipping '{var_name}': {img_path}"
+                        )
+
             consolidate_all_runs(doc)
             doc.render(context, jinja_env=jinja_env)
             save_output_document(

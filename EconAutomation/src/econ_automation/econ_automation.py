@@ -56,12 +56,18 @@ class EconAutomationMainWindow(QMainWindow):
 
     # ── Setup ─────────────────────────────────────────────────────────────────
 
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        self._resize_timer.start(120)
+
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
         self._resize_timer.start(120)
 
     def _on_resize_settled(self) -> None:
-        scale = self.height() / self.ui.BASE_HEIGHT
+        min_h = self.minimumSizeHint().height()
+        base = min_h if min_h > 0 else self.ui.BASE_HEIGHT
+        scale = self.height() / base
         self.ui._apply_styles(scale)
 
     def _setup_comboboxes(self) -> None:
@@ -86,8 +92,14 @@ class EconAutomationMainWindow(QMainWindow):
         label.setText(claimant_name if claimant_name else "No claimant OFF selected.")
 
     def _on_create_case(self) -> None:
-        if self._selected_off_path:
-            create_case_function(self._selected_off_path)
+        if not self._selected_off_path:
+            QMessageBox.warning(
+                self,
+                "No OFF File Selected",
+                "Please select an OFF file in the 'Set Up Case' section before creating a case.",
+            )
+            return
+        create_case_function(self._selected_off_path)
 
     def _on_claimantdir_select(self) -> None:
         result = select_claimant_folder_modal(self, "Select Econ Claimant Folder")
@@ -100,7 +112,11 @@ class EconAutomationMainWindow(QMainWindow):
 
     def _on_merge_clicked(self) -> None:
         if self._selected_claimant_dir is None:
-            logger.warning("_on_merge_clicked: no claimant directory selected.")
+            QMessageBox.warning(
+                self,
+                "No Claimant Folder Selected",
+                "Please select an econ claimant folder in the 'Report Merge' section before merging.",
+            )
             return
 
         ui = self.ui
@@ -108,7 +124,9 @@ class EconAutomationMainWindow(QMainWindow):
         requested_template_keys: list[str] = []
 
         if ui.ea_reportmerge_reporttypes_PVearnings_checkbox.isChecked():
-            gui_overrides["PV_Earnings_Report_Template"] = self._collect_pv_earnings_toggles()
+            gui_overrides["PV_Earnings_Report_Template"] = (
+                self._collect_pv_earnings_toggles()
+            )
             requested_template_keys.append("PV_EARNINGS_TEMPLATE")
         if ui.ea_reportmerge_reporttypes_PVLCP_checkbox.isChecked():
             gui_overrides["PVLCP_Report_Template"] = self._collect_pvlcp_toggles()

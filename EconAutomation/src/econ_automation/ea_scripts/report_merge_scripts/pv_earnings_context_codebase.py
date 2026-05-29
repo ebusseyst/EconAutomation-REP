@@ -15,6 +15,7 @@ class PVEarningsToggles:
     dataclass inference.  All fields default to a conservative "off" state
     so a partially-constructed instance is safe to use.
     """
+
     base1_toggle: bool = True
     base2_toggle: bool = False
     base3_toggle: bool = False
@@ -24,7 +25,7 @@ class PVEarningsToggles:
     meals_toggle: bool = False
     benefits_toggle: bool = False
     taxed_toggle: bool = False
-    projection_type_toggle: str = "WLE"   # "WLE" or "toage"
+    projection_type_toggle: str = "WLE"  # "WLE" or "toage"
     rehab_report_types: list[str] = field(default_factory=list)  # e.g. ["LCP", "Voc"]
 
 
@@ -47,7 +48,9 @@ class PVEarningsContextBuilder:
     and any headless / scripted invocation.
     """
 
-    def __init__(self, ea_main_dataclass: Any, gui_toggles: PVEarningsToggles | None = None) -> None:
+    def __init__(
+        self, ea_main_dataclass: Any, gui_toggles: PVEarningsToggles | None = None
+    ) -> None:
         self._raw = ea_main_dataclass
         self._gui = gui_toggles
 
@@ -86,7 +89,9 @@ class PVEarningsContextBuilder:
         can render {{r ...}} tags correctly.
         """
         if isinstance(self._raw, BaseModel):
-            return {k: v for k, v in self._raw.__dict__.items() if not k.startswith("_")}
+            return {
+                k: v for k, v in self._raw.__dict__.items() if not k.startswith("_")
+            }
         if is_dataclass(self._raw):
             return {f.name: self._get(f.name) for f in fields(self._raw)}
         # Fallback: plain object with __dict__
@@ -168,7 +173,7 @@ class PVEarningsContextBuilder:
             # Remove this alias once the template is corrected to use one name.
             "clm_WLE_from_trial_full": self._get("claimant_WLE_from_trial_full"),
         }
-        
+
     def _derived_fields(self) -> dict[str, Any]:
         """
         Compute derived values that are not directly present in the
@@ -179,21 +184,66 @@ class PVEarningsContextBuilder:
         return {
             # Maps projection_type_toggle → the string the template checks against.
             # GUI stores "toage"; template was authored against "TR".
-            "earnings_projection_type": "WLE" if toggles["projection_type_toggle"] == "WLE" else "TR",
+            "earnings_projection_type": "WLE"
+            if toggles["projection_type_toggle"] == "WLE"
+            else "TR",
             # This template is always the PV Earnings report; the outer {%p if %} wrapper
             # in the template checks 'PV Earnings' in report_templates.
             "report_templates": ["PV Earnings"],
-
-            "single_base": (True if toggles["base1_toggle"] and not toggles["base2_toggle"] and not toggles["base3_toggle"] else False),
-            "single_credit": (True if toggles["credit1_toggle"] and not toggles["credit2_toggle"] and not toggles["credit3_toggle"] else False),
-
-            "multi_base": (True if toggles["base1_toggle"] and (toggles["base2_toggle"] or toggles["base3_toggle"]) else False),
-            "multi_credit": (True if toggles["credit1_toggle"] and (toggles["credit2_toggle"] or toggles["credit3_toggle"]) else False),
-
-            "ssa_projection": (True if ((toggles["projection_type_toggle"] == "WLE" and int(self._get("claimant_WLE_from_trial_int")) >= 11) or (toggles["projection_type_toggle"] == "toage" and int(self._get("claimant_retire_from_trial_int")) >= 11)) else False),
-            "cbo_projection": (True if ((toggles["projection_type_toggle"] == "WLE" and int(self._get("claimant_WLE_from_trial_int")) < 11) or (toggles["projection_type_toggle"] == "toage" and int(self._get("claimant_retire_from_trial_int")) < 11)) else False),
-
-            # THIS IS WHERE I LEFT OFF
+            "single_base": (
+                True
+                if toggles["base1_toggle"]
+                and not toggles["base2_toggle"]
+                and not toggles["base3_toggle"]
+                else False
+            ),
+            "single_credit": (
+                True
+                if toggles["credit1_toggle"]
+                and not toggles["credit2_toggle"]
+                and not toggles["credit3_toggle"]
+                else False
+            ),
+            "multi_base": (
+                True
+                if toggles["base1_toggle"]
+                and (toggles["base2_toggle"] or toggles["base3_toggle"])
+                else False
+            ),
+            "multi_credit": (
+                True
+                if toggles["credit1_toggle"]
+                and (toggles["credit2_toggle"] or toggles["credit3_toggle"])
+                else False
+            ),
+            "ssa_projection": (
+                True
+                if (
+                    (
+                        toggles["projection_type_toggle"] == "WLE"
+                        and int(self._get("claimant_WLE_from_trial_int")) >= 11
+                    )
+                    or (
+                        toggles["projection_type_toggle"] == "toage"
+                        and int(self._get("claimant_retire_from_trial_int")) >= 11
+                    )
+                )
+                else False
+            ),
+            "cbo_projection": (
+                True
+                if (
+                    (
+                        toggles["projection_type_toggle"] == "WLE"
+                        and int(self._get("claimant_WLE_from_trial_int")) < 11
+                    )
+                    or (
+                        toggles["projection_type_toggle"] == "toage"
+                        and int(self._get("claimant_retire_from_trial_int")) < 11
+                    )
+                )
+                else False
+            ),
         }
 
 

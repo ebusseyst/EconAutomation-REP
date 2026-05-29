@@ -15,6 +15,7 @@ class PVLCPToggles:
     type(s) are present: 'LCP' (Life Care Plan) and/or 'MCP' (Medical Cost
     Projection).  This is driven by the Reference Type combobox in the GUI.
     """
+
     rehab_report_types: list[str] = field(default_factory=lambda: ["LCP"])
 
 
@@ -32,7 +33,9 @@ class PVLCPContextBuilder:
     — used by the test harness and headless runs.
     """
 
-    def __init__(self, ea_main_dataclass: Any, gui_toggles: PVLCPToggles | None = None) -> None:
+    def __init__(
+        self, ea_main_dataclass: Any, gui_toggles: PVLCPToggles | None = None
+    ) -> None:
         self._raw = ea_main_dataclass
         self._gui = gui_toggles
 
@@ -61,7 +64,9 @@ class PVLCPContextBuilder:
 
     def _all_fields(self) -> dict[str, Any]:
         if isinstance(self._raw, BaseModel):
-            return {k: v for k, v in self._raw.__dict__.items() if not k.startswith("_")}
+            return {
+                k: v for k, v in self._raw.__dict__.items() if not k.startswith("_")
+            }
         if is_dataclass(self._raw):
             return {f.name: self._get(f.name) for f in fields(self._raw)}
         return {k: v for k, v in vars(self._raw).items() if not k.startswith("_")}
@@ -86,6 +91,25 @@ class PVLCPContextBuilder:
         # if self._is_populated("MCP_expert_name_full_with_titles"):
         #     types.append("MCP")
         return {"rehab_report_types": types}
+
+    def _derived_fields(self) -> dict[str, Any]:
+        """
+        Compute derived values that are not directly present in the
+        extracted dataclass. Used in conjunction with conditionals within
+        the Word template.
+        """
+        return {
+            "report_templates": ["PVLCP"],
+            "PV_is_range": sum(
+                self._is_populated(f)
+                for f in (
+                    "PV_Summary_No_Rounding_Total_Low",
+                    "PV_Summary_No_Rounding_Total_Mid",
+                    "PV_Summary_No_Rounding_Total_High",
+                )
+            )
+            >= 2,
+        }
 
 
 def build_pvlcp_context(

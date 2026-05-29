@@ -266,21 +266,27 @@ class Ui_ea_MainWindow(object):
         self.ea_setupfile_GLayout.setObjectName("ea_setupfile_GLayout")
         self.ea_setupfile_GLayout.setHorizontalSpacing(5)
         self.ea_setupfile_GLayout.setVerticalSpacing(0)
-        self.ea_setupfile_GLayout.setContentsMargins(5,5,5,5)
+        self.ea_setupfile_GLayout.setContentsMargins(5, 5, 5, 5)
 
         self.ea_setupcase_orgsubframe = QFrame(self.ea_setupcase_frame)
         self.ea_setupcase_orgsubframe.setObjectName("ea_setupcase_orgsubframe")
         self.ea_setupcase_orgsubframe.setFrameShape(QFrame.Shape.NoFrame)
         self.ea_setupcase_orgsubframe.setFrameShadow(QFrame.Shadow.Raised)
-        self.ea_setupcase_orgsubframe_GLayout = QGridLayout(self.ea_setupcase_orgsubframe)
-        self.ea_setupcase_orgsubframe_GLayout.setObjectName("ea_setupcase_orgsubframe_GLayout")
-        self.ea_setupcase_orgsubframe_GLayout.setContentsMargins(3,3,3,3)
+        self.ea_setupcase_orgsubframe_GLayout = QGridLayout(
+            self.ea_setupcase_orgsubframe
+        )
+        self.ea_setupcase_orgsubframe_GLayout.setObjectName(
+            "ea_setupcase_orgsubframe_GLayout"
+        )
+        self.ea_setupcase_orgsubframe_GLayout.setContentsMargins(3, 3, 3, 3)
 
         self.ea_setupcase_label = QLabel(self.ea_setupcase_orgsubframe)
         self.ea_setupcase_label.setObjectName("ea_setupcase_label")
         self.ea_setupcase_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.ea_setupcase_orgsubframe_GLayout.addWidget(self.ea_setupcase_label, 0, 0, 1, 3)
+        self.ea_setupcase_orgsubframe_GLayout.addWidget(
+            self.ea_setupcase_label, 0, 0, 1, 3
+        )
 
         self.ea_setupcase_sub2frame = QFrame(self.ea_setupcase_orgsubframe)
         self.ea_setupcase_sub2frame.setObjectName("ea_setupcase_sub2frame")
@@ -310,7 +316,9 @@ class Ui_ea_MainWindow(object):
             self.ea_setupcase_selectedOFF_label, 0, 0, 1, 2
         )
 
-        self.ea_setupcase_orgsubframe_GLayout.addWidget(self.ea_setupcase_sub2frame, 1, 0, 1, 3)
+        self.ea_setupcase_orgsubframe_GLayout.addWidget(
+            self.ea_setupcase_sub2frame, 1, 0, 1, 3
+        )
 
         self.ea_setupcase_createcase_button = QPushButton(self.ea_setupcase_orgsubframe)
         self.ea_setupcase_createcase_button.setObjectName(
@@ -347,7 +355,9 @@ class Ui_ea_MainWindow(object):
         self.reportmerge_orgsubframe.setFrameShape(QFrame.Shape.StyledPanel)
         self.reportmerge_orgsubframe.setFrameShadow(QFrame.Shadow.Raised)
         self.reportmerge_orgsubframe_GLayout = QGridLayout(self.reportmerge_orgsubframe)
-        self.reportmerge_orgsubframe_GLayout.setObjectName("reportmerge_orgsubframe_GLayout")
+        self.reportmerge_orgsubframe_GLayout.setObjectName(
+            "reportmerge_orgsubframe_GLayout"
+        )
         self.reportmerge_orgsubframe_GLayout.setContentsMargins(5, 5, 5, 5)
         self.reportmerge_orgsubframe_GLayout.setSpacing(3)
 
@@ -365,7 +375,9 @@ class Ui_ea_MainWindow(object):
         self.ea_reportmerge_sub2frame_GLayout.setColumnStretch(0, 2)
         self.ea_reportmerge_sub2frame_GLayout.setColumnStretch(1, 2)
 
-        self.ea_reportmerge_sub2frame_section_label = QLabel(self.ea_reportmerge_sub2frame)
+        self.ea_reportmerge_sub2frame_section_label = QLabel(
+            self.ea_reportmerge_sub2frame
+        )
         self.ea_reportmerge_sub2frame_section_label.setObjectName(
             "ea_reportmerge_sub2frame_section_label"
         )
@@ -498,7 +510,9 @@ class Ui_ea_MainWindow(object):
         self.ea_reportmerge_bases_GLayout = QGridLayout(
             self.ea_reportmerge_bases_sub3frame
         )
-        self.ea_reportmerge_bases_GLayout.setSpacing(8)
+        self.ea_reportmerge_bases_GLayout.setContentsMargins(0, 0, 0, 0)
+        self.ea_reportmerge_bases_GLayout.setHorizontalSpacing(6)
+        self.ea_reportmerge_bases_GLayout.setVerticalSpacing(4)
         self.ea_reportmerge_bases_GLayout.setObjectName("ea_reportmerge_bases_GLayout")
         self.ea_reportmerge_bases_GLayout.setAlignment(
             Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter
@@ -760,7 +774,9 @@ class Ui_ea_MainWindow(object):
 
         self.ea_reportmerge_sub2frame_GLayout.addWidget(self.frame_8, 5, 1, 1, 1)
 
-        self.reportmerge_orgsubframe_GLayout.addWidget(self.ea_reportmerge_sub2frame, 1, 0, 1, 1)
+        self.reportmerge_orgsubframe_GLayout.addWidget(
+            self.ea_reportmerge_sub2frame, 1, 0, 1, 1
+        )
 
         self.ea_reportmerge_label = QLabel(self.ea_reportmerge_frame)
         self.ea_reportmerge_label.setObjectName("ea_reportmerge_label")
@@ -781,9 +797,7 @@ class Ui_ea_MainWindow(object):
             "ea_reportmerge_claimantdir_subframe_GLayout"
         )
 
-        self.ea_reportmerge_claimantdir_subframe_GLayout.setContentsMargins(
-            8, 8, 8, 8
-        )
+        self.ea_reportmerge_claimantdir_subframe_GLayout.setContentsMargins(8, 8, 8, 8)
         self.ea_reportmerge_claimantdir_subframe_GLayout.setVerticalSpacing(8)
         self.ea_reportmerge_claimantdir_subframe_GLayout.setHorizontalSpacing(8)
 
@@ -836,8 +850,13 @@ class Ui_ea_MainWindow(object):
         )
 
         self.ea_reportmerge_claimantdir_subframe_GLayout.addItem(
-            QSpacerItem(20, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding),
-            2, 0, 1, 4
+            QSpacerItem(
+                20, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
+            ),
+            2,
+            0,
+            1,
+            4,
         )
 
         self.ea_reportmerge_button = QPushButton(self.ea_reportmerge_frame)
@@ -903,6 +922,7 @@ class Ui_ea_MainWindow(object):
         fs = {
             "fs_header": max(10, round(18 * scale)),
             "fs_section": max(8, round(13 * scale)),
+            "fs_subsection": max(8, round(12.5 * scale)),
             "fs_body": max(7, round(12 * scale)),
             "fs_small": max(7, round(11 * scale)),
             "fs_xs": max(6, round(10 * scale)),
@@ -1134,7 +1154,7 @@ class Ui_ea_MainWindow(object):
                 border-radius: 8px;
                 background-color: {warm_gold};
             }}
-            #ea_reportmerge_frame #ea_reportmerge_claimantdir_subframe ea_reportmerge_claimantdir_section_label {{
+            #ea_reportmerge_frame #ea_reportmerge_claimantdir_subframe #ea_reportmerge_claimantdir_section_label {{
                 background-color: transparent;
                 border-color: transparent;
                 font-family: DM Sans;
@@ -1152,7 +1172,7 @@ class Ui_ea_MainWindow(object):
                 border: 1px solid {dark_navy};
                 border-radius: 4px;
             }}
-            #ea_reportmerge_frame #ea_reportmerge_claimantdir_subframe #ea_reportmerge_selectedclaimantdir_button {{
+            #ea_reportmerge_frame #ea_reportmerge_claimantdir_subframe #ea_reportmerge_claimantdirselect_button {{
                 border: 1px solid {dark_navy};
                 border-radius: 4px;
                 background-color: white;
@@ -1162,10 +1182,10 @@ class Ui_ea_MainWindow(object):
                 color: {dark_navy};
                 padding: 3px;
             }}
-            #ea_reportmerge_frame #ea_reportmerge_claimantdir_subframe #ea_reportmerge_selectedclaimantdir_button:hover {{
+            #ea_reportmerge_frame #ea_reportmerge_claimantdir_subframe #ea_reportmerge_claimantdirselect_button:hover {{
                 background-color: {off_white};
             }}
-            #ea_reportmerge_frame #ea_reportmerge_claimantdir_subframe #ea_reportmerge_selectedclaimantdir_button:pressed {{
+            #ea_reportmerge_frame #ea_reportmerge_claimantdir_subframe #ea_reportmerge_claimantdirselect_button:pressed {{
                 background-color: gray;
             }}
             #ea_reportmerge_frame #ea_reportmerge_button {{

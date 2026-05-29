@@ -14,6 +14,18 @@ import xlwings as xw
 # Module's logger instance
 logger = logging.getLogger(__name__)
 
+# Maps REPORT_OUTPUTS variable_type column values → DataFormatterCore list keys.
+# "Text" and "Integer" are intentionally absent: Text needs no reformatting,
+# Integer is handled separately via reprocess_integers.
+_VARIABLE_TYPE_MAP: dict[str, str] = {
+    "Currency": "currency_values",
+    "Date (Short)": "short_form_dates",
+    "Date (Long)": "long_form_dates",
+    "Percentage": "percentages",
+    "Decimal/Float": "floats",
+    "Integer": "integers",
+}
+
 
 class WorkbookInfoCore:
     """
@@ -64,7 +76,7 @@ class WorkbookInfoCore:
         workbook_name: str,
         active_workbook: opxl.Workbook,
         workbook_outputs_sheet_name: str,
-    ) -> dict[str, tuple[str, str]]:
+    ) -> dict[str, tuple[str, str, str]]:
         """
         Defines the target cells for the instanced workbook. Data is pulled from dedicated "REPORT_OUTPUTS" tab on each
         relevant worksheet and returned as a nested dictionary (e.g., {"variable_name": ("worksheet_name", "cell_address")}).
@@ -80,22 +92,26 @@ class WorkbookInfoCore:
                         continue
                     variable_name = row[0].value
                     variable_value = row[1].value
-                    if (
-                        (variable_name == "" or variable_name is None)
-                        or (variable_value == "" or variable_value is None)
+                    if (variable_name == "" or variable_name is None) or (
+                        variable_value == "" or variable_value is None
                     ):
                         continue
-                    workbook_variables_dict[f"{variable_name}"] = (workbook_outputs_sheet_name, f"{row[1].coordinate}")
+                    workbook_variables_dict[f"{variable_name}"] = (
+                        workbook_outputs_sheet_name,
+                        f"{row[1].coordinate}",
+                    )
             for row in workbook_outputs_sheet.iter_rows(
                 min_row=3, min_col=1, max_col=4, max_row=100, values_only=True
             ):
                 variable_name = row[0]
                 worksheet_name = row[1]
                 cell_address = row[2]
+                variable_type = row[3]
                 if (
                     (variable_name == "" or variable_name is None)
                     or (worksheet_name == "" or worksheet_name is None)
                     or (cell_address == "" or cell_address is None)
+                    or (variable_type == "" or variable_type is None)
                 ):
                     logger.debug(
                         "DataExtractorCore.define_workbook_variables_dict: Empty column(s) found in REPORT_OUTPUTS tab."
@@ -104,6 +120,7 @@ class WorkbookInfoCore:
                 workbook_variables_dict[f"{variable_name}"] = (
                     f"{worksheet_name}",
                     f"{cell_address}",
+                    f"{variable_type}",
                 )
             logger.info(
                 f"DataExtractorCore.define_workbook_variables_dict: {workbook_name} variables dict: {workbook_variables_dict}"
@@ -278,7 +295,12 @@ class DataFormatterCore:
         if isinstance(percentage_value, float):
             return percentage_value
         else:
-            cleaned = percentage_value.replace("$", "").replace(",", "").replace("%", "").strip()
+            cleaned = (
+                percentage_value.replace("$", "")
+                .replace(",", "")
+                .replace("%", "")
+                .strip()
+            )
             return float(cleaned)
 
     @staticmethod
@@ -289,7 +311,9 @@ class DataFormatterCore:
         if isinstance(float_value, float):
             return float_value
         else:
-            cleaned = float_value.replace("$", "").replace(",", "").replace("%", "").strip()
+            cleaned = (
+                float_value.replace("$", "").replace(",", "").replace("%", "").strip()
+            )
             return float(cleaned)
 
     # ── Main reformatting methods ───────────────────────────────────────
@@ -309,6 +333,8 @@ class DataFormatterCore:
                 self.reprocess_percentages(percentages_list=list_of_variables)
             elif list_name == "floats":
                 self.reprocess_floats(floats_list=list_of_variables)
+            elif list_name == "integers":
+                self.reprocess_integers(integers_list=list_of_variables)
 
     def reprocess_currency_values(self, currency_values_list: list[str]) -> None:
         """
@@ -450,6 +476,24 @@ class DataFormatterCore:
                 f"DataExtractorCore.reprocess_floats: Error reprocessing floats: {e}"
             )
 
+    def reprocess_integers(self, integers_list: list[str]) -> None:
+        """
+        Reprocesses provided values as integers (truncates any decimal portion).
+        """
+        try:
+            for var_name in integers_list:
+                val = getattr(self.workbook_dataclass, var_name, None)
+                if val is None or val == "":
+                    continue
+                setattr(self.workbook_dataclass, var_name, int(float(val)))
+            logger.debug(
+                f"DataFormatterCore.reprocess_integers: Reprocessed integers: {self.workbook_dataclass}"
+            )
+        except Exception as e:
+            logger.exception(
+                f"DataFormatterCore.reprocess_integers: Error reprocessing integers: {e}"
+            )
+
 
 class DataExtractorCore:
     """
@@ -459,7 +503,7 @@ class DataExtractorCore:
     def __init__(
         self,
         workbook_pathstr: str,
-        workbook_variables_dict: dict[str, tuple[str, str]],
+        workbook_variables_dict: dict[str, tuple[str, ...]],
         workbook_charts_dict: dict[str, str],
         workbook_tables_dict: dict[str, str],
         temp_dir_path: Path,
@@ -477,23 +521,34 @@ class DataExtractorCore:
         self.workbook_dataclass = self.extract_data(
             self.workbook_pathstr, self.workbook_variables_dict, workbook_model_class
         )
-        self.extract_charts(
-            workbook_pathstr=self.workbook_pathstr,
-            workbook_name=self.workbook_name,
-            workbook_charts_dict=workbook_charts_dict,
-            temp_dir_path=self.temp_dir_path,
+        DataFormatterCore(
+            workbook_dataclass=self.workbook_dataclass,
+            reformatting_lists_dict=self.build_reformatting_lists_dict(
+                self.workbook_variables_dict
+            ),
         )
-        self.extract_tables(
-            workbook_pathstr=self.workbook_pathstr,
-            workbook_name=self.workbook_name,
-            workbook_tables_dict=workbook_tables_dict,
-            temp_dir_path=self.temp_dir_path,
+        self.extracted_image_paths: dict[str, Path] = {}
+        self.extracted_image_paths.update(
+            self.extract_charts(
+                workbook_pathstr=self.workbook_pathstr,
+                workbook_name=self.workbook_name,
+                workbook_charts_dict=workbook_charts_dict,
+                temp_dir_path=self.temp_dir_path,
+            )
+        )
+        self.extracted_image_paths.update(
+            self.extract_tables(
+                workbook_pathstr=self.workbook_pathstr,
+                workbook_name=self.workbook_name,
+                workbook_tables_dict=workbook_tables_dict,
+                temp_dir_path=self.temp_dir_path,
+            )
         )
 
     def extract_data(
         self,
         workbook_pathstr: str,
-        workbook_variables_dict: dict[str, tuple[str, str]],
+        workbook_variables_dict: dict[str, tuple[str, ...]],
         workbook_dataclass: type[Any],
     ) -> Any:
         """
@@ -505,8 +560,10 @@ class DataExtractorCore:
             )
             data_dict = {}
             for variable_name, value_tuple in workbook_variables_dict.items():
-                worksheet_name, cell_address = value_tuple
-                data_dict[variable_name] = active_workbook[worksheet_name][cell_address].value
+                worksheet_name, cell_address = value_tuple[0], value_tuple[1]
+                data_dict[variable_name] = active_workbook[worksheet_name][
+                    cell_address
+                ].value
             active_workbook.close()
             model_instance = workbook_dataclass(**data_dict)
             logger.info(
@@ -525,7 +582,7 @@ class DataExtractorCore:
     def build_workbook_dataclass(
         self,
         workbook_name: str,
-        workbook_variables_dict: dict[str, tuple[str, str]],
+        workbook_variables_dict: dict[str, tuple[str, ...]],
     ) -> type[Any]:
         """
         Returns a dynamically created Pydantic model class for the workbook's data fields.
@@ -537,9 +594,30 @@ class DataExtractorCore:
         }
         return create_model(
             f"{workbook_name}Data",
-            __config__=ConfigDict(validate_assignment=True, arbitrary_types_allowed=True),
+            __config__=ConfigDict(
+                validate_assignment=True, arbitrary_types_allowed=True
+            ),
             **field_definitions,
         )
+
+    @staticmethod
+    def build_reformatting_lists_dict(
+        workbook_variables_dict: dict[str, tuple],
+    ) -> dict[str, list[str]]:
+        """
+        Builds a reformatting_lists_dict from the variable_type column (3rd element
+        of each tuple) in workbook_variables_dict. Variables whose type is not in
+        _VARIABLE_TYPE_MAP (e.g. "Text") or whose tuple has no type element are skipped.
+        """
+        result: dict[str, list[str]] = {}
+        for var_name, value_tuple in workbook_variables_dict.items():
+            if len(value_tuple) < 3:
+                continue
+            list_key = _VARIABLE_TYPE_MAP.get(value_tuple[2])
+            if list_key is None:
+                continue
+            result.setdefault(list_key, []).append(var_name)
+        return result
 
     def open_xw_workbook(self, workbook_pathstr: str) -> tuple[xw.App, xw.Book]:
         """
@@ -555,10 +633,12 @@ class DataExtractorCore:
         workbook_name: str,
         workbook_charts_dict: dict[str, str],
         temp_dir_path: Path,
-    ) -> None:
+    ) -> dict[str, Path]:
         """
-        Extracts specified charts from the active workbook as pdf/png files.
+        Extracts specified charts from the active workbook as png files.
+        Returns a dict mapping chart_name → Path for each extracted image.
         """
+        extracted: dict[str, Path] = {}
         try:
             app, wb = self.open_xw_workbook(workbook_pathstr)
             try:
@@ -572,10 +652,12 @@ class DataExtractorCore:
                                 / f"{workbook_name} - {sheet_name} - {chart_name}.pdf"
                             )
                         else:
-                            chart.to_png(
+                            out_path = (
                                 temp_dir_path
                                 / f"{workbook_name} - {sheet_name} - {chart_name}.png"
                             )
+                            chart.to_png(out_path)
+                            extracted[chart_name] = out_path
                 logger.info(
                     f"DataExtractorCore.extract_charts: Extracted charts from {workbook_name}"
                 )
@@ -593,6 +675,7 @@ class DataExtractorCore:
                 f"DataExtractorCore.extract_charts: Error extracting charts: {e}"
             )
             raise
+        return extracted
 
     def extract_tables(
         self,
@@ -600,10 +683,12 @@ class DataExtractorCore:
         workbook_name: str,
         workbook_tables_dict: dict[str, str],
         temp_dir_path: Path,
-    ) -> None:
+    ) -> dict[str, Path]:
         """
-        Extracts tables from the specified worksheets based on their target table subdictionaries.
+        Extracts tables from the specified worksheets as png files.
+        Returns a dict mapping table_name → Path for each extracted image.
         """
+        extracted: dict[str, Path] = {}
         try:
             app, wb = self.open_xw_workbook(workbook_pathstr)
             try:
@@ -614,12 +699,12 @@ class DataExtractorCore:
                         )
                         continue
                     table = wb.sheets[sheet_name].tables[table_name]
-
-                    table_range = table.range.address
-                    wb.sheets[sheet_name].range(table_range).to_png(
+                    out_path = (
                         temp_dir_path
                         / f"{workbook_name} - {sheet_name} - {table_name}.png"
                     )
+                    wb.sheets[sheet_name].range(table.range.address).to_png(out_path)
+                    extracted[table_name] = out_path
                 logger.info(
                     f"DataExtractorCore.extract_tables: Extracted tables from {workbook_name}"
                 )
@@ -634,3 +719,4 @@ class DataExtractorCore:
         except Exception as e:
             logger.exception(f"DataExtractorCore.extract_tables: Error - {e}")
             raise
+        return extracted

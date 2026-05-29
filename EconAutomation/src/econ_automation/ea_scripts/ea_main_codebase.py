@@ -163,6 +163,7 @@ def run_extraction_and_report_merge(
 
     econ_data_list = _get_all_reformatted_data(extractors)
     ea_main_dataclass = _flatten_all_extracted_data(econ_data_list)
+    image_paths = _collect_image_paths(extractors)
 
     _generate_reports(
         ea_main_dataclass=ea_main_dataclass,
@@ -173,6 +174,7 @@ def run_extraction_and_report_merge(
             selected_filepaths_dict["output_filepaths"].values()
         ),
         gui_overrides=gui_overrides,
+        image_paths=image_paths,
     )
 
 
@@ -252,6 +254,14 @@ def _initialize_extractors(
     }
 
 
+def _collect_image_paths(extractors: dict[str, Any]) -> dict[str, Path]:
+    """Collects all extracted image paths from every extractor into one dict."""
+    image_paths: dict[str, Path] = {}
+    for extractor in extractors.values():
+        image_paths.update(getattr(extractor, "extracted_image_paths", {}))
+    return image_paths
+
+
 def _get_all_reformatted_data(extractors: dict[str, Any]) -> list[Any]:
     """Returns all reformatted data from all extractors as a list of dataclasses."""
     return [
@@ -295,6 +305,7 @@ def _generate_reports(
     selected_template_filepaths: list[Path],
     selected_output_filepaths: list[Path],
     gui_overrides: dict[str, Any] | None = None,
+    image_paths: dict[str, Path] | None = None,
 ) -> None:
     """
     Renders each selected report template with extracted data and saves output files.
@@ -305,6 +316,7 @@ def _generate_reports(
         selected_output_filepaths: Paths to output directories for each template.
         gui_overrides: Forwarded to merge_reports_core; maps template stem →
             toggles object.
+        image_paths: Maps template variable name → Path for chart/table images.
     """
     try:
         merge_reports_core(
@@ -312,6 +324,7 @@ def _generate_reports(
             selected_template_filepaths=selected_template_filepaths,
             selected_output_filepaths=selected_output_filepaths,
             gui_overrides=gui_overrides,
+            image_paths=image_paths,
         )
     except TypeError:
         logger.exception("_generate_reports: Input data type error.")
