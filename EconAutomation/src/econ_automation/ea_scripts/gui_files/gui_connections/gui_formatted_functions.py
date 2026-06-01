@@ -10,6 +10,7 @@ from econ_automation.ea_scripts.file_system_scripts.file_system_codebase import 
     FileSystemCore,
 )
 
+
 def select_OFF_file_modal(ea_main_window: QMainWindow):
     """
     Allows the user to select a file to load, and updates the display.
@@ -67,5 +68,5 @@ def create_case_function(OFF_filepath: str, admin_bool: bool = False) -> None:
         sel_OFF_filepath=Path(OFF_filepath),
         base_filepaths=base_filepaths,
         wb_template_dir=wb_template_dir,
-        admin_bool=admin_bool
+        admin_bool=admin_bool,
     )

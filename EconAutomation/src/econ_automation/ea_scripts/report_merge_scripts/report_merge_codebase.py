@@ -6,7 +6,7 @@ from datetime import datetime, date
 from docx.shared import Mm
 
 from docxtpl import DocxTemplate, InlineImage
-from jinja2 import Environment, Undefined
+from jinja2 import Environment, Undefined, TemplateSyntaxError
 
 from econ_automation.ea_scripts.report_merge_scripts.run_consolidation_codebase import (
     consolidate_all_runs,
@@ -31,6 +31,7 @@ _CONTEXT_BUILDERS: dict[str, Any] = {
 
 class _DebugUndefined(Undefined):
     """Renders as [[ variable_name ]] so missing template variables are visible in output."""
+
     __slots__ = ()
 
     def __str__(self) -> str:
@@ -67,7 +68,9 @@ def save_output_document(
         for output_filepath in selected_output_filepaths:
             dir_name = output_filepath.name  # e.g. "Gaston, Casper (J. D'Attorney)"
             name_last = dir_name.split(",")[0].strip() if "," in dir_name else dir_name
-            name_first_initial = dir_name.split(",")[1].strip()[0] if "," in dir_name else ""
+            name_first_initial = (
+                dir_name.split(",")[1].strip()[0] if "," in dir_name else ""
+            )
             base_stem = f"{name_last}{name_first_initial} - {report_type}"
             final_output_path = output_filepath / f"{base_stem}.docx"
 
@@ -127,17 +130,23 @@ def merge_reports_core(
             if builder is not None:
                 toggles = (gui_overrides or {}).get(template_filepath.stem)
                 context = builder(ea_main_dataclass, toggles)
-                logger.info(f"merge_reports_core: using context builder for {template_filepath.stem}")
+                logger.info(
+                    f"merge_reports_core: using context builder for {template_filepath.stem}"
+                )
             else:
                 context = determine_variable_map(ea_main_dataclass)
-                logger.info(f"merge_reports_core: using fallback variable map for {template_filepath.stem}")
+                logger.info(
+                    f"merge_reports_core: using fallback variable map for {template_filepath.stem}"
+                )
 
             doc = DocxTemplate(str(template_filepath))
 
             if image_paths:
                 for var_name, img_path in image_paths.items():
                     if img_path.exists():
-                        context[var_name] = InlineImage(doc, str(img_path), width=Mm(150))
+                        context[var_name] = InlineImage(
+                            doc, str(img_path), width=Mm(150)
+                        )
                     else:
                         logger.warning(
                             f"merge_reports_core: image not found, skipping '{var_name}': {img_path}"
@@ -150,6 +159,16 @@ def merge_reports_core(
                 report_type=template_filepath.stem,
                 selected_output_filepaths=selected_output_filepaths,
             )
+    except TemplateSyntaxError as e:
+        if hasattr(e, "docx_context"):
+            context_lines = "\n".join(e.docx_context)
+            logger.error(
+                "Template context around line %s:\n%s",
+                getattr(e, "lineno", "?"),
+                context_lines,
+            )
+        logger.exception(f"Error autofilling Word document templates: {e}")
+        raise
     except Exception as e:
         logger.exception(f"Error autofilling Word document templates: {e}")
         raise

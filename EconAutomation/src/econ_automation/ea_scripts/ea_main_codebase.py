@@ -43,15 +43,18 @@ logger = logging.getLogger(__name__)
 # claimant directory.  Each list is tried in order; first match wins.
 _WORKBOOK_GLOB_PATTERNS: dict[str, list[str]] = {
     "CASE_VARIABLES": ["*Case Variables*.xlsx", "*Case_Variables*.xlsx"],
-    "WORKING_CALC":   ["*WorkingCalc*.xlsm", "*WorkingCalc*.xlsx"],
-    "PV2":            ["*PV2*.xlsm"],
-    "HHSPV":          ["*HHS_PV*.xlsx"],
+    "WORKING_CALC": ["*WorkingCalc*.xlsm", "*WorkingCalc*.xlsx"],
+    "PV2": ["*PV2*.xlsm"],
+    "HHSPV": ["*HHS_PV*.xlsx"],
 }
 
 # Glob patterns used by build_selected_files_dict to locate report templates.
 _TEMPLATE_GLOB_PATTERNS: dict[str, list[str]] = {
-    "PV_EARNINGS_TEMPLATE": ["*PV_Earnings*Template*.docx", "*PV*Earnings*Template*.docx"],
-    "PVLCP_TEMPLATE":       ["*PVLCP*Template*.docx"],
+    "PV_EARNINGS_TEMPLATE": [
+        "*PV_Earnings*Template*.docx",
+        "*PV*Earnings*Template*.docx",
+    ],
+    "PVLCP_TEMPLATE": ["*PVLCP*Template*.docx"],
 }
 
 
@@ -62,6 +65,7 @@ def setup_new_case_workflow(
     sel_OFF_filepath: Path,
     base_filepaths: dict[str, Path],
     wb_template_dir: Path,
+    admin_bool: bool = True,
 ) -> None:
     """
     Creates the claimant folder structure, copies workbook templates, and
@@ -77,7 +81,7 @@ def setup_new_case_workflow(
     """
     if not sel_OFF_filepath.is_file():
         raise ValueError(f"OFF file not found: {sel_OFF_filepath}")
-    setup_new_case(sel_OFF_filepath, base_filepaths, wb_template_dir)
+    setup_new_case(sel_OFF_filepath, base_filepaths, wb_template_dir, admin_bool)
 
 
 def build_selected_files_dict(
@@ -106,7 +110,9 @@ def build_selected_files_dict(
                 workbook_fps[key] = matches[0]
                 break
         else:
-            logger.warning("build_selected_files_dict: no match for %s in %s", key, claimant_dir)
+            logger.warning(
+                "build_selected_files_dict: no match for %s in %s", key, claimant_dir
+            )
 
     fs = fsc()
     platform_key = "Mac" if platform.system() == "Darwin" else "Windows"
@@ -121,7 +127,11 @@ def build_selected_files_dict(
                 template_fps[key] = matches[0]
                 break
         else:
-            logger.warning("build_selected_files_dict: no template match for %s in %s", key, rep_template_dir)
+            logger.warning(
+                "build_selected_files_dict: no template match for %s in %s",
+                key,
+                rep_template_dir,
+            )
 
     return {
         "workbook_filepaths": workbook_fps,
@@ -198,7 +208,7 @@ def _select_relevant_filepaths(
     selected_filepaths_dict = {}
 
     for category, filenames_dict in selected_files_dict.items():
-        if category == "output_filepaths":
+        if category not in main_filepaths_dict:
             selected_filepaths_dict[category] = filenames_dict
             continue
         temp_sel_fps_dict = {}

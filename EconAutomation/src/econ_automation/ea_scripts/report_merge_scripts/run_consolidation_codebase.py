@@ -4,9 +4,6 @@ from docx.oxml import OxmlElement
 from docxtpl import DocxTemplate
 from copy import deepcopy
 
-from docx.document import Document as DocxDocument
-from docx.table import _Cell
-
 
 def consolidate_runs_in_paragraph(paragraph):
     """
@@ -64,7 +61,7 @@ def consolidate_runs_in_paragraph(paragraph):
 def consolidate_all_runs(doc: DocxTemplate):
     """Apply run consolidation across all paragraphs and table cells."""
 
-    docx = doc.docx  # the underlying python-docx Document
+    docx = doc.get_docx()  # loads lazily via init_docx() in docxtpl 0.20+
 
     def process_paragraphs(container):
         for para in container.paragraphs:
