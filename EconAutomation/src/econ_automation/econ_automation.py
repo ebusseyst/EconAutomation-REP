@@ -99,7 +99,7 @@ class EconAutomationMainWindow(QMainWindow):
                 "Please select an OFF file in the 'Set Up Case' section before creating a case.",
             )
             return
-        create_case_function(self._selected_off_path)
+        create_case_function(self._selected_off_path, admin_bool=True)
 
     def _on_claimantdir_select(self) -> None:
         result = select_claimant_folder_modal(self, "Select Econ Claimant Folder")

@@ -9,13 +9,13 @@ logger = logging.getLogger(__name__)
 
 
 def load_working_calc_wb(
-    case_profile: Any, private_claimant_dir: Path
+    case_profile: Any, claimant_dir: Path
 ) -> opxl.Workbook:
     """
     Loads the working calculator workbook for the case.
     """
     sel_working_calc_path = (
-        private_claimant_dir
+        claimant_dir
         / f"{case_profile.claimant_name_last}{case_profile.claimant_name_first_initial} - WorkingCalc_Current.xlsm"
     )
     return opxl.load_workbook(sel_working_calc_path)
@@ -23,13 +23,13 @@ def load_working_calc_wb(
 
 def load_pv2_wb(
     case_profile: Any,
-    private_claimant_dir: Path,
+    claimant_dir: Path,
 ) -> opxl.Workbook:
     """
     Loads the PV2 workbook for the case.
     """
     sel_pv2_path = (
-        private_claimant_dir
+        claimant_dir
         / f"{case_profile.claimant_name_last}{case_profile.claimant_name_first_initial} - PV2_Current.xlsm"
     )
     return opxl.load_workbook(sel_pv2_path)

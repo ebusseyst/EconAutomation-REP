@@ -1,31 +1,14 @@
 from pathlib import Path
+import platform
 
 from PySide6.QtWidgets import QFileDialog, QMainWindow
 
 from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase import (
     setup_new_case,
 )
-
-# Shael Private Claimant Dir- C:/Users/shaelwolfson/OneDrive - Stokes & Associates/Leone Deogracias's files - Econ
-# Chris Private Claimant Dir - C:/Users/ChristopherJohnson/OneDrive - Stokes & Associates/Leone Deogracias's files - Econ
-# Econ Public Claimant Dir - S:/Shared Folders/Shared Documents/Economics Claimant Folder
-# Econ Templates Parent Dir - S:/Shared Folders/Shared Documents/Economics Claimant Folder/00-EconAutomation Templates
-# Econ Excel Templates Dir - S:/Shared Folders/Shared Documents/Economics Claimant Folder/00-EconAutomation Templates/EconAutomation Excel Templates
-# Econ Report Templates Dir - S:/Shared Folders/Shared Documents/Economics Claimant Folder/00-EconAutomation Templates/EconAutomation Report Templates
-
-# DEBUG: REPLACE CONSTANTS WITH DYNAMIC INTEGRATED VARS
-BASE_FILEPATHS = {
-    "Private Directory": Path(
-        f"{Path.home()}/OneDrive - Stokes & Associates/Leone Deogracias's files - Econ"
-    ),
-    "Public Directory": Path(
-        r"S:/Shared Folders/Shared Documents/Economics Claimant Folder"
-    ),
-}
-WB_TEMPLATE_DIR = Path(
-    r"S:/Shared Folders/Shared Documents/Economics Claimant Folder/00-EconAutomation Templates/EconAutomation Excel Templates"
+from econ_automation.ea_scripts.file_system_scripts.file_system_codebase import (
+    FileSystemCore,
 )
-
 
 def select_OFF_file_modal(ea_main_window: QMainWindow):
     """
@@ -69,21 +52,20 @@ def select_claimant_folder_modal(self, title: str) -> str:
     return ""
 
 
-def create_case_function(
-    OFF_filepath: str,
-    base_filepaths: dict[str, Path] = BASE_FILEPATHS,
-    wb_template_dir: Path = WB_TEMPLATE_DIR,
-) -> None:
+def create_case_function(OFF_filepath: str, admin_bool: bool = False) -> None:
     """
     Handles the request to create a new case - adds new folder structure and saves Excel templates for the case.
 
     Args:
         OFF_filepath (str): The absolute filepath of the OFF file.
-        base_filepaths (dict): The Econ department claimant folders' base filepaths with named keys.
-        wb_template_dir (Path): The Econ department workbook templates' parent directory filepath.
     """
+    fs = FileSystemCore()
+    base_filepaths = fs.main_filepaths_dict["base_filepaths"]
+    platform_key = "Mac" if platform.system() == "Darwin" else "Windows"
+    wb_template_dir = fs.main_filepaths_dict["wb_template_dir"][platform_key]
     setup_new_case(
         sel_OFF_filepath=Path(OFF_filepath),
         base_filepaths=base_filepaths,
         wb_template_dir=wb_template_dir,
+        admin_bool=admin_bool
     )

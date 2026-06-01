@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 def create_case_variables_excel_sheet(
     case_profile: Any,
     case_var_wb_path: Path,
-    private_claimant_dir: Path,
+    claimant_dir: Path,
 ) -> None:
     """
     Creates a new Excel workbook with the same structure as the template workbook.
@@ -47,9 +47,9 @@ def create_case_variables_excel_sheet(
             else:
                 cell.value = getattr(case_profile, field.name)
 
-    # 4. Save the workbook to the claimant's private directory
+    # 4. Save the workbook to the claimant's directory
     case_var_new_name = f"{case_profile.claimant_name_last}{case_profile.claimant_name_first_initial} - Case Variables.xlsx"
-    output_filepath = private_claimant_dir / case_var_new_name
+    output_filepath = claimant_dir / case_var_new_name
 
     if output_filepath.exists():
         logger.warning("Skipping Case Variables: %s already exists.", output_filepath)

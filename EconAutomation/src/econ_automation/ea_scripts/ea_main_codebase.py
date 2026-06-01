@@ -1,5 +1,6 @@
 from dataclasses import make_dataclass, fields, is_dataclass
 import logging
+import platform
 from pathlib import Path
 from typing import Any
 from importlib.metadata import version, metadata
@@ -45,6 +46,12 @@ _WORKBOOK_GLOB_PATTERNS: dict[str, list[str]] = {
     "WORKING_CALC":   ["*WorkingCalc*.xlsm", "*WorkingCalc*.xlsx"],
     "PV2":            ["*PV2*.xlsm"],
     "HHSPV":          ["*HHS_PV*.xlsx"],
+}
+
+# Glob patterns used by build_selected_files_dict to locate report templates.
+_TEMPLATE_GLOB_PATTERNS: dict[str, list[str]] = {
+    "PV_EARNINGS_TEMPLATE": ["*PV_Earnings*Template*.docx", "*PV*Earnings*Template*.docx"],
+    "PVLCP_TEMPLATE":       ["*PVLCP*Template*.docx"],
 }
 
 
@@ -102,11 +109,19 @@ def build_selected_files_dict(
             logger.warning("build_selected_files_dict: no match for %s in %s", key, claimant_dir)
 
     fs = fsc()
-    all_template_fps: dict[str, Path] = fs.main_filepaths_dict["template_filepaths"]
-    if requested_template_keys is not None:
-        template_fps = {k: v for k, v in all_template_fps.items() if k in requested_template_keys}
-    else:
-        template_fps = all_template_fps
+    platform_key = "Mac" if platform.system() == "Darwin" else "Windows"
+    rep_template_dir: Path = fs.main_filepaths_dict["rep_template_dir"][platform_key]
+    template_fps: dict[str, Path] = {}
+    for key, patterns in _TEMPLATE_GLOB_PATTERNS.items():
+        if requested_template_keys is not None and key not in requested_template_keys:
+            continue
+        for pattern in patterns:
+            matches = list(rep_template_dir.glob(pattern))
+            if matches:
+                template_fps[key] = matches[0]
+                break
+        else:
+            logger.warning("build_selected_files_dict: no template match for %s in %s", key, rep_template_dir)
 
     return {
         "workbook_filepaths": workbook_fps,
