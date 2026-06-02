@@ -142,13 +142,13 @@ class CaseProfile:
     claimant_geozip: str = field(init=False, default="")
 
     # ── DERIVED: Case manager ─────────────────────────────────────────
-    LCP_expert_initials: str = field(init=False, default="")
-    LCP_expert_name_full: str = field(init=False, default="")
-    LCP_expert_name_first: str = field(init=False, default="")
-    LCP_expert_name_last: str = field(init=False, default="")
-    LCP_expert_name_first_initial: str = field(init=False, default="")
-    LCP_expert_name_last_initial: str = field(init=False, default="")
-    LCP_expert_name_full_with_titles: str = field(init=False, default="")
+    rehab_expert_initials: str = field(init=False, default="")
+    rehab_expert_name_full: str = field(init=False, default="")
+    rehab_expert_name_first: str = field(init=False, default="")
+    rehab_expert_name_last: str = field(init=False, default="")
+    rehab_expert_name_first_initial: str = field(init=False, default="")
+    rehab_expert_name_last_initial: str = field(init=False, default="")
+    rehab_expert_name_full_with_titles: str = field(init=False, default="")
     case_manager_name_first: str = field(init=False, default="")
     case_manager_name_last: str = field(init=False, default="")
     case_manager_name_first_initial: str = field(init=False, default="")
@@ -228,7 +228,7 @@ class CaseProfile:
         self.case_type = _normalize_case_type(self.case_type)
 
         # LCP expert name breakdown
-        _LCP_expert_name_map = {
+        _rehab_expert_name_map = {
             "BTB": "Brandy Bradley, MHS, CRC, LRC, CLCP, CVE",
             "TSC": "Todd S. Capielano, M.Ed., LRC, CRC, LPC, CLCP, CCM, NCC",
             "AGL": "Ashley Lastrapes, Ph.D., LRC, LPC, CCM, CRC, CLCP",
@@ -238,17 +238,17 @@ class CaseProfile:
             "MAS": "Molly Struble, MA, CRC, CLCP",
             "CCS": "Claytoon Stroop, BSN, RN, CCM, CLCP, LNCC",
         }
-        self.LCP_expert_initials = re.split(r"\d", self.case_number, maxsplit=1)[0]
-        self.LCP_expert_name_full_with_titles = _LCP_expert_name_map.get(
-            self.LCP_expert_initials, ""
+        self.rehab_expert_initials = re.split(r"\d", self.case_number, maxsplit=1)[0]
+        self.rehab_expert_name_full_with_titles = _rehab_expert_name_map.get(
+            self.rehab_expert_initials, ""
         )
-        self.LCP_expert_name_full = self.LCP_expert_name_full_with_titles.split(",")[
-            0
-        ].strip()
-        self.LCP_expert_name_first = self.LCP_expert_name_full.split(" ")[0]
-        self.LCP_expert_name_last = self.LCP_expert_name_full.split(" ")[-1]
-        self.LCP_expert_name_first_initial = self.LCP_expert_initials[0]
-        self.LCP_expert_name_last_initial = self.LCP_expert_initials[-1]
+        self.rehab_expert_name_full = self.rehab_expert_name_full_with_titles.split(
+            ","
+        )[0].strip()
+        self.rehab_expert_name_first = self.rehab_expert_name_full.split(" ")[0]
+        self.rehab_expert_name_last = self.rehab_expert_name_full.split(" ")[-1]
+        self.rehab_expert_name_first_initial = self.rehab_expert_initials[0]
+        self.rehab_expert_name_last_initial = self.rehab_expert_initials[-1]
 
         # Case manager name breakdown
         mgr_parts = self.case_manager_name_full.split()

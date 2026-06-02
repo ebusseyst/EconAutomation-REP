@@ -86,7 +86,7 @@ class PVLCPContextBuilder:
 
         # Fallback: infer from extracted dataclass values
         types: list[str] = []
-        if self._is_populated("LCP_expert_name_full_with_titles"):
+        if self._is_populated("rehab_expert_name_full_with_titles"):
             types.append("LCP")
         # if self._is_populated("MCP_expert_name_full_with_titles"):
         #     types.append("MCP")

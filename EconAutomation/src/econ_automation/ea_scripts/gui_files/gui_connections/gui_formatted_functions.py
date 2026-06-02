@@ -53,9 +53,10 @@ def select_claimant_folder_modal(self, title: str) -> str:
     return ""
 
 
-def create_case_function(OFF_filepath: str, admin_bool: bool = False) -> None:
+def create_case_function(OFF_filepath: str, admin_bool: bool = False) -> Path:
     """
     Handles the request to create a new case - adds new folder structure and saves Excel templates for the case.
+    Returns the path to the created claimant directory.
 
     Args:
         OFF_filepath (str): The absolute filepath of the OFF file.
@@ -64,7 +65,7 @@ def create_case_function(OFF_filepath: str, admin_bool: bool = False) -> None:
     base_filepaths = fs.main_filepaths_dict["base_filepaths"]
     platform_key = "Mac" if platform.system() == "Darwin" else "Windows"
     wb_template_dir = fs.main_filepaths_dict["wb_template_dir"][platform_key]
-    setup_new_case(
+    return setup_new_case(
         sel_OFF_filepath=Path(OFF_filepath),
         base_filepaths=base_filepaths,
         wb_template_dir=wb_template_dir,

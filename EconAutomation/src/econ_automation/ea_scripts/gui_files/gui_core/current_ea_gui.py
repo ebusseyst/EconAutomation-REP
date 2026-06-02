@@ -797,9 +797,9 @@ class Ui_ea_MainWindow(object):
             "ea_reportmerge_claimantdir_subframe_GLayout"
         )
 
-        self.ea_reportmerge_claimantdir_subframe_GLayout.setContentsMargins(8, 8, 8, 8)
-        self.ea_reportmerge_claimantdir_subframe_GLayout.setVerticalSpacing(8)
-        self.ea_reportmerge_claimantdir_subframe_GLayout.setHorizontalSpacing(8)
+        self.ea_reportmerge_claimantdir_subframe_GLayout.setContentsMargins(0, 0, 0, 0)
+        self.ea_reportmerge_claimantdir_subframe_GLayout.setVerticalSpacing(6)
+        self.ea_reportmerge_claimantdir_subframe_GLayout.setHorizontalSpacing(4)
 
         self.reportmerge_orgsubframe_GLayout.addWidget(
             self.ea_reportmerge_claimantdir_subframe, 0, 0, 1, 1
@@ -1159,7 +1159,7 @@ class Ui_ea_MainWindow(object):
                 border-color: transparent;
                 font-family: DM Sans;
                 font-size: {fs_body}pt;
-                font-weight: 500;
+                font-weight: 600;
                 color: {dark_navy};
                 padding: 3px;
             }}
@@ -1229,7 +1229,7 @@ class Ui_ea_MainWindow(object):
             QCoreApplication.translate("ea_MainWindow", "Create New Case", None)
         )
         self.label_4.setText(
-            QCoreApplication.translate("ea_MainWindow", "Placeholder", None)
+            QCoreApplication.translate("ea_MainWindow", "Placeholder:", None)
         )
         self.checkBox_4.setText(
             QCoreApplication.translate("ea_MainWindow", "Placeholder", None)
@@ -1237,11 +1237,20 @@ class Ui_ea_MainWindow(object):
         self.ea_reportmerge_referencereports_label.setText(
             QCoreApplication.translate("ea_MainWindow", "Reference Report(s):", None)
         )
+        self.ea_reportmerge_referencereports_voc_checkbox.setText(
+            QCoreApplication.translate("ea_MainWindow", "VOC", None)
+        )
+        self.ea_reportmerge_referencereports_lcp_checkbox.setText(
+            QCoreApplication.translate("ea_MainWindow", "LCP", None)
+        )
+        self.ea_reportmerge_referencereports_mcp_checkbox.setText(
+            QCoreApplication.translate("ea_MainWindow", "MCP", None)
+        )
         self.checkBox_6.setText(
             QCoreApplication.translate("ea_MainWindow", "Placeholder", None)
         )
         self.label_6.setText(
-            QCoreApplication.translate("ea_MainWindow", "Placeholder", None)
+            QCoreApplication.translate("ea_MainWindow", "Placeholder:", None)
         )
         self.ea_reportmerge_credit2_checkbox.setText(
             QCoreApplication.translate("ea_MainWindow", "Credit 2", None)
@@ -1294,11 +1303,11 @@ class Ui_ea_MainWindow(object):
             QCoreApplication.translate("ea_MainWindow", "Placeholder", None)
         )
         self.label_8.setText(
-            QCoreApplication.translate("ea_MainWindow", "Placeholder", None)
+            QCoreApplication.translate("ea_MainWindow", "Placeholder:", None)
         )
         self.ea_reportmerge_claimantdir_section_label.setText(
             QCoreApplication.translate(
-                "ea_MainWindow", "Choose Econ Claimant Folder", None
+                "ea_MainWindow", "Select Econ Claimant Folder", None
             )
         )
         self.ea_reportmerge_selectedclaimantdir_label.setText(
@@ -1310,7 +1319,7 @@ class Ui_ea_MainWindow(object):
             QCoreApplication.translate("ea_MainWindow", "", None)
         )
         self.ea_reportmerge_sub2frame_section_label.setText(
-            QCoreApplication.translate("ea_MainWindow", "Report Options", None)
+            QCoreApplication.translate("ea_MainWindow", "Report Configurations", None)
         )
         self.ea_reportmerge_label.setText(
             QCoreApplication.translate("ea_MainWindow", "Report Merge", None)

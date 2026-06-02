@@ -9,6 +9,7 @@ import platform
 from pydantic import create_model, ConfigDict
 
 import openpyxl as opxl
+from openpyxl.cell.cell import MergedCell
 import xlwings as xw
 
 # Module's logger instance
@@ -85,23 +86,38 @@ class WorkbookInfoCore:
             workbook_variables_dict = {}
             workbook_outputs_sheet = active_workbook[workbook_outputs_sheet_name]
             if "Case Variables" in workbook_name:
-                for row in workbook_outputs_sheet.iter_rows(
-                    min_row=3, min_col=1, max_col=2, max_row=110, values_only=False
-                ):
-                    if isinstance(row[0], opxl.cell.cell.MergedCell):
-                        continue
-                    variable_name = row[0].value
-                    variable_value = row[1].value
-                    if (variable_name == "" or variable_name is None) or (
-                        variable_value == "" or variable_value is None
+                # New layout: 4 side-by-side semantic groups.
+                # Each group: (name_col, value_col, type_col) — 1-indexed.
+                #   CLAIMANT INFO  A(1)  B(2)  C(3)
+                #   CASE INFO      E(5)  F(6)  G(7)
+                #   ATTORNEY INFO  I(9)  J(10) K(11)
+                #   ECON INFO      M(13) N(14) O(15)
+                _COL_GROUPS = [(1, 2, 3), (5, 6, 7), (9, 10, 11), (13, 14, 15)]
+                for name_col, _value_col, type_col in _COL_GROUPS:
+                    for row in workbook_outputs_sheet.iter_rows(
+                        min_row=3,
+                        min_col=name_col,
+                        max_col=type_col,
+                        max_row=110,
+                        values_only=False,
                     ):
-                        continue
-                    workbook_variables_dict[f"{variable_name}"] = (
-                        workbook_outputs_sheet_name,
-                        f"{row[1].coordinate}",
-                    )
+                        name_cell, value_cell, type_cell = row[0], row[1], row[2]
+                        if isinstance(name_cell, MergedCell):
+                            continue
+                        variable_name = name_cell.value
+                        variable_value = value_cell.value
+                        variable_type = type_cell.value if type_cell.value else "Text"
+                        if variable_name == "" or variable_name is None:
+                            continue
+                        if variable_value == "" or variable_value is None:
+                            continue
+                        workbook_variables_dict[str(variable_name)] = (
+                            workbook_outputs_sheet_name,
+                            f"{value_cell.coordinate}",
+                            str(variable_type),
+                        )
             for row in workbook_outputs_sheet.iter_rows(
-                min_row=3, min_col=1, max_col=4, max_row=100, values_only=True
+                min_row=3, min_col=1, max_col=4, max_row=150, values_only=True
             ):
                 variable_name = row[0]
                 worksheet_name = row[1]
@@ -155,7 +171,7 @@ class WorkbookInfoCore:
             workbook_charts_dict = {}
             wb_outputs_sheet = active_workbook[workbook_outputs_sheet_name]
             for row in wb_outputs_sheet.iter_rows(
-                min_row=3, min_col=9, max_col=10, max_row=40, values_only=True
+                min_row=3, min_col=10, max_col=11, max_row=40, values_only=True
             ):
                 worksheet_name = row[0]
                 chart_name = row[1]
@@ -198,7 +214,7 @@ class WorkbookInfoCore:
             workbook_tables_dict = {}
             wb_outputs_sheet = active_workbook[workbook_outputs_sheet_name]
             for row in wb_outputs_sheet.iter_rows(
-                min_row=3, min_col=6, max_col=7, max_row=40, values_only=True
+                min_row=3, min_col=7, max_col=8, max_row=40, values_only=True
             ):
                 worksheet_name = row[0]
                 table_name = row[1]

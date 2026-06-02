@@ -1,5 +1,6 @@
 import ctypes
 import logging
+import subprocess
 import sys
 from pathlib import Path
 import platform
@@ -99,7 +100,19 @@ class EconAutomationMainWindow(QMainWindow):
                 "Please select an OFF file in the 'Set Up Case' section before creating a case.",
             )
             return
-        create_case_function(self._selected_off_path, admin_bool=True)
+        try:
+            claimant_dir = create_case_function(
+                self._selected_off_path, admin_bool=True
+            )
+        except Exception:
+            logger.exception("Case creation failed")
+            return
+        QMessageBox.information(
+            self,
+            "Case Created",
+            "Case setup complete.",
+        )
+        self._open_in_explorer(claimant_dir)
 
     def _on_claimantdir_select(self) -> None:
         result = select_claimant_folder_modal(self, "Select Econ Claimant Folder")
@@ -144,8 +157,22 @@ class EconAutomationMainWindow(QMainWindow):
             )
         except Exception:
             logger.exception("Report merge failed")
+            return
+
+        QMessageBox.information(
+            self,
+            "Merge Complete",
+            "Report merge complete.",
+        )
+        self._open_in_explorer(self._selected_claimant_dir)
 
     # ── Helpers ────────────────────────────────────────────────────────────────
+
+    def _open_in_explorer(self, path: Path) -> None:
+        if platform.system() == "Darwin":
+            subprocess.Popen(["open", str(path)])
+        else:
+            subprocess.Popen(["explorer", str(path)])
 
     def _collect_pv_earnings_toggles(self) -> PVEarningsToggles:
         ui = self.ui

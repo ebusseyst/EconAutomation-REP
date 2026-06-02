@@ -24,15 +24,18 @@ def setup_new_case(
     base_filepaths: dict[str, Path],
     wb_template_dir: Path,
     admin_bool: bool,
-) -> None:
+) -> Path:
     """
     Sets up the econ claimant folder and copies workbook templates for a new claimant.
+    Returns the path to the created claimant directory.
     """
     case_profile = create_case_profile(sel_OFF_filepath)
 
     claimant_dir = initialize_case_folders(case_profile, base_filepaths, admin_bool)
 
     save_claimant_workbook_templates(case_profile, wb_template_dir, claimant_dir)
+
+    return claimant_dir
 
 
 def create_case_profile(sel_OFF_filepath: Path) -> Any:

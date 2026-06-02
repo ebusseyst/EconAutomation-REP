@@ -41,12 +41,16 @@ logger = logging.getLogger(__name__)
 
 # Glob patterns used by build_selected_files_dict to locate workbooks inside a
 # claimant directory.  Each list is tried in order; first match wins.
+# Patterns cover legacy naming variants (e.g. "#2PV_*", "#Working_CALC_*").
 _WORKBOOK_GLOB_PATTERNS: dict[str, list[str]] = {
-    "CASE_VARIABLES": ["*Case Variables*.xlsx", "*Case_Variables*.xlsx"],
-    "WORKING_CALC": ["*WorkingCalc*.xlsm", "*WorkingCalc*.xlsx"],
-    "PV2": ["*PV2*.xlsm"],
-    "HHSPV": ["*HHS_PV*.xlsx"],
+    "CASE_VARIABLES": ["*Case*Variables*.xlsx"],
+    "WORKING_CALC": ["*Working*Calc*.xlsm", "*Working*Calc*.xlsx"],
+    "PV2": ["*PV2*.xlsm", "*2PV*.xlsm"],
+    "HHSPV": ["*HHS*PV*.xlsx"],
 }
+
+# Subfolder names (relative to claimant_dir) that are also searched for workbooks.
+_WORKBOOK_SEARCH_SUBDIRS = ["Work Product"]
 
 # Glob patterns used by build_selected_files_dict to locate report templates.
 _TEMPLATE_GLOB_PATTERNS: dict[str, list[str]] = {
@@ -102,13 +106,23 @@ def build_selected_files_dict(
         A dict with "workbook_filepaths", "template_filepaths", and
         "output_filepaths" ready for run_extraction_and_report_merge.
     """
+    search_dirs = [claimant_dir] + [
+        d for sub in _WORKBOOK_SEARCH_SUBDIRS if (d := claimant_dir / sub).is_dir()
+    ]
+
     workbook_fps: dict[str, Path] = {}
     for key, patterns in _WORKBOOK_GLOB_PATTERNS.items():
-        for pattern in patterns:
-            matches = list(claimant_dir.glob(pattern))
-            if matches:
-                workbook_fps[key] = matches[0]
+        match: Path | None = None
+        for search_dir in search_dirs:
+            for pattern in patterns:
+                hits = list(search_dir.glob(pattern))
+                if hits:
+                    match = hits[0]
+                    break
+            if match is not None:
                 break
+        if match is not None:
+            workbook_fps[key] = match
         else:
             logger.warning(
                 "build_selected_files_dict: no match for %s in %s", key, claimant_dir
