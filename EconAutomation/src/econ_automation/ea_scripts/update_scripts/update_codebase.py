@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 try:
     CURRENT_VERSION = version("econ_automation")
 except Exception:
-    CURRENT_VERSION = "0.3.0"
+    CURRENT_VERSION = "0.4.0-alpha"
 VERSION_URL = "https://github.com/ebusseyst/EconAutomation-REP/releases/latest/download/version.json"
 REQUEST_TIMEOUT = 5
 
@@ -34,7 +34,7 @@ def save_install_location() -> None:
     """
     Persist the current exe's parent directory to the user-data dir.
     Called once at startup (frozen builds only) so future update installers
-    can silently reinstall to the same path via /DIR=.
+    can reinstall to the same path via /DIR=.
     """
     if not hasattr(sys, "_MEIPASS"):
         return
@@ -48,7 +48,7 @@ def save_install_location() -> None:
 
 
 def get_saved_install_dir() -> Path | None:
-    """Return the saved install directory, or None if not recorded yet."""
+    """Return the saved install directory, or None if not recorded."""
     config_path = _user_data_dir() / _INSTALL_CONFIG
     try:
         data = json.loads(config_path.read_text())
@@ -103,8 +103,7 @@ def download_installer(download_url: str, dest_dir: Path) -> Path | None:
 
 def launch_installer(installer_path: Path) -> None:
     """
-    Launch the installer as a detached process, then exit the app.
-    The installer runs independently — the app does not wait for it.
+    Launch the installer as a detached process, then exit the app. The installer runs independently.
     """
     if platform.system() == "Windows":
         DETACHED_PROCESS = 0x00000008
@@ -126,6 +125,7 @@ def launch_installer(installer_path: Path) -> None:
 
     try:
         from PySide6.QtWidgets import QApplication
+
         app = QApplication.instance()
         if app is not None:
             app.quit()
@@ -139,7 +139,7 @@ def check_and_apply_update(prompt_fn=None) -> None:
     Full update flow called at app launch.
 
     prompt_fn is an optional callable that receives a message string and returns
-    True if the user confirms the update. Pass a QMessageBox wrapper in the GUI.
+    True if the user confirms the update. Passes a QMessageBox wrapper in the GUI.
     If prompt_fn is None, the update is applied without prompting.
     """
     remote = fetch_remote_version()
