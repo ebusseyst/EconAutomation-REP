@@ -107,7 +107,7 @@ def launch_installer(installer_path: Path) -> None:
     """
     if platform.system() == "Windows":
         DETACHED_PROCESS = 0x00000008
-        # /DIR= reinstalls to the same location the user originally chose.
+        # /DIR= reinstalls to the same location the user chose.
         # Fall back to the exe's own directory if the config hasn't been written yet.
         install_dir = get_saved_install_dir() or Path(sys.executable).parent
         # /CLOSEAPPLICATIONS: lets InnoSetup close any still-open handles

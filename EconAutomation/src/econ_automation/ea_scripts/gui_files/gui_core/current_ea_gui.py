@@ -56,6 +56,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QMainWindow,
     QPushButton,
+    QScrollArea,
     QSizePolicy,
     QVBoxLayout,
     QWidget,
@@ -89,6 +90,7 @@ class Ui_ea_MainWindow(object):
     ea_MainWindow: QMainWindow
     ea_CentralWidget: QWidget
     ea_CentralWidget_GLayout: QGridLayout
+    ea_scroll_area: QScrollArea
     ea_CentralWidget_frame: QFrame
     ea_CentralWidgetframe_GLayout: QGridLayout
     ea_CentralWidget_label_frame: QFrame
@@ -189,6 +191,9 @@ class Ui_ea_MainWindow(object):
         )
         horizontal_spacer_r = QSpacerItem(
             40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+        )
+        vertical_spacer_1 = QSpacerItem(
+            20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding
         )
 
         # 1. Load the font file
@@ -850,14 +855,10 @@ class Ui_ea_MainWindow(object):
         )
 
         self.ea_reportmerge_claimantdir_subframe_GLayout.addItem(
-            QSpacerItem(
-                20, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding
-            ),
-            2,
-            0,
-            1,
-            4,
+            vertical_spacer_1, 2, 0, 1, 4
         )
+        self.ea_reportmerge_claimantdir_subframe_GLayout.setRowStretch(2, 1)
+        self.reportmerge_orgsubframe_GLayout.setRowStretch(0, 1)
 
         self.ea_reportmerge_button = QPushButton(self.ea_reportmerge_frame)
         self.ea_reportmerge_button.setObjectName("ea_reportmerge_button")
@@ -895,7 +896,12 @@ class Ui_ea_MainWindow(object):
 
         self.ea_CentralWidgetframe_GLayout.setColumnStretch(0, 1)
 
-        self.ea_CentralWidget_GLayout.addWidget(self.ea_CentralWidget_frame)
+        self.ea_scroll_area = QScrollArea(self.ea_CentralWidget)
+        self.ea_scroll_area.setObjectName("ea_scroll_area")
+        self.ea_scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        self.ea_scroll_area.setWidgetResizable(True)
+        self.ea_scroll_area.setWidget(self.ea_CentralWidget_frame)
+        self.ea_CentralWidget_GLayout.addWidget(self.ea_scroll_area)
 
         def _frame_shadow():
             effect = QGraphicsDropShadowEffect()

@@ -3,6 +3,7 @@ from pathlib import Path
 from itertools import batched
 import datetime as dt
 from dateutil.relativedelta import relativedelta
+from dateutil import parser
 import logging
 import re
 
@@ -94,6 +95,8 @@ class CaseProfile:
     billing_rate: str = ""
     report_deadline_short: str = ""
     report_deadline_long: str = ""
+    report_date_short: str = ""
+    report_date_long: str = ""
     addendum_report_deadline_short: str = ""
     addendum_report_deadline_long: str = ""
     expert_designation_date_short: str = ""
@@ -407,9 +410,12 @@ class OFFExtractor:
 
     @staticmethod
     def _format_date(raw: str) -> tuple[str, str]:
-        """Parses a MM/DD/YYYY string and returns raw, 'Month DD, YYYY'."""
+        """Parses a variable format date string and returns '%m/%d/%Y' format and 'Month DD, YYYY' format."""
         try:
-            return raw, dt.datetime.strptime(raw, "%m/%d/%Y").strftime("%B %d, %Y")
+            return (
+                parser.parse(raw).strftime("%m/%d/%Y"),
+                parser.parse(raw).strftime("%B %d, %Y"),
+            )
         except (ValueError, TypeError):
             return raw, raw
 
@@ -421,8 +427,8 @@ class OFFExtractor:
         """Determines the reference date based on the case type."""
         if trial_date_short:
             return OFFExtractor._format_date(trial_date_short)
-        else:
-            rep_datetime = dt.datetime.strptime(report_deadline_short, "%m/%d/%Y")
+        elif report_deadline_short:
+            rep_datetime = parser.parse(report_deadline_short)
             ref_datetime = (rep_datetime + relativedelta(months=+3)).strftime(
                 "%m/%d/%Y"
             )
@@ -431,6 +437,8 @@ class OFFExtractor:
             )
 
             return ref_datetime_short, ref_datetime_long
+        else:
+            return "", ""
 
     @staticmethod
     def _expand_sex(raw: str) -> str:
@@ -520,6 +528,8 @@ class OFFExtractor:
             billing_rate=up.get("Billing Rate:", ""),
             report_deadline_short=report_deadline_short,
             report_deadline_long=report_deadline_long,
+            report_date_short="",
+            report_date_long="",
             addendum_report_deadline_short=addendum_report_deadline_short,
             addendum_report_deadline_long=addendum_report_deadline_long,
             expert_designation_date_short=expert_designation_date_short,
