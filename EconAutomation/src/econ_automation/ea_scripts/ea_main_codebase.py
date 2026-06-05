@@ -264,29 +264,45 @@ def _initialize_extractors(
         Dictionary of initialized extractor instances keyed by short name.
     """
     workbook_fps = selected_filepaths_dict["workbook_filepaths"]
+    extractors: dict[str, Any] = {}
 
-    return {
-        "case_variables": CaseVariablesExtractor(
-            case_variables_filepath=workbook_fps["CASE_VARIABLES"],
+    if (fp := workbook_fps.get("CASE_VARIABLES")) is not None:
+        extractors["case_variables"] = CaseVariablesExtractor(
+            case_variables_filepath=fp,
             workbook_outputs_sheet_name=WORKBOOK_OUTPUTS_SHEET_NAME,
             temp_dir_path=temp_dir_filepath,
-        ),
-        "working_calc": WorkingCalcExtractor(
-            working_calc_filepath=workbook_fps["WORKING_CALC"],
+        )
+    else:
+        logger.warning("_initialize_extractors: CASE_VARIABLES workbook not found, skipping.")
+
+    if (fp := workbook_fps.get("WORKING_CALC")) is not None:
+        extractors["working_calc"] = WorkingCalcExtractor(
+            working_calc_filepath=fp,
             workbook_outputs_sheet_name=WORKBOOK_OUTPUTS_SHEET_NAME,
             temp_dir_path=temp_dir_filepath,
-        ),
-        "pv2": PV2Extractor(
-            pv2_filepath=workbook_fps["PV2"],
+        )
+    else:
+        logger.warning("_initialize_extractors: WORKING_CALC workbook not found, skipping.")
+
+    if (fp := workbook_fps.get("PV2")) is not None:
+        extractors["pv2"] = PV2Extractor(
+            pv2_filepath=fp,
             workbook_outputs_sheet_name=WORKBOOK_OUTPUTS_SHEET_NAME,
             temp_dir_path=temp_dir_filepath,
-        ),
-        "hhspv": HHSPVExtractor(
-            hhspv_filepath=workbook_fps["HHSPV"],
+        )
+    else:
+        logger.warning("_initialize_extractors: PV2 workbook not found, skipping.")
+
+    if (fp := workbook_fps.get("HHSPV")) is not None:
+        extractors["hhspv"] = HHSPVExtractor(
+            hhspv_filepath=fp,
             workbook_outputs_sheet_name=WORKBOOK_OUTPUTS_SHEET_NAME,
             temp_dir_path=temp_dir_filepath,
-        ),
-    }
+        )
+    else:
+        logger.warning("_initialize_extractors: HHSPV workbook not found, skipping.")
+
+    return extractors
 
 
 def _collect_image_paths(extractors: dict[str, Any]) -> dict[str, Path]:
@@ -299,12 +315,7 @@ def _collect_image_paths(extractors: dict[str, Any]) -> dict[str, Path]:
 
 def _get_all_reformatted_data(extractors: dict[str, Any]) -> list[Any]:
     """Returns all reformatted data from all extractors as a list of dataclasses."""
-    return [
-        extractors["case_variables"].workbook_dataclass,
-        extractors["working_calc"].workbook_dataclass,
-        extractors["pv2"].workbook_dataclass,
-        extractors["hhspv"].workbook_dataclass,
-    ]
+    return [ext.workbook_dataclass for ext in extractors.values()]
 
 
 def _flatten_all_extracted_data(econ_data_list: list[Any]) -> Any:
