@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 import platform
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
 
@@ -24,15 +24,15 @@ from econ_automation.ea_scripts.report_merge_scripts.pv_earnings_context_codebas
 from econ_automation.ea_scripts.report_merge_scripts.pvlcp_context_codebase import (
     PVLCPToggles,
 )
-from econ_automation.ea_scripts.ea_main_codebase import (
-    run_extraction_and_report_merge,
-    build_selected_files_dict,
-)
 
 from econ_automation.ea_scripts.gui_files.gui_connections.gui_formatted_functions import (
     select_OFF_file_modal,
     select_claimant_folder_modal,
-    create_case_function,
+)
+from econ_automation.ea_scripts.gui_files.gui_core.ea_progress_dialog import (
+    CaseSetupWorker,
+    EAProgressDialog,
+    ReportMergeWorker,
 )
 
 
@@ -49,27 +49,10 @@ class EconAutomationMainWindow(QMainWindow):
         self.econ_cases_path = Path.home()
         self._selected_off_path: str = ""
         self._selected_claimant_dir: Path | None = None
-        self._resize_timer = QTimer(self)
-        self._resize_timer.setSingleShot(True)
-        self._resize_timer.timeout.connect(self._on_resize_settled)
         self._setup_comboboxes()
         self._connect_signals()
 
     # ── Setup ─────────────────────────────────────────────────────────────────
-
-    def showEvent(self, event) -> None:
-        super().showEvent(event)
-        self._resize_timer.start(120)
-
-    def resizeEvent(self, event) -> None:
-        super().resizeEvent(event)
-        self._resize_timer.start(120)
-
-    def _on_resize_settled(self) -> None:
-        min_h = self.minimumSizeHint().height()
-        base = min_h if min_h > 0 else self.ui.BASE_HEIGHT
-        scale = self.height() / base
-        self.ui._apply_styles(scale)
 
     def _setup_comboboxes(self) -> None:
         proj = self.ui.ea_reportmerge_projectiontype_combobox
@@ -100,19 +83,17 @@ class EconAutomationMainWindow(QMainWindow):
                 "Please select an OFF file in the 'Set Up Case' section before creating a case.",
             )
             return
-        try:
-            claimant_dir = create_case_function(
-                self._selected_off_path, admin_bool=True
-            )
-        except Exception:
-            logger.exception("Case creation failed")
-            return
-        QMessageBox.information(
-            self,
-            "Case Created",
-            "Case setup complete.",
-        )
-        self._open_in_explorer(claimant_dir)
+        dialog = EAProgressDialog(self, "Setting Up Case", self.ui._color_dict)
+        worker = CaseSetupWorker(self._selected_off_path, admin_bool=True)
+        worker.step_changed.connect(dialog.update_step)
+        worker.finished.connect(dialog.on_success)
+        worker.error.connect(dialog.on_error)
+        worker.start()
+        dialog.exec()
+        worker.wait()
+        claimant_dir = dialog.result_dir()
+        if claimant_dir is not None:
+            self._open_in_explorer(claimant_dir)
 
     def _on_claimantdir_select(self) -> None:
         result = select_claimant_folder_modal(self, "Select Econ Claimant Folder")
@@ -145,26 +126,20 @@ class EconAutomationMainWindow(QMainWindow):
             gui_overrides["PVLCP_Report_Template"] = self._collect_pvlcp_toggles()
             requested_template_keys.append("PVLCP_TEMPLATE")
 
-        selected_files = build_selected_files_dict(
-            self._selected_claimant_dir,
+        dialog = EAProgressDialog(self, "Merging Reports", self.ui._color_dict)
+        worker = ReportMergeWorker(
+            claimant_dir=self._selected_claimant_dir,
             requested_template_keys=requested_template_keys or None,
+            gui_overrides=gui_overrides or None,
         )
-
-        try:
-            run_extraction_and_report_merge(
-                selected_files_dict=selected_files,
-                gui_overrides=gui_overrides or None,
-            )
-        except Exception:
-            logger.exception("Report merge failed")
-            return
-
-        QMessageBox.information(
-            self,
-            "Merge Complete",
-            "Report merge complete.",
-        )
-        self._open_in_explorer(self._selected_claimant_dir)
+        worker.step_changed.connect(dialog.update_step)
+        worker.finished.connect(dialog.on_success)
+        worker.error.connect(dialog.on_error)
+        worker.start()
+        dialog.exec()
+        worker.wait()
+        if dialog.result_dir() is not None:
+            self._open_in_explorer(self._selected_claimant_dir)
 
     # ── Helpers ────────────────────────────────────────────────────────────────
 

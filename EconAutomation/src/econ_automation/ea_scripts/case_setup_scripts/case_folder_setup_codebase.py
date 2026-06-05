@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 import logging
 import shutil
 import platform
@@ -24,15 +24,23 @@ def setup_new_case(
     base_filepaths: dict[str, Path],
     wb_template_dir: Path,
     admin_bool: bool,
+    progress_callback: Callable[[str], None] | None = None,
 ) -> Path:
     """
     Sets up the econ claimant folder and copies workbook templates for a new claimant.
     Returns the path to the created claimant directory.
     """
+    def _step(msg: str) -> None:
+        if progress_callback:
+            progress_callback(msg)
+
+    _step("Extracting case information from OFF file...")
     case_profile = create_case_profile(sel_OFF_filepath)
 
+    _step("Creating case folder structure...")
     claimant_dir = initialize_case_folders(case_profile, base_filepaths, admin_bool)
 
+    _step("Copying and configuring workbook templates...")
     save_claimant_workbook_templates(case_profile, wb_template_dir, claimant_dir)
 
     return claimant_dir

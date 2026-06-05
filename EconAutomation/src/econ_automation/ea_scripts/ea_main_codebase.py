@@ -2,7 +2,7 @@ from dataclasses import make_dataclass, fields, is_dataclass
 import logging
 import platform
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from importlib.metadata import version, metadata
 
 from pydantic import BaseModel
@@ -157,6 +157,7 @@ def build_selected_files_dict(
 def run_extraction_and_report_merge(
     selected_files_dict: dict[str, dict[str, Path]],
     gui_overrides: dict[str, Any] | None = None,
+    progress_callback: Callable[[str], None] | None = None,
 ) -> None:
     """
     Runs the full data extraction and report merge workflow: initializes the
@@ -171,7 +172,13 @@ def run_extraction_and_report_merge(
             toggles object for other templates).  When provided, the context
             builder for that template uses GUI widget state instead of
             inferring toggles from the extracted dataclass.
+        progress_callback: Optional callable invoked with a status string at
+            each major processing step.
     """
+    def _step(msg: str) -> None:
+        if progress_callback:
+            progress_callback(msg)
+
     file_system_core = fsc()
     main_filepaths_dict = file_system_core.main_filepaths_dict
 
@@ -179,15 +186,20 @@ def run_extraction_and_report_merge(
         selected_files_dict, main_filepaths_dict
     )
 
+    _step("Initializing data extractors...")
     extractors = _initialize_extractors(
         selected_filepaths_dict=selected_filepaths_dict,
         temp_dir_filepath=file_system_core.temp_dir_filepath,
     )
 
+    _step("Extracting data from workbooks...")
     econ_data_list = _get_all_reformatted_data(extractors)
+
+    _step("Processing extracted data...")
     ea_main_dataclass = _flatten_all_extracted_data(econ_data_list)
     image_paths = _collect_image_paths(extractors)
 
+    _step("Generating reports...")
     _generate_reports(
         ea_main_dataclass=ea_main_dataclass,
         selected_template_filepaths=list(

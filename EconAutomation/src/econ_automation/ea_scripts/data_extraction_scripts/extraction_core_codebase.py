@@ -659,7 +659,14 @@ class DataExtractorCore:
             app, wb = self.open_xw_workbook(workbook_pathstr)
             try:
                 for sheet_name, chart_name in workbook_charts_dict.items():
-                    sheet = wb.sheets[sheet_name]
+                    try:
+                        sheet = wb.sheets[sheet_name]
+                    except Exception:
+                        logger.warning(
+                            f"DataExtractorCore.extract_charts: Sheet '{sheet_name}' "
+                            f"not found in {workbook_name}, skipping chart '{chart_name}'."
+                        )
+                        continue
                     if chart_name in sheet.charts:
                         chart = sheet.charts[chart_name]
                         if platform.system() == "Darwin":
@@ -709,18 +716,28 @@ class DataExtractorCore:
             app, wb = self.open_xw_workbook(workbook_pathstr)
             try:
                 for sheet_name, table_name in workbook_tables_dict.items():
-                    if table_name not in wb.sheets[sheet_name].tables:
-                        logger.error(
-                            f"DataExtractorCore.extract_tables: Table '{table_name}' not found in sheet '{sheet_name}'."
+                    try:
+                        sheet = wb.sheets[sheet_name]
+                        if table_name not in sheet.tables:
+                            logger.warning(
+                                f"DataExtractorCore.extract_tables: Table '{table_name}' "
+                                f"not found in sheet '{sheet_name}', skipping."
+                            )
+                            continue
+                        table = sheet.tables[table_name]
+                        out_path = (
+                            temp_dir_path
+                            / f"{workbook_name} - {sheet_name} - {table_name}.png"
+                        )
+                        sheet.range(table.range.address).to_png(out_path)
+                        extracted[table_name] = out_path
+                    except Exception:
+                        logger.warning(
+                            f"DataExtractorCore.extract_tables: Could not extract "
+                            f"table '{table_name}' from sheet '{sheet_name}' in "
+                            f"{workbook_name}, skipping."
                         )
                         continue
-                    table = wb.sheets[sheet_name].tables[table_name]
-                    out_path = (
-                        temp_dir_path
-                        / f"{workbook_name} - {sheet_name} - {table_name}.png"
-                    )
-                    wb.sheets[sheet_name].range(table.range.address).to_png(out_path)
-                    extracted[table_name] = out_path
                 logger.info(
                     f"DataExtractorCore.extract_tables: Extracted tables from {workbook_name}"
                 )

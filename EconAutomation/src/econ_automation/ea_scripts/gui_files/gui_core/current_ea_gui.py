@@ -84,8 +84,6 @@ for icon in Path(icon_dir).iterdir():
 
 
 class Ui_ea_MainWindow(object):
-    BASE_HEIGHT = 600
-
     # Central widget hierarchy
     ea_MainWindow: QMainWindow
     ea_CentralWidget: QWidget
@@ -113,12 +111,12 @@ class Ui_ea_MainWindow(object):
     ea_reportmerge_frame: QFrame
     ea_reportmerge_GLayout: QGridLayout
     ea_reportmerge_label: QLabel
-    ea_reportmerge_button: QPushButton
     ea_reportmerge_claimantdir_subframe: QFrame
     ea_reportmerge_claimantdir_subframe_GLayout: QGridLayout
     ea_reportmerge_claimantdirselect_button: QPushButton
     ea_reportmerge_claimantdir_section_label: QLabel
     ea_reportmerge_selectedclaimantdir_label: QLabel
+    ea_reportmerge_button: QPushButton  # now located within claimantdir_subframe
     reportmerge_orgsubframe: QFrame
     reportmerge_orgsubframe_GLayout: QGridLayout
     ea_reportmerge_sub2frame: QFrame
@@ -193,7 +191,7 @@ class Ui_ea_MainWindow(object):
             40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
         )
         vertical_spacer_1 = QSpacerItem(
-            20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding
+            20, 15, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding
         )
 
         # 1. Load the font file
@@ -301,6 +299,12 @@ class Ui_ea_MainWindow(object):
         self.ea_setupfile_sub2frame_GLayout.setObjectName(
             "ea_setupfile_sub2frame_GLayout"
         )
+        self.ea_setupfile_sub2frame_GLayout.setContentsMargins(4, 4, 4, 4)
+        self.ea_setupfile_sub2frame_GLayout.setColumnStretch(0, 2)
+        self.ea_setupfile_sub2frame_GLayout.setColumnStretch(1, 2)
+        self.ea_setupfile_sub2frame_GLayout.setColumnStretch(2, 0)
+        self.ea_setupfile_sub2frame_GLayout.setColumnStretch(3, 1)
+
         self.ea_setupcase_OFFSelect_button = QPushButton(self.ea_setupcase_sub2frame)
         self.ea_setupcase_OFFSelect_button.setObjectName(
             "ea_setupcase_OFFSelect_button"
@@ -318,7 +322,7 @@ class Ui_ea_MainWindow(object):
         self.ea_setupcase_selectedOFF_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.ea_setupfile_sub2frame_GLayout.addWidget(
-            self.ea_setupcase_selectedOFF_label, 0, 0, 1, 2
+            self.ea_setupcase_selectedOFF_label, 0, 0, 1, 3
         )
 
         self.ea_setupcase_orgsubframe_GLayout.addWidget(
@@ -802,7 +806,7 @@ class Ui_ea_MainWindow(object):
             "ea_reportmerge_claimantdir_subframe_GLayout"
         )
 
-        self.ea_reportmerge_claimantdir_subframe_GLayout.setContentsMargins(0, 0, 0, 0)
+        self.ea_reportmerge_claimantdir_subframe_GLayout.setContentsMargins(4, 4, 4, 4)
         self.ea_reportmerge_claimantdir_subframe_GLayout.setVerticalSpacing(6)
         self.ea_reportmerge_claimantdir_subframe_GLayout.setHorizontalSpacing(4)
 
@@ -835,6 +839,7 @@ class Ui_ea_MainWindow(object):
         self.ea_reportmerge_claimantdirselect_button.setIcon(
             QIcon(icon_dict["add_note_icon"])
         )
+        self.ea_reportmerge_claimantdirselect_button.setFixedSize(30, 20)
 
         self.ea_reportmerge_claimantdir_subframe_GLayout.addWidget(
             self.ea_reportmerge_claimantdirselect_button, 1, 3, 1, 1
@@ -849,6 +854,8 @@ class Ui_ea_MainWindow(object):
         self.ea_reportmerge_selectedclaimantdir_label.setAlignment(
             Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom
         )
+        self.ea_reportmerge_selectedclaimantdir_label.setMaximumHeight(18)
+        self.ea_reportmerge_selectedclaimantdir_label.setContentsMargins(-4, -4, -4, -2)
 
         self.ea_reportmerge_claimantdir_subframe_GLayout.addWidget(
             self.ea_reportmerge_selectedclaimantdir_label, 1, 0, 1, 3
@@ -860,10 +867,18 @@ class Ui_ea_MainWindow(object):
         self.ea_reportmerge_claimantdir_subframe_GLayout.setRowStretch(2, 1)
         self.reportmerge_orgsubframe_GLayout.setRowStretch(0, 1)
 
-        self.ea_reportmerge_button = QPushButton(self.ea_reportmerge_frame)
+        self.ea_reportmerge_button = QPushButton(
+            self.ea_reportmerge_claimantdir_subframe
+        )
         self.ea_reportmerge_button.setObjectName("ea_reportmerge_button")
 
-        self.ea_reportmerge_GLayout.addWidget(self.ea_reportmerge_button, 2, 0, 1, 1)
+        self.ea_reportmerge_claimantdir_subframe_GLayout.addWidget(
+            self.ea_reportmerge_button, 2, 1, 1, 1
+        )
+        self.ea_reportmerge_claimantdir_subframe_GLayout.setColumnStretch(0, 2)
+        self.ea_reportmerge_claimantdir_subframe_GLayout.setColumnStretch(1, 2)
+        self.ea_reportmerge_claimantdir_subframe_GLayout.setColumnStretch(2, 2)
+        self.ea_reportmerge_claimantdir_subframe_GLayout.setColumnStretch(3, 1)
 
         self.ea_reportmerge_GLayout.setRowStretch(0, 1)
         self.ea_reportmerge_GLayout.setRowStretch(1, 10)
@@ -1161,11 +1176,16 @@ class Ui_ea_MainWindow(object):
                 background-color: {warm_gold};
             }}
             #ea_reportmerge_frame #ea_reportmerge_claimantdir_subframe #ea_reportmerge_claimantdir_section_label {{
-                background-color: transparent;
-                border-color: transparent;
+                background-color: {light_gold};
+                border-top: 2px solid {gold_highlight};
+                border-left: 2px solid {gold_highlight};
+                border-bottom: 2px solid {gold_shadow_border};
+                border-right: 2px solid {gold_shadow_border};
+                border-radius: 4px;
                 font-family: DM Sans;
                 font-size: {fs_body}pt;
                 font-weight: 600;
+                font-style: italic;
                 color: {dark_navy};
                 padding: 3px;
             }}
@@ -1187,6 +1207,7 @@ class Ui_ea_MainWindow(object):
                 font-weight: 400;
                 color: {dark_navy};
                 padding: 3px;
+                margin-right: 4px;
             }}
             #ea_reportmerge_frame #ea_reportmerge_claimantdir_subframe #ea_reportmerge_claimantdirselect_button:hover {{
                 background-color: {off_white};
@@ -1199,9 +1220,11 @@ class Ui_ea_MainWindow(object):
                 border-radius: 4px;
                 background-color: white;
                 font-family: Figtree;
-                font-size: {fs_body}pt;
-                font-weight: 500;
+                font-size: {fs_xs}pt;
+                font-weight: 400;
                 color: {dark_navy};
+                padding: 3px;
+                margin-left: 30px;
             }}
             #ea_reportmerge_frame #ea_reportmerge_button:hover {{
                 background-color: {off_white};

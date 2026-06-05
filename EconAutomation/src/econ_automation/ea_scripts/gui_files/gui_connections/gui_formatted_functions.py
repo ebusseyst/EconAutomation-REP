@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Callable
 import platform
 
 from PySide6.QtWidgets import QFileDialog, QMainWindow
@@ -53,7 +54,11 @@ def select_claimant_folder_modal(self, title: str) -> str:
     return ""
 
 
-def create_case_function(OFF_filepath: str, admin_bool: bool = False) -> Path:
+def create_case_function(
+    OFF_filepath: str,
+    admin_bool: bool = False,
+    progress_callback: Callable[[str], None] | None = None,
+) -> Path:
     """
     Handles the request to create a new case - adds new folder structure and saves Excel templates for the case.
     Returns the path to the created claimant directory.
@@ -70,4 +75,5 @@ def create_case_function(OFF_filepath: str, admin_bool: bool = False) -> Path:
         base_filepaths=base_filepaths,
         wb_template_dir=wb_template_dir,
         admin_bool=admin_bool,
+        progress_callback=progress_callback,
     )

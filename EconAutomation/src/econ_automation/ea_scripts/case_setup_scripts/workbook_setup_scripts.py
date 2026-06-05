@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any
 from datetime import datetime
+import dateutil.parser as parser
 
 import xlwings as xlw
 
@@ -35,9 +36,9 @@ def set_PV2_case_variables(case_profile: Any, pv2_workbook_path: Path) -> None:
                 else "Missing Claimant Gender"
             )
             if claimant_gender == "man":
-                case_inputs_sheet.range("B8").value = "M"
+                case_inputs_sheet.range("B9").value = "M"
             else:
-                case_inputs_sheet.range("B8").value = "F"
+                case_inputs_sheet.range("B9").value = "F"
 
             pv2_wb.save(pv2_workbook_path)
 
@@ -51,20 +52,26 @@ def set_WC_case_variables(case_profile: Any, wc_workbook_path: Path) -> None:
             # Sets "DROPS" sheet values
             drops_sheet = wc_wb.sheets["DROPS"]
 
-            trial_date = (
-                case_profile.trial_date_short
-                if case_profile.trial_date_short != ""
-                else "Missing Trial Date"
-            )
+            if case_profile.trial_date_short == "":
+                if case_profile.reference_date_short == "":
+                    trial_date = "Error: Missing Trial Date"
+                else:
+                    trial_date = case_profile.reference_date_short
+            else:
+                trial_date = case_profile.trial_date_short
 
-            drops_sheet.range("B10").value = datetime.strptime(
-                trial_date, "%m/%d/%Y"
-            ).year
-            drops_sheet.range("B12").value = trial_date
-            drops_sheet.range("B13").value = (
-                case_profile.claimant_DOB_short
-                if case_profile.claimant_DOB_short != ""
-                else "Missing Claimant DOB"
-            )
+            try:
+                drops_sheet.range("B10").value = datetime.strptime(
+                    trial_date, "%m/%d/%Y"
+                ).year
+                drops_sheet.range("B12").value = trial_date
+                drops_sheet.range("B13").value = (
+                    case_profile.claimant_DOB_short
+                    if case_profile.claimant_DOB_short != ""
+                    else "Missing Claimant DOB"
+                )
+            except (ValueError, TypeError, AttributeError, parser.ParserError):
+                drops_sheet.range("B10").value = "Error: Invalid Trial Date"
+                drops_sheet.range("B12").value = "Error: Invalid Trial Date"
 
             wc_wb.save(wc_workbook_path)

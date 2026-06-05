@@ -366,8 +366,12 @@ class OFFExtractor:
             for item_1, item_2 in zip(list_1, list_2):
                 if item_1 == "" and item_2 == "":
                     continue
-                item_1 = item_1.strip()
-                item_2 = item_2.strip()
+                elif "<" in item_2 and ">" in item_2:
+                    item_1 = item_1.strip()
+                    item_2 = ""
+                else:
+                    item_1 = item_1.strip()
+                    item_2 = item_2.strip()
 
                 if item_1 == "Address:":
                     item_1 = (
@@ -428,15 +432,17 @@ class OFFExtractor:
         if trial_date_short:
             return OFFExtractor._format_date(trial_date_short)
         elif report_deadline_short:
-            rep_datetime = parser.parse(report_deadline_short)
-            ref_datetime = (rep_datetime + relativedelta(months=+3)).strftime(
-                "%m/%d/%Y"
-            )
-            ref_datetime_short, ref_datetime_long = OFFExtractor._format_date(
-                ref_datetime
-            )
-
-            return ref_datetime_short, ref_datetime_long
+            try:
+                rep_datetime = parser.parse(report_deadline_short)
+                ref_datetime = (rep_datetime + relativedelta(months=+3)).strftime(
+                    "%m/%d/%Y"
+                )
+                ref_datetime_short, ref_datetime_long = OFFExtractor._format_date(
+                    ref_datetime
+                )
+                return ref_datetime_short, ref_datetime_long
+            except (ValueError, TypeError, parser.ParserError):
+                return "", ""
         else:
             return "", ""
 
