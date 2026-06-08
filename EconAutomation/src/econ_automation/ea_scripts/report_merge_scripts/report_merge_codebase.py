@@ -123,9 +123,10 @@ def merge_reports_core(
     extracted from workbooks. Each path is converted to an InlineImage bound
     to the current DocxTemplate before rendering.
     """
-    try:
-        jinja_env = Environment(undefined=_DebugUndefined)
-        for template_filepath in selected_template_filepaths:
+    jinja_env = Environment(undefined=_DebugUndefined)
+    for template_filepath in selected_template_filepaths:
+        doc: DocxTemplate | None = None
+        try:
             builder = _CONTEXT_BUILDERS.get(template_filepath.stem)
             if builder is not None:
                 toggles = (gui_overrides or {}).get(template_filepath.stem)
@@ -159,16 +160,34 @@ def merge_reports_core(
                 report_type=template_filepath.stem,
                 selected_output_filepaths=selected_output_filepaths,
             )
-    except TemplateSyntaxError as e:
-        if hasattr(e, "docx_context"):
-            context_lines = "\n".join(e.docx_context)
+        except TemplateSyntaxError as e:
+            # Dump the post-consolidation XML so the split tag can be located.
+            try:
+                import tempfile
+                if doc is not None:
+                    xml_bytes = doc.get_docx()._part.blob
+                    dump_path = Path(tempfile.gettempdir()) / f"_debug_{template_filepath.stem}.xml"
+                    dump_path.write_bytes(xml_bytes)
+                    logger.error(
+                        "TemplateSyntaxError: post-consolidation XML written to %s — "
+                        "search for 'endif' in that file to locate the unmatched tag.",
+                        dump_path,
+                    )
+            except Exception:
+                pass
             logger.error(
-                "Template context around line %s:\n%s",
+                "TemplateSyntaxError in '%s' at XML line %s: %s — "
+                "likely cause: Word split a Jinja2 tag (e.g. {%% if %%} or {%% endif %%}) "
+                "across XML runs with differing w:rPr or w:proofErr markers. "
+                "Open the template in Word, select the affected tag text, clear all "
+                "character formatting (Ctrl+Space), and re-save.",
+                template_filepath.name,
                 getattr(e, "lineno", "?"),
-                context_lines,
+                e,
             )
-        logger.exception(f"Error autofilling Word document templates: {e}")
-        raise
-    except Exception as e:
-        logger.exception(f"Error autofilling Word document templates: {e}")
-        raise
+            raise
+        except Exception as e:
+            logger.exception(
+                f"Error rendering template '{template_filepath.name}': {e}"
+            )
+            raise

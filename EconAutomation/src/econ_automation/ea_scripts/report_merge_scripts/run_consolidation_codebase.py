@@ -1,16 +1,53 @@
+import re as _re
 from lxml import etree
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 from docxtpl import DocxTemplate
 from copy import deepcopy
 
+# Word automatically injects these properties without user intent.
+# Stripping them before comparison lets adjacent runs that are visually
+# identical (but tagged with different language/proofing annotations) merge,
+# which prevents Jinja2 tags from being split across XML runs.
+_AUTO_INSERTED_PROPS = frozenset([qn("w:lang"), qn("w:noProof")])
+
+# Inline paragraph elements that Word injects as spell/grammar-check markers.
+# They have no semantic content but sit between runs as sibling elements,
+# causing the adjacency check to treat neighboring runs as non-adjacent.
+# Stripping them before consolidation allows the runs to merge correctly.
+_TRANSPARENT_PARA_TAGS = frozenset([qn("w:proofErr")])
+
+
+def _normalize_rpr(rpr) -> bytes:
+    """
+    Return a normalized serialization of a run-properties element.
+    Auto-inserted Word properties (w:lang, w:noProof) are stripped so they
+    don't prevent otherwise-identical runs from merging.
+    An rPr reduced to empty is treated the same as no rPr (returns b"").
+    """
+    if rpr is None:
+        return b""
+    rpr_copy = deepcopy(rpr)
+    for tag in _AUTO_INSERTED_PROPS:
+        for elem in rpr_copy.findall(tag):
+            rpr_copy.remove(elem)
+    return etree.tostring(rpr_copy) if len(rpr_copy) > 0 else b""
+
+
+def _strip_transparent_elements(p) -> None:
+    """Remove proofErr markers (and similar) that sit between runs as siblings."""
+    for tag in _TRANSPARENT_PARA_TAGS:
+        for elem in p.findall(tag):
+            p.remove(elem)
+
 
 def consolidate_runs_in_paragraph(paragraph):
     """
-    Merge adjacent runs with identical rPr within a paragraph.
+    Merge adjacent runs with equivalent rPr within a paragraph.
     Operates directly on the lxml element tree.
     """
     p = paragraph._p
+    _strip_transparent_elements(p)
     runs = p.findall(qn("w:r"))
     if len(runs) < 2:
         return
@@ -30,11 +67,7 @@ def consolidate_runs_in_paragraph(paragraph):
         rpr_current = r_current.find(qn("w:rPr"))
         rpr_next = r_next.find(qn("w:rPr"))
 
-        # Compare rPr serializations (None == None is fine too)
-        def rpr_xml(rpr):
-            return etree.tostring(rpr) if rpr is not None else b""
-
-        if rpr_xml(rpr_current) == rpr_xml(rpr_next):
+        if _normalize_rpr(rpr_current) == _normalize_rpr(rpr_next):
             # Merge: append all w:t (and w:br, w:tab) from next into current
             for child in list(r_next):
                 if child.tag != qn("w:rPr"):
@@ -56,6 +89,69 @@ def consolidate_runs_in_paragraph(paragraph):
             runs = p.findall(qn("w:r"))  # refresh after mutation
         else:
             i += 1
+
+
+def fix_same_row_tr_tags(doc: DocxTemplate) -> None:
+    """
+    Restructure table rows where {%tr if...%} and {%tr endif%} appear in the
+    SAME <w:tr> element.
+
+    docxtpl's patch_xml regex is greedy and replaces the ENTIRE <w:tr> with
+    whichever {%tr...%} tag it matches last — always the endif — discarding the
+    opening if condition. The standard docxtpl contract requires each tag to be
+    in its own dedicated row. This function enforces that contract automatically:
+
+      Before:  <w:tr> {%tr if cond%} ...data... {%tr endif%} </w:tr>
+      After:   <w:tr> {%tr if cond%} </w:tr>
+               <w:tr> ...data...                </w:tr>
+               <w:tr> {%tr endif%}              </w:tr>
+
+    Must be called AFTER run consolidation so the tags are guaranteed to be in
+    complete, single <w:t> elements.
+    """
+    _docx = doc.get_docx()
+    if _docx is None:
+        return
+    body = _docx._element.body
+
+    # Collect first — modifying the tree while iterating is unsafe.
+    rows_to_fix: list[tuple] = []
+    for tr in body.iter(qn("w:tr")):
+        all_text = "".join(t.text or "" for t in tr.iter(qn("w:t")))
+        if_m = _re.search(r"\{%tr if ([^%]+)%\}", all_text)
+        endif_m = _re.search(r"\{%tr endif\s*%\}", all_text)
+        if if_m and endif_m:
+            rows_to_fix.append((tr, if_m.group(1).strip()))
+
+    for tr, condition in rows_to_fix:
+        parent = tr.getparent()
+        if parent is None:
+            continue
+
+        # Strip {%tr ...%} tags from text elements so the data row is clean.
+        for t in tr.iter(qn("w:t")):
+            if t.text:
+                t.text = _re.sub(r"\{%tr if[^%]+%\}", "", t.text)
+                t.text = _re.sub(r"\{%tr endif\s*%\}", "", t.text)
+
+        idx = list(parent).index(tr)
+
+        def _make_tag_row(tag_text: str):
+            row = OxmlElement("w:tr")
+            tc = OxmlElement("w:tc")
+            p = OxmlElement("w:p")
+            r = OxmlElement("w:r")
+            t = OxmlElement("w:t")
+            t.text = tag_text
+            r.append(t)
+            p.append(r)
+            tc.append(p)
+            row.append(tc)
+            return row
+
+        parent.insert(idx, _make_tag_row(f"{{%tr if {condition} %}}"))
+        # tr is now at idx+1; insert endif after it
+        parent.insert(idx + 2, _make_tag_row("{%tr endif %}"))
 
 
 def consolidate_all_runs(doc: DocxTemplate):
@@ -85,3 +181,7 @@ def consolidate_all_runs(doc: DocxTemplate):
         ):
             if hf and not hf.is_linked_to_previous:
                 process_paragraphs(hf)
+
+    # Fix same-row {%tr if/endif%} patterns after run consolidation has ensured
+    # the tags are in complete, single <w:t> elements.
+    fix_same_row_tr_tags(doc)
