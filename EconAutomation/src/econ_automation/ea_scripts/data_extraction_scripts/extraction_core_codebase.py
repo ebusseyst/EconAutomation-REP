@@ -85,7 +85,7 @@ class WorkbookInfoCore:
         try:
             workbook_variables_dict = {}
             workbook_outputs_sheet = active_workbook[workbook_outputs_sheet_name]
-            if "Case Variables" in workbook_name:
+            if "Case" in workbook_name and "Variable" in workbook_name:
                 # New layout: 4 side-by-side semantic groups.
                 # Each group: (name_col, value_col, type_col) — 1-indexed.
                 #   CLAIMANT INFO  A(1)  B(2)  C(3)
@@ -679,7 +679,23 @@ class DataExtractorCore:
                                 temp_dir_path
                                 / f"{workbook_name} - {sheet_name} - {chart_name}.png"
                             )
-                            chart.to_png(out_path)
+                            # Use CopyPicture+clipboard approach (same as Range.to_png)
+                            # for reliable PNG output. Chart.Export() ignores the PNG
+                            # FilterName on some Windows/Office configurations and
+                            # produces EMF, which python-docx cannot read.
+                            from PIL import ImageGrab
+                            xl_obj, _ = chart.api
+                            for _retry in range(10):
+                                try:
+                                    xl_obj.CopyPicture(Appearance=1, Format=2)
+                                    _im = ImageGrab.grabclipboard()
+                                    if _im is None or isinstance(_im, list):
+                                        raise AttributeError("clipboard empty")
+                                    _im.save(str(out_path))
+                                    break
+                                except AttributeError:
+                                    if _retry == 9:
+                                        raise
                             extracted[chart_name] = out_path
                 logger.info(
                     f"DataExtractorCore.extract_charts: Extracted charts from {workbook_name}"

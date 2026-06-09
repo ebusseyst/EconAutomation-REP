@@ -32,7 +32,10 @@
       "Bash(.venv/Scripts/python -c \"from docxtpl import DocxTemplate; import inspect; src = inspect.getsource\\(DocxTemplate.init_jinja_env\\); print\\(src\\)\")",
       "Bash(.venv/Scripts/python -c \"from docxtpl import DocxTemplate; import inspect; src = inspect.getsource\\(DocxTemplate.render\\); print\\(src\\)\")",
       "Bash(.venv/Scripts/python -c \"from docxtpl import DocxTemplate; import inspect; src = inspect.getsource\\(DocxTemplate.render_xml_part\\); print\\(src\\)\")",
-      "Bash(.venv/Scripts/python -c ' *)"
+      "Bash(.venv/Scripts/python -c ' *)",
+      "PowerShell(& \".venv\\\\Scripts\\\\python.exe\" -c \"import xlwings; print\\(xlwings.__version__\\)\")",
+      "PowerShell(& \".venv\\\\Scripts\\\\python.exe\" -c \"import PIL; print\\(PIL.__version__\\)\")",
+      "PowerShell(& \".venv\\\\Scripts\\\\python.exe\" -c \"import docx.image; import inspect; print\\(inspect.getfile\\(docx.image\\)\\)\")"
     ],
     "additionalDirectories": [
       "/private/tmp"

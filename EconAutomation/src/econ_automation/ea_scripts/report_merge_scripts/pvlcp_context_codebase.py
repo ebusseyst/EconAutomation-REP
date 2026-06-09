@@ -2,9 +2,15 @@ import logging
 from dataclasses import dataclass, field, is_dataclass, fields
 from typing import Any
 
+from docxtpl import RichText
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
+
+_CPI_CATEGORIES = [
+    "physer", "othmedpro", "medcarser", "predru", "nonpredru",
+    "allite", "hosser", "inpser", "outser", "medequ",
+]
 
 
 @dataclass
@@ -45,6 +51,7 @@ class PVLCPContextBuilder:
         ctx: dict[str, Any] = {}
         ctx.update(self._all_fields())
         ctx.update(self._rehab_report_types())
+        ctx.update(self._cpi_derived_fields())
         return ctx
 
     # ── Private helpers ───────────────────────────────────────────────────
@@ -91,6 +98,28 @@ class PVLCPContextBuilder:
         # if self._is_populated("MCP_expert_name_full_with_titles"):
         #     types.append("MCP")
         return {"rehab_report_types": types}
+
+    def _cpi_derived_fields(self) -> dict[str, Any]:
+        out: dict[str, Any] = {}
+        for cat in _CPI_CATEGORIES:
+            has_low  = self._is_populated(f"WC_CPI_selcat_{cat}low")
+            has_high = self._is_populated(f"WC_CPI_selcat_{cat}high")
+
+            out[f"WC_CPI_selcat_{cat}"] = has_low or has_high
+
+            low_val  = self._get(f"WC_CPI_selcat_{cat}low_growth_rate") or ""
+            high_val = self._get(f"WC_CPI_selcat_{cat}high_growth_rate") or ""
+
+            if has_low and has_high:
+                rt = RichText()
+                rt.add(low_val)
+                rt.xml += "<w:r><w:br/></w:r><w:r><w:br/></w:r>"
+                rt.add(high_val)
+                out[f"WC_CPI_selcat_{cat}_growth_rates"] = rt
+            else:
+                out[f"WC_CPI_selcat_{cat}_growth_rates"] = low_val if has_low else high_val
+
+        return out
 
     def _derived_fields(self) -> dict[str, Any]:
         """

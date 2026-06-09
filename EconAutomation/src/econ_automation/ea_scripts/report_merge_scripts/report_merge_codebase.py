@@ -10,6 +10,7 @@ from jinja2 import Environment, Undefined, TemplateSyntaxError
 
 from econ_automation.ea_scripts.report_merge_scripts.run_consolidation_codebase import (
     consolidate_all_runs,
+    remove_empty_numbered_paragraphs,
 )
 from econ_automation.ea_scripts.report_merge_scripts.pv_earnings_context_codebase import (
     build_pv_earnings_context,
@@ -155,6 +156,13 @@ def merge_reports_core(
 
             consolidate_all_runs(doc)
             doc.render(context, jinja_env=jinja_env)
+            n = remove_empty_numbered_paragraphs(doc.docx)
+            if n:
+                logger.info(
+                    "merge_reports_core: removed %d empty numbered paragraph(s) from %s",
+                    n,
+                    template_filepath.name,
+                )
             save_output_document(
                 doc=doc,
                 report_type=template_filepath.stem,

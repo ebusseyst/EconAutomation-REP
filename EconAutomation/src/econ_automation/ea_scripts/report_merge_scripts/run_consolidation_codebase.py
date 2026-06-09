@@ -154,6 +154,33 @@ def fix_same_row_tr_tags(doc: DocxTemplate) -> None:
         parent.insert(idx + 2, _make_tag_row("{%tr endif %}"))
 
 
+def remove_empty_numbered_paragraphs(document) -> int:
+    """
+    Remove auto-numbered paragraphs that have no text after rendering.
+
+    Inline {% if condition %}text{% endif %} blocks leave the enclosing <w:p>
+    element intact when condition is False — only the text is removed — which
+    produces a blank numbered line. This sweeps those residual paragraphs out
+    of the rendered document before saving.
+
+    Returns the count of paragraphs removed.
+    """
+    body = document.element.body
+    to_remove = []
+    for para in body.iter(qn("w:p")):
+        ppr = para.find(qn("w:pPr"))
+        if ppr is None:
+            continue
+        if ppr.find(qn("w:numPr")) is None:
+            continue
+        text = "".join((t.text or "") for t in para.iter(qn("w:t"))).strip()
+        if not text:
+            to_remove.append(para)
+    for para in to_remove:
+        para.getparent().remove(para)
+    return len(to_remove)
+
+
 def consolidate_all_runs(doc: DocxTemplate):
     """Apply run consolidation across all paragraphs and table cells."""
 
