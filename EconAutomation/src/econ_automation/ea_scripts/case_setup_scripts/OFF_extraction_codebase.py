@@ -250,8 +250,12 @@ class CaseProfile:
         )[0].strip()
         self.rehab_expert_name_first = self.rehab_expert_name_full.split(" ")[0]
         self.rehab_expert_name_last = self.rehab_expert_name_full.split(" ")[-1]
-        self.rehab_expert_name_first_initial = self.rehab_expert_initials[0]
-        self.rehab_expert_name_last_initial = self.rehab_expert_initials[-1]
+        self.rehab_expert_name_first_initial = (
+            self.rehab_expert_initials[0] if self.rehab_expert_initials else ""
+        )
+        self.rehab_expert_name_last_initial = (
+            self.rehab_expert_initials[-1] if self.rehab_expert_initials else ""
+        )
 
         # Case manager name breakdown
         mgr_parts = self.case_manager_name_full.split()

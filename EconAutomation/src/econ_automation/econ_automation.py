@@ -29,10 +29,19 @@ from econ_automation.ea_scripts.gui_files.gui_connections.gui_formatted_function
     select_OFF_file_modal,
     select_claimant_folder_modal,
 )
+from econ_automation.ea_scripts.gui_files.gui_core.case_info_dialogs import (
+    ConfirmCaseInfoDialog,
+    CreateFolderDialog,
+)
 from econ_automation.ea_scripts.gui_files.gui_core.ea_progress_dialog import (
     CaseSetupWorker,
+    CreateFolderWorker,
     EAProgressDialog,
     ReportMergeWorker,
+    SetupWorkbooksWorker,
+)
+from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase import (
+    make_case_profile_from_basic_info,
 )
 
 
@@ -49,6 +58,7 @@ class EconAutomationMainWindow(QMainWindow):
         self.econ_cases_path = Path.home()
         self._selected_off_path: str = ""
         self._selected_claimant_dir: Path | None = None
+        self._off_available: bool = True
         self._setup_comboboxes()
         self._connect_signals()
 
@@ -60,6 +70,10 @@ class EconAutomationMainWindow(QMainWindow):
         proj.addItem("To Age", "toage")
 
     def _connect_signals(self) -> None:
+        self.ui.ea_setupcase_createfolder_button.clicked.connect(self._on_create_folder)
+        self.ui.ea_setupcase_offavailable_checkbox.stateChanged.connect(
+            self._on_off_available_changed
+        )
         self.ui.ea_setupcase_OFFSelect_button.clicked.connect(self._on_off_select)
         self.ui.ea_setupcase_createcase_button.clicked.connect(self._on_create_case)
         self.ui.ea_reportmerge_claimantdirselect_button.clicked.connect(
@@ -69,6 +83,41 @@ class EconAutomationMainWindow(QMainWindow):
 
     # ── Slots ──────────────────────────────────────────────────────────────────
 
+    def _on_create_folder(self) -> None:
+        dlg = CreateFolderDialog(self, self.ui._color_dict)
+        if dlg.exec() != CreateFolderDialog.DialogCode.Accepted:
+            return
+        data = dlg.form_data()
+        case_profile = make_case_profile_from_basic_info(data)
+        progress = EAProgressDialog(self, "Creating Claimant Folder", self.ui._color_dict)
+        worker = CreateFolderWorker(case_profile, admin_bool=True)
+        worker.step_changed.connect(progress.update_step)
+        worker.finished.connect(progress.on_success)
+        worker.error.connect(progress.on_error)
+        worker.start()
+        progress.exec()
+        worker.wait()
+        claimant_dir = progress.result_dir()
+        if claimant_dir is not None:
+            self._open_in_explorer(claimant_dir)
+
+    def _on_off_available_changed(self, state: int) -> None:
+        available = state == Qt.CheckState.Checked.value
+        self._off_available = available
+        self.ui.ea_setupcase_OFFSelect_button.setEnabled(available)
+        self.ui.ea_setupcase_selectedOFF_label.setEnabled(available)
+        if not available:
+            self.ui.ea_setupcase_selectedOFF_label.setText(
+                "Workbooks will be created without OFF."
+            )
+        else:
+            label_text = (
+                f"Selected: {self._selected_off_path}"
+                if self._selected_off_path
+                else "No claimant OFF selected."
+            )
+            self.ui.ea_setupcase_selectedOFF_label.setText(label_text)
+
     def _on_off_select(self) -> None:
         claimant_name, file_path = select_OFF_file_modal(self)
         self._selected_off_path = file_path
@@ -76,22 +125,37 @@ class EconAutomationMainWindow(QMainWindow):
         label.setText(claimant_name if claimant_name else "No claimant OFF selected.")
 
     def _on_create_case(self) -> None:
-        if not self._selected_off_path:
-            QMessageBox.warning(
-                self,
-                "No OFF File Selected",
-                "Please select an OFF file in the 'Set Up Case' section before creating a case.",
-            )
-            return
-        dialog = EAProgressDialog(self, "Setting Up Case", self.ui._color_dict)
-        worker = CaseSetupWorker(self._selected_off_path, admin_bool=True)
-        worker.step_changed.connect(dialog.update_step)
-        worker.finished.connect(dialog.on_success)
-        worker.error.connect(dialog.on_error)
-        worker.start()
-        dialog.exec()
-        worker.wait()
-        claimant_dir = dialog.result_dir()
+        if self._off_available:
+            if not self._selected_off_path:
+                QMessageBox.warning(
+                    self,
+                    "No OFF File Selected",
+                    "Please select an OFF file in the 'Set Up Case' section before creating a case.",
+                )
+                return
+            progress = EAProgressDialog(self, "Setting Up Case", self.ui._color_dict)
+            worker = CaseSetupWorker(self._selected_off_path, admin_bool=True)
+            worker.step_changed.connect(progress.update_step)
+            worker.finished.connect(progress.on_success)
+            worker.error.connect(progress.on_error)
+            worker.start()
+            progress.exec()
+            worker.wait()
+            claimant_dir = progress.result_dir()
+        else:
+            dlg = ConfirmCaseInfoDialog(self, self.ui._color_dict)
+            if dlg.exec() != ConfirmCaseInfoDialog.DialogCode.Accepted:
+                return
+            case_profile = make_case_profile_from_basic_info(dlg.form_data())
+            progress = EAProgressDialog(self, "Setting Up Case", self.ui._color_dict)
+            worker = SetupWorkbooksWorker(case_profile, admin_bool=True)
+            worker.step_changed.connect(progress.update_step)
+            worker.finished.connect(progress.on_success)
+            worker.error.connect(progress.on_error)
+            worker.start()
+            progress.exec()
+            worker.wait()
+            claimant_dir = progress.result_dir()
         if claimant_dir is not None:
             self._open_in_explorer(claimant_dir)
 

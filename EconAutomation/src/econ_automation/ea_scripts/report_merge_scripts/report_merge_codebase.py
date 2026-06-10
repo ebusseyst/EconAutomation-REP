@@ -172,9 +172,13 @@ def merge_reports_core(
             # Dump the post-consolidation XML so the split tag can be located.
             try:
                 import tempfile
+
                 if doc is not None:
                     xml_bytes = doc.get_docx()._part.blob
-                    dump_path = Path(tempfile.gettempdir()) / f"_debug_{template_filepath.stem}.xml"
+                    dump_path = (
+                        Path(tempfile.gettempdir())
+                        / f"_debug_{template_filepath.stem}.xml"
+                    )
                     dump_path.write_bytes(xml_bytes)
                     logger.error(
                         "TemplateSyntaxError: post-consolidation XML written to %s — "

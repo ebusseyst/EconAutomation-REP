@@ -667,7 +667,15 @@ class DataExtractorCore:
                             f"not found in {workbook_name}, skipping chart '{chart_name}'."
                         )
                         continue
-                    if chart_name in sheet.charts:
+                    try:
+                        has_chart = chart_name in sheet.charts
+                    except Exception:
+                        logger.warning(
+                            f"DataExtractorCore.extract_charts: Cannot access charts on "
+                            f"sheet '{sheet_name}' in {workbook_name}, skipping '{chart_name}'."
+                        )
+                        continue
+                    if has_chart:
                         chart = sheet.charts[chart_name]
                         if platform.system() == "Darwin":
                             sheet.to_pdf(

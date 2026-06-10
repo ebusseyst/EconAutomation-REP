@@ -8,8 +8,16 @@ from pydantic import BaseModel
 logger = logging.getLogger(__name__)
 
 _CPI_CATEGORIES = [
-    "physer", "othmedpro", "medcarser", "predru", "nonpredru",
-    "allite", "hosser", "inpser", "outser", "medequ",
+    "physer",
+    "othmedpro",
+    "medcarser",
+    "predru",
+    "nonpredru",
+    "allite",
+    "hosser",
+    "inpser",
+    "outser",
+    "medequ",
 ]
 
 
@@ -102,22 +110,24 @@ class PVLCPContextBuilder:
     def _cpi_derived_fields(self) -> dict[str, Any]:
         out: dict[str, Any] = {}
         for cat in _CPI_CATEGORIES:
-            has_low  = self._is_populated(f"WC_CPI_selcat_{cat}low")
+            has_low = self._is_populated(f"WC_CPI_selcat_{cat}low")
             has_high = self._is_populated(f"WC_CPI_selcat_{cat}high")
 
             out[f"WC_CPI_selcat_{cat}"] = has_low or has_high
 
-            low_val  = self._get(f"WC_CPI_selcat_{cat}low_growth_rate") or ""
+            low_val = self._get(f"WC_CPI_selcat_{cat}low_growth_rate") or ""
             high_val = self._get(f"WC_CPI_selcat_{cat}high_growth_rate") or ""
 
+            rt = RichText()
             if has_low and has_high:
-                rt = RichText()
-                rt.add(low_val)
+                rt.add(low_val, font="Times New Roman", size=24)
                 rt.xml += "<w:r><w:br/></w:r><w:r><w:br/></w:r>"
-                rt.add(high_val)
-                out[f"WC_CPI_selcat_{cat}_growth_rates"] = rt
-            else:
-                out[f"WC_CPI_selcat_{cat}_growth_rates"] = low_val if has_low else high_val
+                rt.add(high_val, font="Times New Roman", size=24)
+            elif has_low:
+                rt.add(low_val, font="Times New Roman", size=24)
+            elif has_high:
+                rt.add(high_val, font="Times New Roman", size=24)
+            out[f"WC_CPI_selcat_{cat}_growth_rates"] = rt
 
         return out
 

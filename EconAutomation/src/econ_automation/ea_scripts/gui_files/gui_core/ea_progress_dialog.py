@@ -23,6 +23,13 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase import (
+    create_folder_only,
+    setup_workbooks_from_profile,
+)
+from econ_automation.ea_scripts.file_system_scripts.file_system_codebase import (
+    FileSystemCore,
+)
 from econ_automation.ea_scripts.gui_files.gui_connections.gui_formatted_functions import (
     create_case_function,
 )
@@ -189,6 +196,72 @@ class CaseSetupWorker(QThread):
             self.finished.emit(claimant_dir)
         except Exception as exc:
             logger.exception("Case setup failed in worker")
+            self.error.emit(str(exc))
+        finally:
+            if _USE_COM:
+                _pythoncom.CoUninitialize()
+
+
+class CreateFolderWorker(QThread):
+    step_changed = Signal(str)
+    finished = Signal(object)
+    error = Signal(str)
+
+    def __init__(self, case_profile, admin_bool: bool):
+        super().__init__()
+        self._case_profile = case_profile
+        self._admin_bool = admin_bool
+
+    def run(self) -> None:
+        if _USE_COM:
+            _pythoncom.CoInitialize()
+        try:
+            fs = FileSystemCore()
+            base_filepaths = fs.main_filepaths_dict["base_filepaths"]
+            claimant_dir = create_folder_only(
+                case_profile=self._case_profile,
+                base_filepaths=base_filepaths,
+                admin_bool=self._admin_bool,
+                progress_callback=lambda s: self.step_changed.emit(s),
+            )
+            self.finished.emit(claimant_dir)
+        except Exception as exc:
+            logger.exception("Folder creation failed in worker")
+            self.error.emit(str(exc))
+        finally:
+            if _USE_COM:
+                _pythoncom.CoUninitialize()
+
+
+class SetupWorkbooksWorker(QThread):
+    step_changed = Signal(str)
+    finished = Signal(object)
+    error = Signal(str)
+
+    def __init__(self, case_profile, admin_bool: bool):
+        super().__init__()
+        self._case_profile = case_profile
+        self._admin_bool = admin_bool
+
+    def run(self) -> None:
+        if _USE_COM:
+            _pythoncom.CoInitialize()
+        try:
+            import platform as _platform
+            fs = FileSystemCore()
+            base_filepaths = fs.main_filepaths_dict["base_filepaths"]
+            platform_key = "Mac" if _platform.system() == "Darwin" else "Windows"
+            wb_template_dir = fs.main_filepaths_dict["wb_template_dir"][platform_key]
+            claimant_dir = setup_workbooks_from_profile(
+                case_profile=self._case_profile,
+                base_filepaths=base_filepaths,
+                wb_template_dir=wb_template_dir,
+                admin_bool=self._admin_bool,
+                progress_callback=lambda s: self.step_changed.emit(s),
+            )
+            self.finished.emit(claimant_dir)
+        except Exception as exc:
+            logger.exception("Workbook setup failed in worker")
             self.error.emit(str(exc))
         finally:
             if _USE_COM:

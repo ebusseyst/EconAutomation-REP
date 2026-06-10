@@ -2,8 +2,11 @@ from pathlib import Path
 from typing import Any
 from datetime import datetime
 import dateutil.parser as parser
+import logging
 
 import xlwings as xlw
+
+logger = logging.getLogger(__name__)
 
 
 def set_PV2_case_variables(case_profile: Any, pv2_workbook_path: Path) -> None:
@@ -11,8 +14,15 @@ def set_PV2_case_variables(case_profile: Any, pv2_workbook_path: Path) -> None:
     Sets the case variables in the PV2 workbook.
     """
     with xlw.App(visible=False) as app:
-        with app.books.open(pv2_workbook_path) as pv2_wb:
-            # Sets "Case Inputs" sheet values
+        with app.books.open(pv2_workbook_path, update_links=False) as pv2_wb:
+            sheet_names = [s.name for s in pv2_wb.sheets]
+            if "Case Inputs" not in sheet_names:
+                logger.warning(
+                    "PV2 workbook %s is missing 'Case Inputs' sheet (found: %s)",
+                    pv2_workbook_path.name,
+                    sheet_names,
+                )
+                return
             case_inputs_sheet = pv2_wb.sheets["Case Inputs"]
             case_inputs_sheet.range("B3").value = case_profile.claimant_name_full
             case_inputs_sheet.range("B4").value = (
@@ -48,8 +58,15 @@ def set_WC_case_variables(case_profile: Any, wc_workbook_path: Path) -> None:
     Sets the case variables in the Working Calc workbook.
     """
     with xlw.App(visible=False) as app:
-        with app.books.open(wc_workbook_path) as wc_wb:
-            # Sets "DROPS" sheet values
+        with app.books.open(wc_workbook_path, update_links=False) as wc_wb:
+            sheet_names = [s.name for s in wc_wb.sheets]
+            if "DROPS" not in sheet_names:
+                logger.warning(
+                    "WC workbook %s is missing 'DROPS' sheet (found: %s)",
+                    wc_workbook_path.name,
+                    sheet_names,
+                )
+                return
             drops_sheet = wc_wb.sheets["DROPS"]
 
             if case_profile.trial_date_short == "":

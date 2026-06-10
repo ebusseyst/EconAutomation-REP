@@ -175,6 +175,7 @@ def run_extraction_and_report_merge(
         progress_callback: Optional callable invoked with a status string at
             each major processing step.
     """
+
     def _step(msg: str) -> None:
         if progress_callback:
             progress_callback(msg)
@@ -273,7 +274,9 @@ def _initialize_extractors(
             temp_dir_path=temp_dir_filepath,
         )
     else:
-        logger.warning("_initialize_extractors: CASE_VARIABLES workbook not found, skipping.")
+        logger.warning(
+            "_initialize_extractors: CASE_VARIABLES workbook not found, skipping."
+        )
 
     if (fp := workbook_fps.get("WORKING_CALC")) is not None:
         extractors["working_calc"] = WorkingCalcExtractor(
@@ -282,7 +285,9 @@ def _initialize_extractors(
             temp_dir_path=temp_dir_filepath,
         )
     else:
-        logger.warning("_initialize_extractors: WORKING_CALC workbook not found, skipping.")
+        logger.warning(
+            "_initialize_extractors: WORKING_CALC workbook not found, skipping."
+        )
 
     if (fp := workbook_fps.get("PV2")) is not None:
         extractors["pv2"] = PV2Extractor(
