@@ -208,6 +208,8 @@ class ConfirmCaseInfoDialog(QDialog):
         form2.setVerticalSpacing(8)
 
         self._trial_date_check = QCheckBox("Trial Date?")
+        self._attorney_gender_combo = QComboBox()
+        self._attorney_gender_combo.addItems(["M", "F"])
         self._gender_combo = QComboBox()
         self._gender_combo.addItems(["M", "F"])
         self._reference_date = QLineEdit()
@@ -218,6 +220,7 @@ class ConfirmCaseInfoDialog(QDialog):
         self._doi.setPlaceholderText("MM/DD/YYYY")
 
         form2.addRow(self._trial_date_check, QLabel(""))
+        form2.addRow("Attorney Gender:", self._attorney_gender_combo)
         form2.addRow("Claimant Gender:", self._gender_combo)
         form2.addRow("Trial/Reference Date:", self._reference_date)
         form2.addRow("Claimant DOB:", self._dob)
@@ -252,6 +255,7 @@ class ConfirmCaseInfoDialog(QDialog):
             "attorney_name_first": self._attorney_first.text().strip(),
             "attorney_name_last": self._attorney_last.text().strip(),
             "trial_date_bool": self._trial_date_check.isChecked(),
+            "attorney_gender": self._attorney_gender_combo.currentText(),
             "gender": self._gender_combo.currentText(),
             "reference_date": self._reference_date.text().strip(),
             "dob": self._dob.text().strip(),

@@ -1,7 +1,7 @@
 import logging
 import logging.config
 import os
-from logging.handlers import RotatingFileHandler
+from datetime import datetime
 from pathlib import Path
 import traceback
 import sys
@@ -26,9 +26,6 @@ def _get_log_dir() -> Path:
         return Path.home() / "Library" / "Logs" / APP_NAME
     else:
         return Path.home() / ".local" / "share" / APP_NAME / "logs"
-
-
-_DEFAULT_LOG_PATH = str(_get_log_dir() / "econ_automation.log")
 
 
 class GlobalContextFilter(logging.Filter):
@@ -70,13 +67,29 @@ class DefaultConsoleFormatter(logging.Formatter):
         return "".join(traceback.format_exception(*ei)).rstrip()
 
 
-class JSONFileHandler(RotatingFileHandler):
-    def __init__(self, filename=_DEFAULT_LOG_PATH, maxBytes=500000, backupCount=5, mode='a', delay=True):
-        Path(filename).parent.mkdir(parents=True, exist_ok=True)
-        super().__init__(filename, maxBytes=maxBytes, backupCount=backupCount, mode=mode, delay=delay)
+class TimestampedJSONFileHandler(logging.FileHandler):
+    def __init__(self, max_logs: int = 10):
+        log_dir = _get_log_dir()
+        log_dir.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        log_path = log_dir / f"econ_automation_{timestamp}.txt"
+        super().__init__(str(log_path), mode="a", delay=False)
         self.setFormatter(DefaultJSONFormatter())
         self.terminator = "\n\n"
         sys.excepthook = self._handle_exception
+        self._purge_old_logs(log_dir, max_logs)
+
+    @staticmethod
+    def _purge_old_logs(log_dir: Path, max_logs: int) -> None:
+        logs = sorted(
+            log_dir.glob("econ_automation_*.txt"),
+            key=lambda p: p.stat().st_mtime,
+        )
+        for old_log in logs[:-max_logs]:
+            try:
+                old_log.unlink()
+            except Exception:
+                pass
 
     def _handle_exception(self, exc_type, exc_value, exc_traceback):
         if issubclass(exc_type, KeyboardInterrupt):
@@ -92,4 +105,3 @@ def setup_logging():
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
     logging.config.dictConfig(config)
-    logging.getLogger(__name__).debug("Log file: %s", _DEFAULT_LOG_PATH)

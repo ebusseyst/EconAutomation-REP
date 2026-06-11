@@ -1,6 +1,7 @@
 import datetime as dt
 import logging
 import locale
+import time
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Optional
@@ -167,6 +168,11 @@ class WorkbookInfoCore:
         """
         Defines the worksheets with charts for the relevant workbook.
         """
+        # Case_Variables uses a 4-column-group layout where columns J-K (10-11)
+        # hold attorney values — the same columns this function reads for chart
+        # config.  That workbook has no charts to extract, so bail early.
+        if "Case" in workbook_name and "Variable" in workbook_name:
+            return {}
         try:
             workbook_charts_dict = {}
             wb_outputs_sheet = active_workbook[workbook_outputs_sheet_name]
@@ -210,6 +216,9 @@ class WorkbookInfoCore:
         """
         Defines the worksheets with tables for the relevant workbook.
         """
+        # Same column-layout collision as define_workbook_charts — skip entirely.
+        if "Case" in workbook_name and "Variable" in workbook_name:
+            return {}
         try:
             workbook_tables_dict = {}
             wb_outputs_sheet = active_workbook[workbook_outputs_sheet_name]
@@ -640,7 +649,12 @@ class DataExtractorCore:
         Opens an Excel workbook using xlwings for chart/table extraction.
         """
         app = xw.App(visible=False)
+        # Disable events before opening so Workbook_Open VBA macros don't fire.
+        # Without this, xlsm files keep Excel's COM busy and the next call gets
+        # RPC_E_CALL_REJECTED (-2147418111).
+        app.api.EnableEvents = False
         wb = app.books.open(workbook_pathstr)
+        time.sleep(0.5)
         return app, wb
 
     def extract_charts(
@@ -668,29 +682,48 @@ class DataExtractorCore:
                         )
                         continue
                     try:
-                        has_chart = chart_name in sheet.charts
+                        charts_col = sheet.charts
+                        has_chart = chart_name in charts_col
+                        if not has_chart:
+                            try:
+                                available = [c.name for c in charts_col]
+                            except Exception:
+                                available = []
+                            logger.warning(
+                                f"DataExtractorCore.extract_charts: Chart '{chart_name}' not found "
+                                f"in sheet '{sheet_name}' of {workbook_name}. "
+                                f"Available chart names: {available}"
+                            )
+                            continue
                     except Exception:
                         logger.warning(
                             f"DataExtractorCore.extract_charts: Cannot access charts on "
                             f"sheet '{sheet_name}' in {workbook_name}, skipping '{chart_name}'."
                         )
                         continue
-                    if has_chart:
-                        chart = sheet.charts[chart_name]
-                        if platform.system() == "Darwin":
-                            sheet.to_pdf(
-                                temp_dir_path
-                                / f"{workbook_name} - {sheet_name} - {chart_name}.pdf"
-                            )
-                        else:
-                            out_path = (
-                                temp_dir_path
-                                / f"{workbook_name} - {sheet_name} - {chart_name}.png"
-                            )
-                            # Use CopyPicture+clipboard approach (same as Range.to_png)
-                            # for reliable PNG output. Chart.Export() ignores the PNG
-                            # FilterName on some Windows/Office configurations and
-                            # produces EMF, which python-docx cannot read.
+                    chart = sheet.charts[chart_name]
+                    if platform.system() == "Darwin":
+                        sheet.to_pdf(
+                            temp_dir_path
+                            / f"{workbook_name} - {sheet_name} - {chart_name}.pdf"
+                        )
+                    else:
+                        out_path = (
+                            temp_dir_path
+                            / f"{workbook_name} - {sheet_name} - {chart_name}.png"
+                        )
+                        # Try direct file export first — no clipboard dependency.
+                        # Chart.Export() infers PNG from the .png extension.
+                        # If it silently produces EMF instead (detectable via header),
+                        # fall back to the CopyPicture+clipboard approach.
+                        _exported_valid = False
+                        try:
+                            chart.to_png(str(out_path))
+                            with open(str(out_path), "rb") as _f:
+                                _exported_valid = _f.read(4) == b"\x89PNG"
+                        except Exception:
+                            _exported_valid = False
+                        if not _exported_valid:
                             from PIL import ImageGrab
                             xl_obj, _ = chart.api
                             for _retry in range(10):
@@ -704,7 +737,8 @@ class DataExtractorCore:
                                 except AttributeError:
                                     if _retry == 9:
                                         raise
-                            extracted[chart_name] = out_path
+                                    time.sleep(0.1)
+                        extracted[chart_name] = out_path
                 logger.info(
                     f"DataExtractorCore.extract_charts: Extracted charts from {workbook_name}"
                 )
@@ -753,7 +787,20 @@ class DataExtractorCore:
                             temp_dir_path
                             / f"{workbook_name} - {sheet_name} - {table_name}.png"
                         )
-                        sheet.range(table.range.address).to_png(out_path)
+                        from PIL import ImageGrab
+                        rng = sheet.range(table.range.address)
+                        for _retry in range(10):
+                            try:
+                                rng.api.CopyPicture(Appearance=1, Format=2)
+                                _im = ImageGrab.grabclipboard()
+                                if _im is None or isinstance(_im, list):
+                                    raise AttributeError("clipboard empty")
+                                _im.save(str(out_path))
+                                break
+                            except AttributeError:
+                                if _retry == 9:
+                                    raise
+                                time.sleep(0.1)
                         extracted[table_name] = out_path
                     except Exception:
                         logger.warning(

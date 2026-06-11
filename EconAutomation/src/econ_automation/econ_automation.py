@@ -56,9 +56,7 @@ class EconAutomationMainWindow(QMainWindow):
         self.ui = Ui_ea_MainWindow(self)
         self.ui.setupUi()
         self.econ_cases_path = Path.home()
-        self._selected_off_path: str = ""
         self._selected_claimant_dir: Path | None = None
-        self._off_available: bool = True
         self._setup_comboboxes()
         self._connect_signals()
 
@@ -71,11 +69,8 @@ class EconAutomationMainWindow(QMainWindow):
 
     def _connect_signals(self) -> None:
         self.ui.ea_setupcase_createfolder_button.clicked.connect(self._on_create_folder)
-        self.ui.ea_setupcase_offavailable_checkbox.stateChanged.connect(
-            self._on_off_available_changed
-        )
-        self.ui.ea_setupcase_OFFSelect_button.clicked.connect(self._on_off_select)
-        self.ui.ea_setupcase_createcase_button.clicked.connect(self._on_create_case)
+        self.ui.ea_setupcase_OFFSelect_button.clicked.connect(self._on_prepare_with_off)
+        self.ui.ea_setupcase_createcase_button.clicked.connect(self._on_prepare_without_off)
         self.ui.ea_reportmerge_claimantdirselect_button.clicked.connect(
             self._on_claimantdir_select
         )
@@ -101,61 +96,36 @@ class EconAutomationMainWindow(QMainWindow):
         if claimant_dir is not None:
             self._open_in_explorer(claimant_dir)
 
-    def _on_off_available_changed(self, state: int) -> None:
-        available = state == Qt.CheckState.Checked.value
-        self._off_available = available
-        self.ui.ea_setupcase_OFFSelect_button.setEnabled(available)
-        self.ui.ea_setupcase_selectedOFF_label.setEnabled(available)
-        if not available:
-            self.ui.ea_setupcase_selectedOFF_label.setText(
-                "Workbooks will be created without OFF."
-            )
-        else:
-            label_text = (
-                f"Selected: {self._selected_off_path}"
-                if self._selected_off_path
-                else "No claimant OFF selected."
-            )
-            self.ui.ea_setupcase_selectedOFF_label.setText(label_text)
-
-    def _on_off_select(self) -> None:
+    def _on_prepare_with_off(self) -> None:
         claimant_name, file_path = select_OFF_file_modal(self)
-        self._selected_off_path = file_path
-        label = self.ui.ea_setupcase_selectedOFF_label
-        label.setText(claimant_name if claimant_name else "No claimant OFF selected.")
+        if not file_path:
+            return
+        progress = EAProgressDialog(self, "Setting Up Case", self.ui._color_dict)
+        worker = CaseSetupWorker(file_path, admin_bool=True)
+        worker.step_changed.connect(progress.update_step)
+        worker.finished.connect(progress.on_success)
+        worker.error.connect(progress.on_error)
+        worker.start()
+        progress.exec()
+        worker.wait()
+        claimant_dir = progress.result_dir()
+        if claimant_dir is not None:
+            self._open_in_explorer(claimant_dir)
 
-    def _on_create_case(self) -> None:
-        if self._off_available:
-            if not self._selected_off_path:
-                QMessageBox.warning(
-                    self,
-                    "No OFF File Selected",
-                    "Please select an OFF file in the 'Set Up Case' section before creating a case.",
-                )
-                return
-            progress = EAProgressDialog(self, "Setting Up Case", self.ui._color_dict)
-            worker = CaseSetupWorker(self._selected_off_path, admin_bool=True)
-            worker.step_changed.connect(progress.update_step)
-            worker.finished.connect(progress.on_success)
-            worker.error.connect(progress.on_error)
-            worker.start()
-            progress.exec()
-            worker.wait()
-            claimant_dir = progress.result_dir()
-        else:
-            dlg = ConfirmCaseInfoDialog(self, self.ui._color_dict)
-            if dlg.exec() != ConfirmCaseInfoDialog.DialogCode.Accepted:
-                return
-            case_profile = make_case_profile_from_basic_info(dlg.form_data())
-            progress = EAProgressDialog(self, "Setting Up Case", self.ui._color_dict)
-            worker = SetupWorkbooksWorker(case_profile, admin_bool=True)
-            worker.step_changed.connect(progress.update_step)
-            worker.finished.connect(progress.on_success)
-            worker.error.connect(progress.on_error)
-            worker.start()
-            progress.exec()
-            worker.wait()
-            claimant_dir = progress.result_dir()
+    def _on_prepare_without_off(self) -> None:
+        dlg = ConfirmCaseInfoDialog(self, self.ui._color_dict)
+        if dlg.exec() != ConfirmCaseInfoDialog.DialogCode.Accepted:
+            return
+        case_profile = make_case_profile_from_basic_info(dlg.form_data())
+        progress = EAProgressDialog(self, "Setting Up Case", self.ui._color_dict)
+        worker = SetupWorkbooksWorker(case_profile, admin_bool=True)
+        worker.step_changed.connect(progress.update_step)
+        worker.finished.connect(progress.on_success)
+        worker.error.connect(progress.on_error)
+        worker.start()
+        progress.exec()
+        worker.wait()
+        claimant_dir = progress.result_dir()
         if claimant_dir is not None:
             self._open_in_explorer(claimant_dir)
 

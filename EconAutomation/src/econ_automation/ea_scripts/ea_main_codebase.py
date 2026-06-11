@@ -23,9 +23,9 @@ from econ_automation.ea_scripts.data_extraction_scripts.working_calc_extraction_
 from econ_automation.ea_scripts.data_extraction_scripts.pv2_extraction_codebase import (
     PV2Extractor,
 )
-from econ_automation.ea_scripts.data_extraction_scripts.hhspv_extraction_codebase import (
-    HHSPVExtractor,
-)
+# from econ_automation.ea_scripts.data_extraction_scripts.hhspv_extraction_codebase import (
+#     HHSPVExtractor,
+# )
 
 from econ_automation.ea_scripts.report_merge_scripts.report_merge_codebase import (
     merge_reports_core,
@@ -46,7 +46,7 @@ _WORKBOOK_GLOB_PATTERNS: dict[str, list[str]] = {
     "CASE_VARIABLES": ["*Case*Variables*.xlsx"],
     "WORKING_CALC": ["*Working*Calc*.xlsm", "*Working*Calc*.xlsx"],
     "PV2": ["*PV2*.xlsm", "*2PV*.xlsm"],
-    "HHSPV": ["*HHS*PV*.xlsx"],
+    # "HHSPV": ["*HHS*PV*.xlsx"],
 }
 
 # Subfolder names (relative to claimant_dir) that are also searched for workbooks.
@@ -298,14 +298,14 @@ def _initialize_extractors(
     else:
         logger.warning("_initialize_extractors: PV2 workbook not found, skipping.")
 
-    if (fp := workbook_fps.get("HHSPV")) is not None:
-        extractors["hhspv"] = HHSPVExtractor(
-            hhspv_filepath=fp,
-            workbook_outputs_sheet_name=WORKBOOK_OUTPUTS_SHEET_NAME,
-            temp_dir_path=temp_dir_filepath,
-        )
-    else:
-        logger.warning("_initialize_extractors: HHSPV workbook not found, skipping.")
+    # if (fp := workbook_fps.get("HHSPV")) is not None:
+    #     extractors["hhspv"] = HHSPVExtractor(
+    #         hhspv_filepath=fp,
+    #         workbook_outputs_sheet_name=WORKBOOK_OUTPUTS_SHEET_NAME,
+    #         temp_dir_path=temp_dir_filepath,
+    #     )
+    # else:
+    #     logger.warning("_initialize_extractors: HHSPV workbook not found, skipping.")
 
     return extractors
 

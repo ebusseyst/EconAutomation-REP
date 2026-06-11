@@ -116,6 +116,7 @@ class CaseProfile:
     attorney_name_first: str = ""
     attorney_name_middle: str = ""
     attorney_name_last: str = ""
+    attorney_sex: str = ""
     attorney_phone: str = ""
     attorney_fax: str = ""
     attorney_email: str = ""
@@ -283,12 +284,18 @@ class CaseProfile:
         )
 
         # Attorney salutation / title variants
-        self.attorney_salutation = "Mr./Ms."
+        _atty_sal_map = {"Male": "Mr.", "Female": "Ms."}
+        atty_sal = _atty_sal_map.get(self.attorney_sex, "Mr./Ms.")
+        self.attorney_salutation = atty_sal
         self.attorney_name_full_with_title = f"{self.attorney_name_full}, Esq."
-        self.attorney_salutation_with_name_full = f"Mr./Ms. {self.attorney_name_full}"
-        self.attorney_salutation_with_name_last = f"Mr./Ms. {self.attorney_name_last}"
+        self.attorney_salutation_with_name_full = (
+            f"{atty_sal} {self.attorney_name_full}"
+        )
+        self.attorney_salutation_with_name_last = (
+            f"{atty_sal} {self.attorney_name_last}"
+        )
         self.attorney_salutation_with_name_full_with_title = (
-            f"Mr./Ms. {self.attorney_name_full}, Esq."
+            f"{atty_sal} {self.attorney_name_full}, Esq."
         )
 
         # Attorney phone formatting
@@ -538,8 +545,8 @@ class OFFExtractor:
             billing_rate=up.get("Billing Rate:", ""),
             report_deadline_short=report_deadline_short,
             report_deadline_long=report_deadline_long,
-            report_date_short="",
-            report_date_long="",
+            report_date_short=report_deadline_short,
+            report_date_long=report_deadline_long,
             addendum_report_deadline_short=addendum_report_deadline_short,
             addendum_report_deadline_long=addendum_report_deadline_long,
             expert_designation_date_short=expert_designation_date_short,

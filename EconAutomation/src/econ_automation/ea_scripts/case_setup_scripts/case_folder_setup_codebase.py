@@ -235,6 +235,7 @@ def make_case_profile_from_basic_info(data: dict) -> CaseProfile:
     """
     gender_map = {"M": "Male", "F": "Female"}
     claimant_sex = gender_map.get(data.get("gender", ""), "")
+    attorney_sex = gender_map.get(data.get("attorney_gender", ""), "")
 
     dob_short, dob_long = OFFExtractor._format_date(data.get("dob", ""))
     doi_short, doi_long = OFFExtractor._format_date(data.get("doi", ""))
@@ -260,4 +261,5 @@ def make_case_profile_from_basic_info(data: dict) -> CaseProfile:
         trial_date_long=trial_date_long,
         attorney_name_first=attorney_first,
         attorney_name_last=attorney_last,
+        attorney_sex=attorney_sex,
     )

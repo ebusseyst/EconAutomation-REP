@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 from typing import Any
 from datetime import datetime
@@ -14,7 +15,9 @@ def set_PV2_case_variables(case_profile: Any, pv2_workbook_path: Path) -> None:
     Sets the case variables in the PV2 workbook.
     """
     with xlw.App(visible=False) as app:
+        app.api.EnableEvents = False
         with app.books.open(pv2_workbook_path, update_links=False) as pv2_wb:
+            time.sleep(0.5)
             sheet_names = [s.name for s in pv2_wb.sheets]
             if "Case Inputs" not in sheet_names:
                 logger.warning(
@@ -58,7 +61,9 @@ def set_WC_case_variables(case_profile: Any, wc_workbook_path: Path) -> None:
     Sets the case variables in the Working Calc workbook.
     """
     with xlw.App(visible=False) as app:
+        app.api.EnableEvents = False
         with app.books.open(wc_workbook_path, update_links=False) as wc_wb:
+            time.sleep(0.5)
             sheet_names = [s.name for s in wc_wb.sheets]
             if "DROPS" not in sheet_names:
                 logger.warning(

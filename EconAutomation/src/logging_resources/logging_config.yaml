@@ -30,13 +30,10 @@ handlers:
     level: INFO
 
   file_handler:
-    class: logging_resources.log_context.JSONFileHandler
+    class: logging_resources.log_context.TimestampedJSONFileHandler
     filters: [GlobalContextFilter]
     level: INFO
-    maxBytes: 500000
-    backupCount: 5
-    mode: "a"
-    delay: True
+    max_logs: 10
 
 loggers:
   econ_automation:
