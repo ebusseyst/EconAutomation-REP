@@ -9,13 +9,7 @@ import sys
 import yaml
 from pythonjsonlogger import jsonlogger
 
-try:
-    from importlib.metadata import version, metadata as pkg_metadata
-    APP_NAME = pkg_metadata("econ_automation").get("Name", "EconAutomation")
-    APP_VERSION = version("econ_automation")
-except Exception:
-    APP_NAME = "EconAutomation"
-    APP_VERSION = "unknown"
+from econ_automation._version import APP_NAME, __version__ as APP_VERSION
 
 
 def _get_log_dir() -> Path:

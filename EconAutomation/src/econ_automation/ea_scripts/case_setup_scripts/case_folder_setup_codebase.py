@@ -19,7 +19,7 @@ from econ_automation.ea_scripts.case_setup_scripts.workbook_setup_scripts import
 
 logger = logging.getLogger(__name__)
 
-_CASE_SUBFOLDERS = ["E-File", "Correspondence", "Report and Invoice", "Work Product"]
+_CASE_SUBFOLDERS = ["E-File", "Emails", "Reports and Invoices", "Work Products"]
 
 
 def _get_base_dir(base_filepaths: dict[str, Path], admin_bool: bool) -> Path:
@@ -74,7 +74,7 @@ def setup_new_case(
         claimant_dir = initialize_case_folders(case_profile, base_filepaths, admin_bool)
 
     _step("Copying and configuring workbook templates...")
-    work_product_dir = claimant_dir / "Work Product"
+    work_product_dir = claimant_dir / "Work Products"
     work_product_dir.mkdir(exist_ok=True)
     save_claimant_workbook_templates(case_profile, wb_template_dir, work_product_dir)
 
@@ -221,7 +221,7 @@ def setup_workbooks_from_profile(
             (claimant_dir / sub).mkdir(exist_ok=True)
 
     _step("Copying and configuring workbook templates...")
-    work_product_dir = claimant_dir / "Work Product"
+    work_product_dir = claimant_dir / "Work Products"
     work_product_dir.mkdir(exist_ok=True)
     save_claimant_workbook_templates(case_profile, wb_template_dir, work_product_dir)
     return claimant_dir

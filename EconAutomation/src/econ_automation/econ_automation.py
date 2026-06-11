@@ -254,9 +254,13 @@ class eaApp(QApplication):
         )
 
 
-if __name__ == "__main__":
+def main() -> None:
     myappid = "EconAutomation"
     if platform.system() == "Windows":
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     ea_app = eaApp(argv=sys.argv)
     ea_app.exec()
+
+
+if __name__ == "__main__":
+    main()

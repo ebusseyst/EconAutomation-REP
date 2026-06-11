@@ -50,7 +50,7 @@ _WORKBOOK_GLOB_PATTERNS: dict[str, list[str]] = {
 }
 
 # Subfolder names (relative to claimant_dir) that are also searched for workbooks.
-_WORKBOOK_SEARCH_SUBDIRS = ["Work Product"]
+_WORKBOOK_SEARCH_SUBDIRS = ["Work Products"]
 
 # Glob patterns used by build_selected_files_dict to locate report templates.
 _TEMPLATE_GLOB_PATTERNS: dict[str, list[str]] = {

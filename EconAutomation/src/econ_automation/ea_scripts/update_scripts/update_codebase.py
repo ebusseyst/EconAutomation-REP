@@ -4,19 +4,15 @@ import os
 import subprocess
 import sys
 import tempfile
-from importlib.metadata import version
 from pathlib import Path
 import platform
 
 import requests
 from packaging.version import Version
 
-logger = logging.getLogger(__name__)
+from econ_automation._version import __version__ as CURRENT_VERSION
 
-try:
-    CURRENT_VERSION = version("econ_automation")
-except Exception:
-    CURRENT_VERSION = "0.4.0-alpha"
+logger = logging.getLogger(__name__)
 VERSION_URL = "https://github.com/ebusseyst/EconAutomation-REP/releases/latest/download/version.json"
 REQUEST_TIMEOUT = 5
 

@@ -87,13 +87,14 @@ def set_WC_case_variables(case_profile: Any, wc_workbook_path: Path) -> None:
                     trial_date, "%m/%d/%Y"
                 ).year
                 drops_sheet.range("B12").value = trial_date
-                drops_sheet.range("B13").value = (
-                    case_profile.claimant_DOB_short
-                    if case_profile.claimant_DOB_short != ""
-                    else "Missing Claimant DOB"
-                )
             except (ValueError, TypeError, AttributeError, parser.ParserError):
                 drops_sheet.range("B10").value = "Error: Invalid Trial Date"
                 drops_sheet.range("B12").value = "Error: Invalid Trial Date"
+
+            drops_sheet.range("B13").value = (
+                case_profile.claimant_DOB_short
+                if case_profile.claimant_DOB_short != ""
+                else "Missing Claimant DOB"
+            )
 
             wc_wb.save(wc_workbook_path)

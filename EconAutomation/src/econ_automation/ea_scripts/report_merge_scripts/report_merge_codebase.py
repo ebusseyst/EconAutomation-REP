@@ -73,14 +73,14 @@ def save_output_document(
                 dir_name.split(",")[1].strip()[0] if "," in dir_name else ""
             )
             base_stem = f"{name_last}{name_first_initial} - {report_type}"
-            final_output_path = output_filepath / f"{base_stem}.docx"
-
-            output_filepath.mkdir(parents=True, exist_ok=True)
+            output_dir = output_filepath / "Reports and Invoices"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            final_output_path = output_dir / f"{base_stem}.docx"
 
             counter = 0
             while final_output_path.exists():
                 counter += 1
-                final_output_path = output_filepath / f"{base_stem}({counter}).docx"
+                final_output_path = output_dir / f"{base_stem}({counter}).docx"
 
             doc.save(str(final_output_path))
             logger.info(f"Saved output document to: {final_output_path}")
@@ -174,6 +174,7 @@ def merge_reports_core(
                 import tempfile
 
                 if doc is not None:
+                    # pyrefly: ignore [missing-attribute]
                     xml_bytes = doc.get_docx()._part.blob
                     dump_path = (
                         Path(tempfile.gettempdir())
