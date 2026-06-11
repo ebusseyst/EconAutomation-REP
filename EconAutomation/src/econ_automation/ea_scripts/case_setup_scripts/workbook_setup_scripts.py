@@ -53,7 +53,7 @@ def set_PV2_case_variables(case_profile: Any, pv2_workbook_path: Path) -> None:
             else:
                 case_inputs_sheet.range("B9").value = "F"
 
-            pv2_wb.save(pv2_workbook_path)
+            pv2_wb.save()
 
 
 def set_WC_case_variables(case_profile: Any, wc_workbook_path: Path) -> None:
@@ -97,4 +97,4 @@ def set_WC_case_variables(case_profile: Any, wc_workbook_path: Path) -> None:
                 else "Missing Claimant DOB"
             )
 
-            wc_wb.save(wc_workbook_path)
+            wc_wb.save()
