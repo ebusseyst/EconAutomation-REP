@@ -163,9 +163,10 @@ def merge_reports_core(
                     n,
                     template_filepath.name,
                 )
+            report_type = template_filepath.stem.removesuffix("_Template").replace("_", " ")
             save_output_document(
                 doc=doc,
-                report_type=template_filepath.stem,
+                report_type=report_type,
                 selected_output_filepaths=selected_output_filepaths,
             )
         except TemplateSyntaxError as e:

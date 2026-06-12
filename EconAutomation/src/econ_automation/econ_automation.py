@@ -85,7 +85,7 @@ class EconAutomationMainWindow(QMainWindow):
         data = dlg.form_data()
         case_profile = make_case_profile_from_basic_info(data)
         progress = EAProgressDialog(self, "Creating Claimant Folder", self.ui._color_dict)
-        worker = CreateFolderWorker(case_profile, admin_bool=True)
+        worker = CreateFolderWorker(case_profile, admin_bool=False)
         worker.step_changed.connect(progress.update_step)
         worker.finished.connect(progress.on_success)
         worker.error.connect(progress.on_error)
@@ -101,7 +101,7 @@ class EconAutomationMainWindow(QMainWindow):
         if not file_path:
             return
         progress = EAProgressDialog(self, "Setting Up Case", self.ui._color_dict)
-        worker = CaseSetupWorker(file_path, admin_bool=True)
+        worker = CaseSetupWorker(file_path, admin_bool=False)
         worker.step_changed.connect(progress.update_step)
         worker.finished.connect(progress.on_success)
         worker.error.connect(progress.on_error)
@@ -110,7 +110,7 @@ class EconAutomationMainWindow(QMainWindow):
         worker.wait()
         claimant_dir = progress.result_dir()
         if claimant_dir is not None:
-            self._open_in_explorer(claimant_dir)
+            self._open_in_explorer(claimant_dir / "Work Products")
 
     def _on_prepare_without_off(self) -> None:
         dlg = ConfirmCaseInfoDialog(self, self.ui._color_dict)
@@ -118,7 +118,7 @@ class EconAutomationMainWindow(QMainWindow):
             return
         case_profile = make_case_profile_from_basic_info(dlg.form_data())
         progress = EAProgressDialog(self, "Setting Up Case", self.ui._color_dict)
-        worker = SetupWorkbooksWorker(case_profile, admin_bool=True)
+        worker = SetupWorkbooksWorker(case_profile, admin_bool=False)
         worker.step_changed.connect(progress.update_step)
         worker.finished.connect(progress.on_success)
         worker.error.connect(progress.on_error)
@@ -127,7 +127,7 @@ class EconAutomationMainWindow(QMainWindow):
         worker.wait()
         claimant_dir = progress.result_dir()
         if claimant_dir is not None:
-            self._open_in_explorer(claimant_dir)
+            self._open_in_explorer(claimant_dir / "Work Products")
 
     def _on_claimantdir_select(self) -> None:
         result = select_claimant_folder_modal(self, "Select Econ Claimant Folder")
@@ -173,7 +173,7 @@ class EconAutomationMainWindow(QMainWindow):
         dialog.exec()
         worker.wait()
         if dialog.result_dir() is not None:
-            self._open_in_explorer(self._selected_claimant_dir)
+            self._open_in_explorer(self._selected_claimant_dir / "Reports and Invoices")
 
     # ── Helpers ────────────────────────────────────────────────────────────────
 

@@ -61,7 +61,7 @@ def create_case_variables_excel_sheet(
             cell.value = getattr(case_profile, field.name)
 
     # 4. Save the workbook to the claimant's directory
-    case_var_new_name = f"{case_profile.claimant_name_last}{case_profile.claimant_name_first_initial} - Case Variables.xlsx"
+    case_var_new_name = f"{case_profile.claimant_name_last}{case_profile.claimant_name_first_initial} - Case_Variables.xlsx"
     output_filepath = claimant_dir / case_var_new_name
 
     if output_filepath.exists():
