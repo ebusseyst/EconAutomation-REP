@@ -7,11 +7,12 @@
 #define MyAppPublisher "Eric Bussey"
 #define MyAppURL "https://github.com/ebusseyst/EconAutomation-REP/"
 #define MyAppExeName "EconAutomation.exe"
+#define MyAppGuid "6F54F296-0E19-4255-B6D0-C309453DB77C"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{6F54F296-0E19-4255-B6D0-C309453DB77C}
+AppId={{{#MyAppGuid}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -40,6 +41,7 @@ OutputBaseFilename=EconAutomation
 SetupIconFile=C:\Users\EricBussey\GitHub\EconAutomation-REP\EconAutomation\innosetup\bolt_boost_icon.ico
 SolidCompression=yes
 WizardStyle=modern dynamic
+CloseApplications=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -58,4 +60,30 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+
+[Code]
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  uninstallStr: String;
+  resultCode: Integer;
+begin
+  if CurStep <> ssInstall then Exit;
+
+  uninstallStr := '';
+
+  // Check user-mode install first (matches PrivilegesRequired=lowest)
+  if not RegQueryStringValue(HKCU,
+      'Software\Microsoft\Windows\CurrentVersion\Uninstall\{{#MyAppGuid}}_is1',
+      'UninstallString', uninstallStr) then
+  begin
+    // Fall back to machine-wide install
+    RegQueryStringValue(HKLM,
+        'Software\Microsoft\Windows\CurrentVersion\Uninstall\{{#MyAppGuid}}_is1',
+        'UninstallString', uninstallStr);
+  end;
+
+  if uninstallStr <> '' then
+    Exec(RemoveQuotes(uninstallStr), '/SILENT /SUPPRESSMSGBOXES', '', SW_HIDE,
+         ewWaitUntilTerminated, resultCode);
+end;
 

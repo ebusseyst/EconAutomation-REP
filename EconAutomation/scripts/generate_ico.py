@@ -18,7 +18,8 @@ SIZES = [16, 32, 48, 256]
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SVG_PATH = REPO_ROOT / "src/econ_automation/ea_scripts/gui_files/icons/bolt_boost_icon.svg"
-ICO_OUT = REPO_ROOT / "innosetup/bolt_boost_icon.ico"
+ICO_ICONS = REPO_ROOT / "src/econ_automation/ea_scripts/gui_files/icons/bolt_boost_icon.ico"
+ICO_INNOSETUP = REPO_ROOT / "innosetup/bolt_boost_icon.ico"
 
 
 def svg_to_pil(svg_bytes: bytes, size: int) -> Image.Image:
@@ -46,8 +47,10 @@ def main() -> None:
 
     buf = io.BytesIO()
     large.save(buf, format="ICO", sizes=[(s, s) for s in SIZES])
-    ICO_OUT.write_bytes(buf.getvalue())
-    print(f"Written {len(SIZES)}-size ICO to {ICO_OUT}")
+    ico_bytes = buf.getvalue()
+    ICO_ICONS.write_bytes(ico_bytes)
+    ICO_INNOSETUP.write_bytes(ico_bytes)
+    print(f"Written {len(SIZES)}-size ICO to {ICO_ICONS} and {ICO_INNOSETUP}")
 
 
 if __name__ == "__main__":

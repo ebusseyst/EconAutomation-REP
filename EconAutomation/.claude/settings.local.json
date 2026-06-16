@@ -39,7 +39,9 @@
       "Bash(.venv\\\\Scripts\\\\python.exe -c \"import xlwings; print\\(xlwings.__version__\\)\")",
       "Bash(.venv/Scripts/python.exe -c \"import xlwings; print\\(xlwings.__version__\\)\")",
       "Bash(dir \"C:\\\\Users\\\\EricBussey\\\\AppData\\\\Local\\\\Programs\\\\EconAutomation\\\\_internal\\\\python314.dll\")",
-      "Bash(grep -E \"\\\\.\\(py|bat|sh|yml|yaml\\)$\")"
+      "Bash(grep -E \"\\\\.\\(py|bat|sh|yml|yaml\\)$\")",
+      "PowerShell(Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue)",
+      "PowerShell(Start-Process explorer)"
     ],
     "additionalDirectories": [
       "/private/tmp"

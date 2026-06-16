@@ -6,7 +6,7 @@ from pathlib import Path
 import platform
 
 from PySide6.QtCore import Qt
-
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
 
 from logging_resources.log_context import setup_logging
@@ -44,7 +44,7 @@ from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase im
     make_case_profile_from_basic_info,
 )
 
-from econ_automation._version import __version__ as APP_VERSION
+from econ_automation._version import __version__ as app_version
 
 
 setup_logging()
@@ -57,6 +57,8 @@ class EconAutomationMainWindow(QMainWindow):
         super().__init__()
         self.ui = Ui_ea_MainWindow(self)
         self.ui.setupUi()
+        self.ui.ea_reportmerge_reporttypes_PVLCP_checkbox.setChecked(True)
+        self.ui.ea_reportmerge_referencereports_lcp_checkbox.setChecked(True)
         self.econ_cases_path = Path.home()
         self._selected_claimant_dir: Path | None = None
         self._setup_comboboxes()
@@ -228,6 +230,22 @@ class EconAutomationMainWindow(QMainWindow):
         return PVLCPToggles(rehab_report_types=rehab)
 
 
+def _force_taskbar_icon(hwnd: int, ico_path: str) -> None:
+    """Send WM_SETICON directly — Qt sometimes skips ICON_BIG on the Windows taskbar."""
+    WM_SETICON = 0x0080
+    IMAGE_ICON = 1
+    LR_LOADFROMFILE = 0x0010
+    LR_DEFAULTSIZE = 0x0040
+
+    user32 = ctypes.windll.user32
+    hicon = user32.LoadImageW(
+        None, ico_path, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE
+    )
+    if hicon:
+        user32.SendMessageW(hwnd, WM_SETICON, 1, hicon)  # ICON_BIG  → taskbar
+        user32.SendMessageW(hwnd, WM_SETICON, 0, hicon)  # ICON_SMALL → title bar
+
+
 def _update_prompt(message: str, parent=None) -> bool:
     dialog = QMessageBox(parent)
     dialog.setWindowTitle("Update Available")
@@ -243,15 +261,36 @@ class eaApp(QApplication):
     def __init__(self, argv):
         super().__init__(argv)
 
+        if getattr(sys, "frozen", False):
+            # PyInstaller entry-point: __file__ resolves to the exe, not _internal/.
+            # Use sys._MEIPASS which always points to the _internal/ directory.
+            _ico = (
+                Path(sys._MEIPASS)
+                / "econ_automation/ea_scripts/gui_files/icons/bolt_boost_icon.ico"
+            )
+        else:
+            _ico = (
+                Path(__file__).resolve().parent
+                / "ea_scripts/gui_files/icons/bolt_boost_icon.ico"
+            )
+        if _ico.exists():
+            self.setWindowIcon(QIcon(str(_ico)))
+
         self.styleHints().setColorScheme(Qt.ColorScheme.Light)
 
-        self.setApplicationDisplayName(f"EconAutomation v{APP_VERSION}")
-        self.setApplicationName(f"EconAutomation v{APP_VERSION}")
+        self.setApplicationDisplayName(f"EconAutomation v{app_version}")
+        self.setApplicationName(f"EconAutomation v{app_version}")
 
         save_install_location()
 
         self.ea_main_window = EconAutomationMainWindow()
+        self.ea_main_window.setWindowTitle(f"EconAutomation v{app_version}")
+        if _ico.exists():
+            self.ea_main_window.setWindowIcon(QIcon(str(_ico)))
         self.ea_main_window.show()
+
+        if platform.system() == "Windows" and _ico.exists():
+            _force_taskbar_icon(int(self.ea_main_window.winId()), str(_ico))
 
         # Check after show() so the dialog has a rendered parent window and
         # appears centered on it rather than as an orphaned system dialog.
@@ -261,7 +300,7 @@ class eaApp(QApplication):
 
 
 def main() -> None:
-    myappid = f"EconAutomation v{APP_VERSION}"
+    myappid = "EconAutomation.App"
     if platform.system() == "Windows":
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     ea_app = eaApp(argv=sys.argv)

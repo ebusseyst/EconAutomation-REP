@@ -45,7 +45,6 @@ from PySide6.QtGui import (
     QTransform,
 )
 from PySide6.QtWidgets import (
-    QApplication,
     QCheckBox,
     QComboBox,
     QFrame,
@@ -231,12 +230,6 @@ class Ui_ea_MainWindow(object):
 
         self.ea_MainWindow.setMinimumSize(400, 520)
         self.ea_MainWindow.resize(400, 520)
-        _app_icon = QIcon(icon_dict["bolt_boost_icon"])
-        self.ea_MainWindow.setWindowIcon(_app_icon)
-        _app = QApplication.instance()
-        if isinstance(_app, QApplication):
-            _app.setWindowIcon(_app_icon)
-        self.ea_MainWindow.setWindowTitle("EconAutomation")
 
         self.ea_CentralWidget = QWidget(self.ea_MainWindow)
         self.ea_CentralWidget.setObjectName("ea_CentralWidget")
