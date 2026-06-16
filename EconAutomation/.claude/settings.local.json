@@ -38,7 +38,8 @@
       "PowerShell(& \".venv\\\\Scripts\\\\python.exe\" -c \"import docx.image; import inspect; print\\(inspect.getfile\\(docx.image\\)\\)\")",
       "Bash(.venv\\\\Scripts\\\\python.exe -c \"import xlwings; print\\(xlwings.__version__\\)\")",
       "Bash(.venv/Scripts/python.exe -c \"import xlwings; print\\(xlwings.__version__\\)\")",
-      "Bash(dir \"C:\\\\Users\\\\EricBussey\\\\AppData\\\\Local\\\\Programs\\\\EconAutomation\\\\_internal\\\\python314.dll\")"
+      "Bash(dir \"C:\\\\Users\\\\EricBussey\\\\AppData\\\\Local\\\\Programs\\\\EconAutomation\\\\_internal\\\\python314.dll\")",
+      "Bash(grep -E \"\\\\.\\(py|bat|sh|yml|yaml\\)$\")"
     ],
     "additionalDirectories": [
       "/private/tmp"

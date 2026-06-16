@@ -420,9 +420,7 @@ class Ui_ea_MainWindow(object):
         self.ea_setupcase_createcase_button.setObjectName(
             "ea_setupcase_createcase_button"
         )
-        self.ea_setupcase_createcase_button.setIcon(
-            QIcon(icon_dict["table_view_icon"])
-        )
+        self.ea_setupcase_createcase_button.setIcon(QIcon(icon_dict["table_view_icon"]))
         self.ea_setupcase_createcase_button.setMinimumSize(160, 22)
 
         self.ea_setupcase_createcase_subframe_GLayout.addWidget(
@@ -1368,12 +1366,12 @@ class Ui_ea_MainWindow(object):
         )
         self.ea_setupcase_createfolder_subframe_label.setText(
             QCoreApplication.translate(
-                "ea_MainWindow", "Create New Claimant Folder", None
+                "ea_MainWindow", "Create New Claimant Folder (No Workbooks)", None
             )
         )
         self.ea_setupcase_createfolder_button.setText(
             QCoreApplication.translate(
-                "ea_MainWindow", "Create Folder Only", None
+                "ea_MainWindow", "Create Claimant Folder Only", None
             )
         )
         self.ea_setupcase_createcase_subframe_label.setText(
@@ -1385,7 +1383,9 @@ class Ui_ea_MainWindow(object):
             QCoreApplication.translate("ea_MainWindow", "OFF available?", None)
         )
         self.ea_setupcase_OFFSelect_button.setText(
-            QCoreApplication.translate("ea_MainWindow", "Prepare Workbooks with OFF", None)
+            QCoreApplication.translate(
+                "ea_MainWindow", "Prepare Workbooks with OFF", None
+            )
         )
         self.ea_setupcase_selectedOFF_label.setText(
             QCoreApplication.translate(
@@ -1393,7 +1393,9 @@ class Ui_ea_MainWindow(object):
             )
         )
         self.ea_setupcase_createcase_button.setText(
-            QCoreApplication.translate("ea_MainWindow", "Prepare Workbooks without OFF", None)
+            QCoreApplication.translate(
+                "ea_MainWindow", "Prepare Workbooks without OFF", None
+            )
         )
         self.label_4.setText(
             QCoreApplication.translate("ea_MainWindow", "Placeholder:", None)
@@ -1483,7 +1485,9 @@ class Ui_ea_MainWindow(object):
             )
         )
         self.ea_reportmerge_claimantdirselect_button.setText(
-            QCoreApplication.translate("ea_MainWindow", "Select Claimant Folder", None)
+            QCoreApplication.translate(
+                "ea_MainWindow", "Select Claimant Folder for Merge", None
+            )
         )
         self.ea_reportmerge_sub2frame_section_label.setText(
             QCoreApplication.translate("ea_MainWindow", "Report Configurations", None)

@@ -44,6 +44,8 @@ from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase im
     make_case_profile_from_basic_info,
 )
 
+from econ_automation._version import __version__ as APP_VERSION
+
 
 setup_logging()
 
@@ -243,8 +245,8 @@ class eaApp(QApplication):
 
         self.styleHints().setColorScheme(Qt.ColorScheme.Light)
 
-        self.setApplicationDisplayName("EconAutomation")
-        self.setApplicationName("EconAutomation")
+        self.setApplicationDisplayName(f"EconAutomation v{APP_VERSION}")
+        self.setApplicationName(f"EconAutomation v{APP_VERSION}")
 
         save_install_location()
 
@@ -259,7 +261,7 @@ class eaApp(QApplication):
 
 
 def main() -> None:
-    myappid = "EconAutomation"
+    myappid = f"EconAutomation v{APP_VERSION}"
     if platform.system() == "Windows":
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     ea_app = eaApp(argv=sys.argv)

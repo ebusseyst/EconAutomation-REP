@@ -5,6 +5,7 @@ import logging
 
 try:
     import pythoncom as _pythoncom
+
     _USE_COM = True
 except ImportError:
     _USE_COM = False
@@ -84,7 +85,9 @@ class EAProgressDialog(QDialog):
 
         btn_row = QHBoxLayout()
         btn_row.addItem(
-            QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+            QSpacerItem(
+                40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+            )
         )
         self._ok_btn = QPushButton("OK")
         self._ok_btn.setObjectName("progress_ok")
@@ -248,6 +251,7 @@ class SetupWorkbooksWorker(QThread):
             _pythoncom.CoInitialize()
         try:
             import platform as _platform
+
             fs = FileSystemCore()
             base_filepaths = fs.main_filepaths_dict["base_filepaths"]
             platform_key = "Mac" if _platform.system() == "Darwin" else "Windows"

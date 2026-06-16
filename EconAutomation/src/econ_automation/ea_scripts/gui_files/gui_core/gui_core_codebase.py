@@ -10,3 +10,5 @@ class EAMainWindow(QMainWindow):
         super().__init__()
         self.ui = Ui_ea_MainWindow(self)
         self.ui.setupUi()
+        self.ui.ea_reportmerge_referencereports_lcp_checkbox.setChecked(True)
+        self.ui.ea_reportmerge_reporttypes_PVLCP_checkbox.setChecked(True)
