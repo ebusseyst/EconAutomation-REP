@@ -1,0 +1,7 @@
+#!/bin/sh
+# If _version.py is staged, sync version.json and pyproject.toml to match,
+# then stage those files so they're included in the same commit.
+if git diff --cached --name-only | grep -q "src/econ_automation/_version.py"; then
+    python scripts/sync_version.py || exit 1
+    git add version.json pyproject.toml
+fi
