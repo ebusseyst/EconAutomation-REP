@@ -70,7 +70,9 @@ class EconAutomationMainWindow(QMainWindow):
     def _connect_signals(self) -> None:
         self.ui.ea_setupcase_createfolder_button.clicked.connect(self._on_create_folder)
         self.ui.ea_setupcase_OFFSelect_button.clicked.connect(self._on_prepare_with_off)
-        self.ui.ea_setupcase_createcase_button.clicked.connect(self._on_prepare_without_off)
+        self.ui.ea_setupcase_createcase_button.clicked.connect(
+            self._on_prepare_without_off
+        )
         self.ui.ea_reportmerge_claimantdirselect_button.clicked.connect(
             self._on_claimantdir_select
         )
@@ -84,7 +86,9 @@ class EconAutomationMainWindow(QMainWindow):
             return
         data = dlg.form_data()
         case_profile = make_case_profile_from_basic_info(data)
-        progress = EAProgressDialog(self, "Creating Claimant Folder", self.ui._color_dict)
+        progress = EAProgressDialog(
+            self, "Creating Claimant Folder", self.ui._color_dict
+        )
         worker = CreateFolderWorker(case_profile, admin_bool=False)
         worker.step_changed.connect(progress.update_step)
         worker.finished.connect(progress.on_success)

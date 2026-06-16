@@ -649,10 +649,12 @@ class DataExtractorCore:
         Opens an Excel workbook using xlwings for chart/table extraction.
         """
         app = xw.App(visible=False)
-        # Disable events before opening so Workbook_Open VBA macros don't fire.
-        # Without this, xlsm files keep Excel's COM busy and the next call gets
-        # RPC_E_CALL_REJECTED (-2147418111).
+        # Disable events so Workbook_Open / Worksheet_Activate handlers don't fire.
         app.api.EnableEvents = False
+        # Force-disable ALL macros (msoAutomationSecurityForceDisable = 3).
+        # EnableEvents only suppresses event handlers; Auto_Open subroutines bypass
+        # it and can disconnect the COM object before we finish extraction.
+        app.api.AutomationSecurity = 3
         wb = app.books.open(workbook_pathstr)
         time.sleep(0.5)
         return app, wb
@@ -725,6 +727,7 @@ class DataExtractorCore:
                             _exported_valid = False
                         if not _exported_valid:
                             from PIL import ImageGrab
+
                             xl_obj, _ = chart.api
                             for _retry in range(10):
                                 try:
@@ -743,8 +746,14 @@ class DataExtractorCore:
                     f"DataExtractorCore.extract_charts: Extracted charts from {workbook_name}"
                 )
             finally:
-                wb.close()
-                app.quit()
+                try:
+                    wb.close()
+                except Exception:
+                    pass
+                try:
+                    app.quit()
+                except Exception:
+                    pass
 
         except FileNotFoundError:
             logger.exception(
@@ -788,6 +797,7 @@ class DataExtractorCore:
                             / f"{workbook_name} - {sheet_name} - {table_name}.png"
                         )
                         from PIL import ImageGrab
+
                         rng = sheet.range(table.range.address)
                         for _retry in range(10):
                             try:
@@ -813,8 +823,14 @@ class DataExtractorCore:
                     f"DataExtractorCore.extract_tables: Extracted tables from {workbook_name}"
                 )
             finally:
-                wb.close()
-                app.quit()
+                try:
+                    wb.close()
+                except Exception:
+                    pass
+                try:
+                    app.quit()
+                except Exception:
+                    pass
         except FileNotFoundError:
             logger.exception(
                 f"DataExtractorCore.extract_tables: Error - {workbook_pathstr} not found."

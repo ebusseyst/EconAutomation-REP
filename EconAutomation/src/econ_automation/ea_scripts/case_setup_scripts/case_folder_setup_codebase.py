@@ -36,13 +36,14 @@ def find_existing_claimant_folder(
     case_profile: Any, base_filepaths: dict[str, Path], admin_bool: bool
 ) -> "Path | None":
     """
-    Glob-matches an existing claimant folder by last-name prefix.
+    Glob-matches an existing claimant folder by last name, first name.
     Returns the first match or None.
     """
     base_dir = _get_base_dir(base_filepaths, admin_bool)
     last_initial = case_profile.claimant_name_last_initial
     last_name = case_profile.claimant_name_last
-    pattern = f"{last_initial}/{last_name}*"
+    first_name = case_profile.claimant_name_first
+    pattern = f"{last_initial}/{last_name}, {first_name}*"
     matches = list(base_dir.glob(pattern))
     return matches[0] if matches else None
 
