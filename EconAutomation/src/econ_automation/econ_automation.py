@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 import platform
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
 
@@ -261,9 +261,12 @@ class eaApp(QApplication):
     def __init__(self, argv):
         super().__init__(argv)
 
+        # QRC resource — always available (compiled into ea_iconset1.py, imported above)
+        _qrc_icon = QIcon(":/icons/bolt_boost_icon.ico")
+        self.setWindowIcon(_qrc_icon)
+
+        # Filesystem path — needed only for Win32 LoadImageW in _force_taskbar_icon
         if getattr(sys, "frozen", False):
-            # PyInstaller entry-point: __file__ resolves to the exe, not _internal/.
-            # Use sys._MEIPASS which always points to the _internal/ directory.
             _ico = (
                 Path(sys._MEIPASS)
                 / "econ_automation/ea_scripts/gui_files/icons/bolt_boost_icon.ico"
@@ -273,8 +276,6 @@ class eaApp(QApplication):
                 Path(__file__).resolve().parent
                 / "ea_scripts/gui_files/icons/bolt_boost_icon.ico"
             )
-        if _ico.exists():
-            self.setWindowIcon(QIcon(str(_ico)))
 
         self.styleHints().setColorScheme(Qt.ColorScheme.Light)
 
@@ -285,12 +286,13 @@ class eaApp(QApplication):
 
         self.ea_main_window = EconAutomationMainWindow()
         self.ea_main_window.setWindowTitle(f"EconAutomation v{app_version}")
-        if _ico.exists():
-            self.ea_main_window.setWindowIcon(QIcon(str(_ico)))
+        self.ea_main_window.setWindowIcon(_qrc_icon)
         self.ea_main_window.show()
 
         if platform.system() == "Windows" and _ico.exists():
-            _force_taskbar_icon(int(self.ea_main_window.winId()), str(_ico))
+            _ico_str = str(_ico)
+            hwnd = int(self.ea_main_window.winId())
+            QTimer.singleShot(0, lambda: _force_taskbar_icon(hwnd, _ico_str))
 
         # Check after show() so the dialog has a rendered parent window and
         # appears centered on it rather than as an orphaned system dialog.
