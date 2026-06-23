@@ -161,6 +161,17 @@ class PVEarningsContextBuilder:
         #     types.append("Voc")
         return {"rehab_report_types": types}
 
+    def _rehab_report_names(self, rehab_report_types: list[str]) -> list[str]:
+        """
+        Returns a list of rehab report proper names (i.e. "Life Care Plan", "Medical Cost Projection").
+        """
+        names_map = {
+            "LCP": "Life Care Plan",
+            "MCP": "Medical Cost Projection",
+            "Voc": "Vocational Opinion",
+        }
+        return [names_map[r] for r in rehab_report_types]
+
     def _aliases(self) -> dict[str, Any]:
         """
         Resolves known variable-name inconsistencies between the template
@@ -204,20 +215,8 @@ class PVEarningsContextBuilder:
                 and not toggles["credit3_toggle"]
                 else False
             ),
-            "multi_base": (
-                True
-                if toggles["base1_toggle"]
-                and (toggles["base2_toggle"] or toggles["base3_toggle"])
-                else False
-            ),
-            "multi_credit": (
-                True
-                if toggles["credit1_toggle"]
-                and (toggles["credit2_toggle"] or toggles["credit3_toggle"])
-                else False
-            ),
-            "ssa_projection": (
-                True
+            "growth_rate_projection": (
+                "SSA"
                 if (
                     (
                         toggles["projection_type_toggle"] == "WLE"
@@ -228,21 +227,7 @@ class PVEarningsContextBuilder:
                         and int(self._get("claimant_retire_from_trial_int")) >= 11
                     )
                 )
-                else False
-            ),
-            "cbo_projection": (
-                True
-                if (
-                    (
-                        toggles["projection_type_toggle"] == "WLE"
-                        and int(self._get("claimant_WLE_from_trial_int")) < 11
-                    )
-                    or (
-                        toggles["projection_type_toggle"] == "toage"
-                        and int(self._get("claimant_retire_from_trial_int")) < 11
-                    )
-                )
-                else False
+                else "CBO"
             ),
         }
 

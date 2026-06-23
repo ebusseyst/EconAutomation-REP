@@ -48,6 +48,7 @@ class EAProgressDialog(QDialog):
         self._colors = colors
         self._result_dir: Path | None = None
         self._worker_done = False
+        self._error_message: str | None = None
         self._setup_ui(title)
         self._apply_style()
         self.setModal(True)
@@ -158,10 +159,17 @@ class EAProgressDialog(QDialog):
 
     def on_error(self, message: str) -> None:
         self._worker_done = True
+        self._error_message = message
         self._bar.setRange(0, 100)
         self._bar.setValue(0)
         self._step_label.setText(f"Error: {message}")
         self._ok_btn.setVisible(True)
+
+    def had_error(self) -> bool:
+        return self._error_message is not None
+
+    def error_message(self) -> str | None:
+        return self._error_message
 
     def result_dir(self) -> Path | None:
         return self._result_dir
@@ -187,6 +195,10 @@ class CaseSetupWorker(QThread):
         self._off_path = off_path
         self._admin_bool = admin_bool
 
+    def _emit_step(self, msg: str) -> None:
+        self.step_changed.emit(msg)
+        logger.info(msg)
+
     def run(self) -> None:
         if _USE_COM:
             _pythoncom.CoInitialize()
@@ -194,7 +206,7 @@ class CaseSetupWorker(QThread):
             claimant_dir = create_case_function(
                 OFF_filepath=self._off_path,
                 admin_bool=self._admin_bool,
-                progress_callback=lambda s: self.step_changed.emit(s),
+                progress_callback=self._emit_step,
             )
             self.finished.emit(claimant_dir)
         except Exception as exc:
@@ -215,6 +227,10 @@ class CreateFolderWorker(QThread):
         self._case_profile = case_profile
         self._admin_bool = admin_bool
 
+    def _emit_step(self, msg: str) -> None:
+        self.step_changed.emit(msg)
+        logger.info(msg)
+
     def run(self) -> None:
         if _USE_COM:
             _pythoncom.CoInitialize()
@@ -225,7 +241,7 @@ class CreateFolderWorker(QThread):
                 case_profile=self._case_profile,
                 base_filepaths=base_filepaths,
                 admin_bool=self._admin_bool,
-                progress_callback=lambda s: self.step_changed.emit(s),
+                progress_callback=self._emit_step,
             )
             self.finished.emit(claimant_dir)
         except Exception as exc:
@@ -246,6 +262,10 @@ class SetupWorkbooksWorker(QThread):
         self._case_profile = case_profile
         self._admin_bool = admin_bool
 
+    def _emit_step(self, msg: str) -> None:
+        self.step_changed.emit(msg)
+        logger.info(msg)
+
     def run(self) -> None:
         if _USE_COM:
             _pythoncom.CoInitialize()
@@ -261,7 +281,7 @@ class SetupWorkbooksWorker(QThread):
                 base_filepaths=base_filepaths,
                 wb_template_dir=wb_template_dir,
                 admin_bool=self._admin_bool,
-                progress_callback=lambda s: self.step_changed.emit(s),
+                progress_callback=self._emit_step,
             )
             self.finished.emit(claimant_dir)
         except Exception as exc:
@@ -288,11 +308,15 @@ class ReportMergeWorker(QThread):
         self._requested_template_keys = requested_template_keys
         self._gui_overrides = gui_overrides
 
+    def _emit_step(self, msg: str) -> None:
+        self.step_changed.emit(msg)
+        logger.info(msg)
+
     def run(self) -> None:
         if _USE_COM:
             _pythoncom.CoInitialize()
         try:
-            self.step_changed.emit("Building file list...")
+            self._emit_step("Building file list...")
             selected_files = build_selected_files_dict(
                 self._claimant_dir,
                 requested_template_keys=self._requested_template_keys,
@@ -300,7 +324,7 @@ class ReportMergeWorker(QThread):
             run_extraction_and_report_merge(
                 selected_files_dict=selected_files,
                 gui_overrides=self._gui_overrides,
-                progress_callback=lambda s: self.step_changed.emit(s),
+                progress_callback=self._emit_step,
             )
             self.finished.emit(self._claimant_dir)
         except Exception as exc:

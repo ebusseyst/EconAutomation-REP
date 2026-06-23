@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QPalette
+import platform
+import urllib.parse
+
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QColor, QDesktopServices, QPalette
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -14,9 +17,12 @@ from PySide6.QtWidgets import (
     QPushButton,
     QSizePolicy,
     QSpacerItem,
+    QTextEdit,
     QVBoxLayout,
 )
 
+from econ_automation._version import __version__ as _app_version
+from logging_resources.log_context import _get_log_dir
 from econ_automation.ea_scripts.case_setup_scripts.case_info_persistence import (
     load_case_info,
     save_case_info,
@@ -63,6 +69,17 @@ def _apply_dialog_style(dialog: QDialog, colors: dict) -> None:
             border-radius: 3px;
             padding: 3px 5px;
             font-size: 11pt;
+        }}
+        QTextEdit {{
+            background-color: white;
+            color: {c["dark_navy"]};
+            border: 1px solid {c["warm_gold"]};
+            border-radius: 3px;
+            padding: 3px 5px;
+            font-size: 11pt;
+        }}
+        QTextEdit:focus {{
+            border: 1px solid {c["light_gold"]};
         }}
         QCheckBox {{
             color: {c["off_white"]};
@@ -261,3 +278,103 @@ class ConfirmCaseInfoDialog(QDialog):
             "dob": self._dob.text().strip(),
             "doi": self._doi.text().strip(),
         }
+
+
+def _read_recent_log() -> str | None:
+    try:
+        log_dir = _get_log_dir()
+        log_files = list(log_dir.glob("econ_automation_*.txt"))
+        if not log_files:
+            return None
+
+        latest = max(log_files, key=lambda f: f.stat().st_mtime)
+        text = latest.read_text(encoding="utf-8", errors="replace")
+        entries = [e.strip() for e in text.split("\n\n") if e.strip()]
+        snippet = "\n\n".join(entries[-10:])
+        if len(snippet) > 3000:
+            snippet = "...[truncated]\n\n" + snippet[-3000:]
+        return snippet
+    except Exception:
+        return None
+
+
+class BugReportDialog(QDialog):
+    """'Send Bug Report' — pre-fills a GitHub new-issue URL and opens it in the browser."""
+
+    def __init__(self, parent, colors: dict, error_message: str | None = None):
+        super().__init__(parent)
+        self.setWindowTitle("Send Bug Report")
+        self.setModal(True)
+        self.setMinimumWidth(440)
+        self._colors = colors
+        self._error_message = error_message
+        self._log_snippet = _read_recent_log()
+        self._build_ui()
+        _apply_dialog_style(self, colors)
+
+    def _build_ui(self) -> None:
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 20, 24, 16)
+        layout.setSpacing(12)
+
+        title = QLabel("Send Bug Report")
+        title.setObjectName("dialog_title")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title)
+        layout.addWidget(_make_separator())
+
+        form = QFormLayout()
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        form.setHorizontalSpacing(12)
+        form.setVerticalSpacing(8)
+        self._title_edit = QLineEdit()
+        self._title_edit.setText("Bug Report")
+        self._title_edit.setPlaceholderText("Brief summary of the issue")
+        form.addRow("Title:", self._title_edit)
+        layout.addLayout(form)
+
+        desc_label = QLabel("Description:")
+        layout.addWidget(desc_label)
+        self._desc_edit = QTextEdit()
+        self._desc_edit.setPlaceholderText("Describe the issue and steps to reproduce...")
+        self._desc_edit.setFixedHeight(100)
+        layout.addWidget(self._desc_edit)
+
+        btn_row = QHBoxLayout()
+        btn_row.addItem(
+            QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        )
+        submit_btn = QPushButton("Submit")
+        submit_btn.setObjectName("dialog_btn")
+        submit_btn.clicked.connect(self._on_submit)
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.setObjectName("dialog_btn")
+        cancel_btn.clicked.connect(self.reject)
+        btn_row.addWidget(submit_btn)
+        btn_row.addWidget(cancel_btn)
+        layout.addLayout(btn_row)
+
+    def _on_submit(self) -> None:
+        title = self._title_edit.text().strip() or "Bug Report"
+        description = self._desc_edit.toPlainText().strip()
+
+        body_parts = [
+            "**Description:**",
+            description if description else "(no description provided)",
+            "",
+            "**Environment:**",
+            f"- App Version: v{_app_version}",
+            f"- OS: {platform.system()} {platform.version()}",
+        ]
+
+        if self._error_message:
+            body_parts += ["", "**Error Message:**", f"```\n{self._error_message}\n```"]
+
+        if self._log_snippet:
+            body_parts += ["", "**Recent Log Entries:**", f"```\n{self._log_snippet}\n```"]
+
+        body = "\n".join(body_parts)
+        params = urllib.parse.urlencode({"title": title, "body": body, "labels": "bug"})
+        url = f"https://github.com/ebusseyst/EconAutomation-REP/issues/new?{params}"
+        QDesktopServices.openUrl(QUrl(url))
+        self.accept()

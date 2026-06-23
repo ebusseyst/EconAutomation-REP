@@ -30,6 +30,7 @@ from econ_automation.ea_scripts.gui_files.gui_connections.gui_formatted_function
     select_claimant_folder_modal,
 )
 from econ_automation.ea_scripts.gui_files.gui_core.case_info_dialogs import (
+    BugReportDialog,
     ConfirmCaseInfoDialog,
     CreateFolderDialog,
 )
@@ -81,6 +82,7 @@ class EconAutomationMainWindow(QMainWindow):
             self._on_claimantdir_select
         )
         self.ui.ea_reportmerge_button.clicked.connect(self._on_merge_clicked)
+        self.ui.ea_bugreport_button.clicked.connect(self._on_bug_report)
 
     # ── Slots ──────────────────────────────────────────────────────────────────
 
@@ -100,6 +102,9 @@ class EconAutomationMainWindow(QMainWindow):
         worker.start()
         progress.exec()
         worker.wait()
+        if progress.had_error():
+            self._offer_bug_report(progress.error_message())
+            return
         claimant_dir = progress.result_dir()
         if claimant_dir is not None:
             self._open_in_explorer(claimant_dir)
@@ -116,6 +121,9 @@ class EconAutomationMainWindow(QMainWindow):
         worker.start()
         progress.exec()
         worker.wait()
+        if progress.had_error():
+            self._offer_bug_report(progress.error_message())
+            return
         claimant_dir = progress.result_dir()
         if claimant_dir is not None:
             self._open_in_explorer(claimant_dir / "Work Products")
@@ -133,6 +141,9 @@ class EconAutomationMainWindow(QMainWindow):
         worker.start()
         progress.exec()
         worker.wait()
+        if progress.had_error():
+            self._offer_bug_report(progress.error_message())
+            return
         claimant_dir = progress.result_dir()
         if claimant_dir is not None:
             self._open_in_explorer(claimant_dir / "Work Products")
@@ -180,10 +191,27 @@ class EconAutomationMainWindow(QMainWindow):
         worker.start()
         dialog.exec()
         worker.wait()
+        if dialog.had_error():
+            self._offer_bug_report(dialog.error_message())
+            return
         if dialog.result_dir() is not None:
             self._open_in_explorer(self._selected_claimant_dir / "Reports and Invoices")
 
     # ── Helpers ────────────────────────────────────────────────────────────────
+
+    def _on_bug_report(self) -> None:
+        BugReportDialog(self, self.ui._color_dict).exec()
+
+    def _offer_bug_report(self, error_msg: str | None) -> None:
+        answer = QMessageBox.question(
+            self,
+            "Report Bug",
+            "An error occurred. Would you like to submit a bug report?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes,
+        )
+        if answer == QMessageBox.StandardButton.Yes:
+            BugReportDialog(self, self.ui._color_dict, error_message=error_msg).exec()
 
     def _open_in_explorer(self, path: Path) -> None:
         if platform.system() == "Darwin":

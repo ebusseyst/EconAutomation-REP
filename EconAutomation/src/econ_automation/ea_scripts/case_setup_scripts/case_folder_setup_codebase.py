@@ -19,7 +19,7 @@ from econ_automation.ea_scripts.case_setup_scripts.workbook_setup_scripts import
 
 logger = logging.getLogger(__name__)
 
-_CASE_SUBFOLDERS = ["E-File", "Emails", "Reports and Invoices", "Work Products"]
+_CASE_SUBFOLDERS = ["E-File", "Emails", "Report and Invoice", "Work Product"]
 
 
 def _get_base_dir(base_filepaths: dict[str, Path], admin_bool: bool) -> Path:
@@ -105,11 +105,15 @@ def initialize_case_folders(
     econ_claimant_dir_base = _get_base_dir(base_filepaths, admin_bool)
 
     claimant_dir_filepath = f"{claimant_name_last_initial}/{claimant_name_last}, {claimant_name_first} ({attorney_name_first_initial}. {attorney_name_last})"
-    claimant_dir = Path.joinpath(econ_claimant_dir_base, claimant_dir_filepath)
+    claimant_dir = str(Path.joinpath(econ_claimant_dir_base, claimant_dir_filepath))
 
-    claimant_dir.mkdir(parents=True, exist_ok=True)
-    for sub in _CASE_SUBFOLDERS:
-        (claimant_dir / sub).mkdir(exist_ok=True)
+    try:
+        Path(claimant_dir).mkdir(parents=True, exist_ok=True)
+        for sub in _CASE_SUBFOLDERS:
+            Path(claimant_dir + "/" + sub).mkdir(exist_ok=True)
+    except PermissionError:
+        logger.error("Permission denied to create claimant directory: %s", claimant_dir)
+        raise
 
     return claimant_dir
 
@@ -130,9 +134,16 @@ def save_claimant_workbook_templates(
             if wb_template.stem == "Case_Variables":
                 create_case_variables_excel_sheet(case_profile, wb_template, target_dir)
             else:
-                claimant_wb = shutil.copy2(wb_template, target_dir)
-                claimant_wb_path = Path(claimant_wb)
-                prepare_claimant_workbooks(case_profile, claimant_wb_path)
+                target_path = target_dir / wb_template.name
+                if target_path.exists():
+                    logger.warning(
+                        "Skipping %s: already exists in target directory.",
+                        wb_template.name,
+                    )
+                else:
+                    claimant_wb = shutil.copy2(wb_template, target_dir)
+                    claimant_wb_path = Path(claimant_wb)
+                    prepare_claimant_workbooks(case_profile, claimant_wb_path)
 
 
 def prepare_claimant_workbooks(case_profile: Any, claimant_wb_path: Path) -> None:
