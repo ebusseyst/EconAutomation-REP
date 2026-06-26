@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import platform
 import urllib.parse
+from datetime import datetime as dt
+from pathlib import Path
 
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QColor, QDesktopServices, QPalette
@@ -178,7 +180,7 @@ class CreateFolderDialog(QDialog):
 
 
 class ConfirmCaseInfoDialog(QDialog):
-    """'Confirm Case Information' — pre-fills from cache, collects additional fields for no-OFF workbook setup."""
+    """'Confirm Case Information' — pre-fills from OFF cache, requests user confirmation of essential values."""
 
     def __init__(self, parent, colors: dict):
         super().__init__(parent)
@@ -279,6 +281,116 @@ class ConfirmCaseInfoDialog(QDialog):
             "doi": self._doi.text().strip(),
         }
 
+class ConfirmReferenceData(QDialog):
+    """
+    Pre-fills trial date from OFF extraction.
+    
+    User confirms pre-populated trial/reference date, attorney/claimant genders, and claimant DOB/DOI.
+    """
+    
+    def __init__(self, parent, colors: dict, off_path: Path) -> None:
+        super().__init__(parent)
+        self.setWindowTitle("Confirm Case Information")
+        self.setModal(True)
+        self.setMinimumWidth(400)
+        self._colors = colors
+        self._off_path = off_path
+        self._build_ui()
+        self._prefill()
+        _apply_dialog_style(self, colors)
+    
+    def _build_ui(self) -> None:
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 20, 24, 16)
+        layout.setSpacing(12)
+        
+        title = QLabel("Confirm Case Information")
+        title.setObjectName("dialog_title")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title)
+        layout.addWidget(_make_separator())
+        
+        form = QFormLayout()
+        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        form.setHorizontalSpacing(12)
+        form.setVerticalSpacing(8)
+        
+        self._claimant_first = QLineEdit()
+        self._claimant_last = QLineEdit()
+        self._attorney_first = QLineEdit()
+        self._attorney_last = QLineEdit()
+        
+        form.addRow("Claimant First Name:", self._claimant_first)
+        form.addRow("Claimant Last Name:", self._claimant_last)
+        form.addRow("Attorney First Name:", self._attorney_first)
+        form.addRow("Attorney Last Name:", self._attorney_last)
+        
+        layout.addLayout(form)
+        layout.addWidget(_make_separator())
+        
+        form2 = QFormLayout()
+        form2.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        form2.setHorizontalSpacing(12)
+        form2.setVerticalSpacing(8)
+        
+        self._trial_date_check = QCheckBox("Trial Date?")
+        self._attorney_gender_combo = QComboBox()
+        self._attorney_gender_combo.addItems(["M", "F"])
+        self._gender_combo = QComboBox()
+        self._gender_combo.addItems(["M", "F"])
+        self._reference_date = QLineEdit()
+        self._reference_date.setPlaceholderText("MM/DD/YYYY")
+        self._dob = QLineEdit()
+        self._dob.setPlaceholderText("MM/DD/YYYY")
+        self._doi = QLineEdit()
+        self._doi.setPlaceholderText("MM/DD/YYYY")
+        
+        form2.addRow(self._trial_date_check, QLabel(""))
+        form2.addRow("Attorney Gender:", self._attorney_gender_combo)
+        form2.addRow("Claimant Gender:", self._gender_combo)
+        form2.addRow("Trial/Reference Date:", self._reference_date)
+        form2.addRow("Claimant DOB:", self._dob)
+        form2.addRow("Claimant DOI:", self._doi)
+        layout.addLayout(form2)
+        
+        btn_row = QHBoxLayout()
+        btn_row.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
+        ok_btn = QPushButton("OK")
+        ok_btn.setObjectName("dialog_btn")
+        ok_btn.clicked.connect(self.accept)
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.setObjectName("dialog_btn")
+        cancel_btn.clicked.connect(self.reject)
+        btn_row.addWidget(ok_btn)
+        btn_row.addWidget(cancel_btn)
+        layout.addLayout(btn_row)
+    
+    def _prefill(self) -> None:
+        case_profile = create_case_profile(self._off_path)
+        self._claimant_first.setText(case_profile.claimant_name_first)
+        self._claimant_last.setText(case_profile.claimant_name_last)
+        self._attorney_first.setText(case_profile.attorney_name_first)
+        self._attorney_last.setText(case_profile.attorney_name_last)
+        self._attorney_gender_combo.setCurrentText(case_profile.attorney_gender)
+        self._gender_combo.setCurrentText(case_profile.claimant_gender)
+        self._reference_date.setText(case_profile.trial_date)
+        self._dob.setText(case_profile.claimant_dob)
+        self._doi.setText(case_profile.claimant_doi)
+    
+    def form_data(self) -> dict:
+        return {
+            "claimant_name_first": self._claimant_first.text().strip(),
+            "claimant_name_last": self._claimant_last.text().strip(),
+            "attorney_name_first": self._attorney_first.text().strip(),
+            "attorney_name_last": self._attorney_last.text().strip(),
+            "trial_date_bool": self._trial_date_check.isChecked(),
+            "attorney_gender": self._attorney_gender_combo.currentText(),
+            "gender": self._gender_combo.currentText(),
+            "reference_date": self._reference_date.text().strip(),
+            "dob": self._dob.text().strip(),
+            "doi": self._doi.text().strip(),
+        }
+    
 
 def _read_recent_log() -> str | None:
     try:
@@ -355,7 +467,8 @@ class BugReportDialog(QDialog):
         layout.addLayout(btn_row)
 
     def _on_submit(self) -> None:
-        title = self._title_edit.text().strip() or "Bug Report"
+        today = dt.now().strftime("%Y-%m-%d")
+        title = f"{today} - {self._title_edit.text().strip() or 'Bug Report'}"
         description = self._desc_edit.toPlainText().strip()
 
         body_parts = [

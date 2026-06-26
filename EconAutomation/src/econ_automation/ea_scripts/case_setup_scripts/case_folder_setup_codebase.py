@@ -75,7 +75,7 @@ def setup_new_case(
         claimant_dir = initialize_case_folders(case_profile, base_filepaths, admin_bool)
 
     _step("Copying and configuring workbook templates...")
-    work_product_dir = claimant_dir / "Work Products"
+    work_product_dir = claimant_dir / "Work Product"
     work_product_dir.mkdir(exist_ok=True)
     save_claimant_workbook_templates(case_profile, wb_template_dir, work_product_dir)
 
@@ -115,7 +115,7 @@ def initialize_case_folders(
         logger.error("Permission denied to create claimant directory: %s", claimant_dir)
         raise
 
-    return claimant_dir
+    return Path(claimant_dir)
 
 
 def save_claimant_workbook_templates(

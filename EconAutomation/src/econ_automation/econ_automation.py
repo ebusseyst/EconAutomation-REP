@@ -265,6 +265,7 @@ def _force_taskbar_icon(hwnd: int, ico_path: str) -> None:
     LR_LOADFROMFILE = 0x0010
     LR_DEFAULTSIZE = 0x0040
 
+    # pyrefly: ignore [missing-attribute]
     user32 = ctypes.windll.user32
     hicon = user32.LoadImageW(
         None, ico_path, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE
@@ -296,6 +297,7 @@ class eaApp(QApplication):
         # Filesystem path — needed only for Win32 LoadImageW in _force_taskbar_icon
         if getattr(sys, "frozen", False):
             _ico = (
+                # pyrefly: ignore [missing-attribute]
                 Path(sys._MEIPASS)
                 / "econ_automation/ea_scripts/gui_files/icons/bolt_boost_icon.ico"
             )
@@ -319,6 +321,7 @@ class eaApp(QApplication):
 
         if platform.system() == "Windows" and _ico.exists():
             _ico_str = str(_ico)
+            # pyrefly: ignore [unnecessary-type-conversion]
             hwnd = int(self.ea_main_window.winId())
             QTimer.singleShot(0, lambda: _force_taskbar_icon(hwnd, _ico_str))
 
@@ -332,6 +335,7 @@ class eaApp(QApplication):
 def main() -> None:
     myappid = "EconAutomation.App"
     if platform.system() == "Windows":
+        # pyrefly: ignore [missing-attribute]
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     ea_app = eaApp(argv=sys.argv)
     ea_app.exec()
