@@ -201,19 +201,35 @@ class PVEarningsContextBuilder:
             # This template is always the PV Earnings report; the outer {%p if %} wrapper
             # in the template checks 'PV Earnings' in report_templates.
             "report_templates": ["PV Earnings"],
-            "single_base": (
-                True
+            "bases_list": (
+                ["base1", "base2", "base3"]
+                if toggles["base1_toggle"]
+                and toggles["base2_toggle"]
+                and toggles["base3_toggle"]
+                else ["base1", "base2"]
+                if toggles["base1_toggle"]
+                and toggles["base2_toggle"]
+                and not toggles["base3_toggle"]
+                else ["base1"]
                 if toggles["base1_toggle"]
                 and not toggles["base2_toggle"]
                 and not toggles["base3_toggle"]
-                else False
+                else []
             ),
-            "single_credit": (
-                True
+            "credits_list": (
+                ["credit1", "credit2", "credit3"]
+                if toggles["credit1_toggle"]
+                and toggles["credit2_toggle"]
+                and toggles["credit3_toggle"]
+                else ["credit1", "credit2"]
+                if toggles["credit1_toggle"]
+                and toggles["credit2_toggle"]
+                and not toggles["credit3_toggle"]
+                else ["credit1"]
                 if toggles["credit1_toggle"]
                 and not toggles["credit2_toggle"]
                 and not toggles["credit3_toggle"]
-                else False
+                else []
             ),
             "growth_rate_projection": (
                 "SSA"
@@ -223,7 +239,8 @@ class PVEarningsContextBuilder:
                         and int(self._get("claimant_WLE_from_trial_int")) >= 11
                     )
                     or (
-                        toggles["projection_type_toggle"] == "toage"
+                        toggles["projection_type_toggle"]
+                        == "toage"  # TODO: change this to TR when we update the template
                         and int(self._get("claimant_retire_from_trial_int")) >= 11
                     )
                 )
