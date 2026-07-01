@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass, field, is_dataclass, fields
 from typing import Any
+import re
 
 from pydantic import BaseModel
 
@@ -27,6 +28,96 @@ class PVEarningsToggles:
     taxed_toggle: bool = False
     projection_type_toggle: str = "WLE"  # "WLE" or "toage"
     rehab_report_types: list[str] = field(default_factory=list)  # e.g. ["LCP", "Voc"]
+
+
+class BaseBuilder:
+    """
+    Builds the attributes for each base earnings variable in the report.
+    """
+    def __init__(
+        self, ea_main_dataclass: Any, pv_earnings_toggles: PVEarningsToggles
+    ) -> None:
+        self._raw = ea_main_dataclass
+        self._pv_earnings_toggles = pv_earnings_toggles
+
+    def _get(self, name: str, default: Any = None) -> Any:
+        return getattr(self._raw, name, default)
+
+    def _is_populated(self, name: str) -> bool:
+        """True when a field has a non-empty, non-zero value after formatting."""
+        val = self._get(name)
+        if val is None:
+            return False
+        if isinstance(val, str):
+            # Treat formatted zero-currency/zero-percent strings as absent
+            return bool(val.strip()) and val.strip() not in ("$0", "0", "0.00", "0.00%")
+        if isinstance(val, (int, float)):
+            return val != 0
+        return bool(val)
+
+    def _get_bases(self, projection_type: str) -> dict[str, Any]:
+        """
+        Get the relevant base earnings variables for the report based on projection type.
+
+        Returns:
+            dict[str, Any]: The base earnings variables for the report.
+        """
+        
+        # Base earnings variable stems and suffixes
+        if projection_type == "WLE":
+            base_earnings_stem = "base1_WLE"
+        elif projection_type == "toage":
+            base_earnings_stem = "base1_toage"
+        else:
+            raise ValueError("Invalid projection type")
+        
+        base_earnings_suffixes = [
+            "_earnings",
+            "_eff_tax_rate",
+            "_growth_rate",
+            "_pretrial_loss_notax",
+            "_pretrial_loss_taxed",
+            "_posttrial_loss_notax",
+            "_posttrial_loss_taxed",
+            "_total_loss_notax",
+            "_total_loss_taxed",
+        ]
+        
+        # Regex to identify unique base instances
+        bases = set(re.findall(r"base(\d+)", self._raw.__dict__.keys()))
+
+        confirmed_bases = set()
+        for base in bases:
+            for suffix in base_earnings_suffixes:
+                variable = f"{base_earnings_stem}{suffix}"
+                if self._is_populated(variable):
+                    confirmed_bases.add(base)
+                    
+        if self._pv_earnings_toggles.projection_type_toggle == "toage":
+            for variable in ""
+                "base1_toggle": self._is_populated("b1e_toage_earnings"),
+                "base2_toggle": self._is_populated("b2e_toage_earnings"),
+                "base3_toggle": self._is_populated("b3e_toage_earnings"),
+                "credit1_toggle": self._is_populated("credit1_toage_earnings"),
+                "credit2_toggle": self._is_populated("credit2_toage_earnings"),
+                "credit3_toggle": self._is_populated("credit3_toage_earnings"),
+                "meals_toggle": self._is_populated("b1e_WLE_pretrial_meals_adj"),
+                "benefits_toggle": self._is_populated("b1e_WLE_pretrial_benefits_adj"),
+                "taxed_toggle": self._is_populated("eff_tax_rate"),
+            }
+        else:
+            return {
+                "base1_toggle": self._is_populated("b1e_WLE_earnings"),
+                "base2_toggle": self._is_populated("b2e_WLE_earnings"),
+                "base3_toggle": self._is_populated("b3e_WLE_earnings"),
+                "projection_type_toggle": "WLE",
+                "credit1_toggle": self._is_populated("credit1_WLE_earnings"),
+                "credit2_toggle": self._is_populated("credit2_WLE_earnings"),
+                "credit3_toggle": self._is_populated("credit3_WLE_earnings"),
+                "meals_toggle": self._is_populated("b1e_WLE_pretrial_meals_adj"),
+                "benefits_toggle": self._is_populated("b1e_WLE_pretrial_benefits_adj"),
+                "taxed_toggle": self._is_populated("eff_tax_rate"),
+            }
 
 
 class PVEarningsContextBuilder:
@@ -247,6 +338,9 @@ class PVEarningsContextBuilder:
                 else "CBO"
             ),
         }
+
+
+# THIS IS WHERE I LEFT OFF
 
 
 def build_pv_earnings_context(
