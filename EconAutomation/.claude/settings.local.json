@@ -41,10 +41,13 @@
       "Bash(dir \"C:\\\\Users\\\\EricBussey\\\\AppData\\\\Local\\\\Programs\\\\EconAutomation\\\\_internal\\\\python314.dll\")",
       "Bash(grep -E \"\\\\.\\(py|bat|sh|yml|yaml\\)$\")",
       "PowerShell(Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue)",
-      "PowerShell(Start-Process explorer)"
+      "PowerShell(Start-Process explorer)",
+      "PowerShell(python -m py_compile \"src\\\\econ_automation\\\\ea_scripts\\\\report_merge_scripts\\\\pv_earnings_context_codebase.py\"; echo \"exit=$LASTEXITCODE\")",
+      "Bash(rm -f /tmp/_t.py)"
     ],
     "additionalDirectories": [
-      "/private/tmp"
+      "/private/tmp",
+      "\\tmp"
     ]
   }
 }

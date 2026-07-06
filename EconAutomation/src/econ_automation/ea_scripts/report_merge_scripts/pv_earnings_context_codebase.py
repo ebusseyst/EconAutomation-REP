@@ -29,13 +29,105 @@ class PVEarningsToggles:
     projection_type_toggle: str = "WLE"  # "WLE" or "toage"
     rehab_report_types: list[str] = field(default_factory=list)  # e.g. ["LCP", "Voc"]
 
-class Base:
+
+class BaseBuilder:
     """
-    Represents a single base earnings variable in the report.
+    Builds the attributes for each base earnings variable in the report.
     """
-    def __init__(self, base_stem: str, ):
-        self._base_stem = base_stem
-        self._suffixes = [
+
+    def __init__(
+        self,
+        ea_main_dataclass: Any,
+        pv_earnings_toggles: PVEarningsToggles,
+    ) -> None:
+        """
+        Initializes the BaseBuilder.
+
+        Args:
+            ea_main_dataclass: The EA main dataclass.
+            pv_earnings_toggles: The GUI-provided PV Earnings toggles.
+        """
+        # Defining class attributes from arguments
+        self._raw = ea_main_dataclass
+        self._pv_earnings_toggles = pv_earnings_toggles
+
+        # Determine which base numbers are present, based on GUI toggles
+        self._base_numbers = set()
+        if self._pv_earnings_toggles.base1_toggle:
+            self._base_numbers.add(1)
+        if self._pv_earnings_toggles.base2_toggle:
+            self._base_numbers.add(2)
+        if self._pv_earnings_toggles.base3_toggle:
+            self._base_numbers.add(3)
+
+        # If no base toggles are set to true, run fallback inference to determine which bases are present
+        if not self._base_numbers:
+            self._base_numbers = self._get_base_numbers()
+
+        # Obtain list of projection types present based on GUI toggle
+        self._projection_types = set()
+        if self._pv_earnings_toggles.projection_type_toggle == "WLE":
+            self._projection_types.add("WLE")
+        if self._pv_earnings_toggles.projection_type_toggle == "toage":
+            self._projection_types.add("toage")
+
+        # Fallback: If no projection types are set, run inference
+        if not self._projection_types:
+            self._projection_types = self._get_projection_types()
+
+        # Obtain nested dict with confirmed base varnames per unique base instance
+        self.confirmed_base_vars = self._get_confirmed_base_vars()
+
+        # Obtain list of BaseOrCredit instances, each containing confirmed variables for a unique base.
+        self.base_instances = self.build_all_bases(
+            ea_main_dataclass=self._raw,
+            base_numbers=self._base_numbers,
+            confirmed_base_vars=self.confirmed_base_vars,
+        )
+
+    def _get(self, name: str, default: Any = None) -> Any:
+        return getattr(self._raw, name, default)
+
+    def _is_populated(self, name: str) -> bool:
+        """True when a field has a non-empty, non-zero value after formatting."""
+        val = self._get(name)
+        if val is None:
+            return False
+        if isinstance(val, str):
+            # Treat formatted zero-currency/zero-percent strings as absent
+            return bool(val.strip()) and val.strip() not in ("$0", "0", "0.00", "0.00%")
+        if isinstance(val, (int, float)):
+            return val != 0
+        return bool(val)
+
+    def _get_base_numbers(self):
+        """
+        Programmatically parse unique base numbers present in ea_main_dataclass.
+        """
+        bases = set()
+        pattern = r"base(\d+)"
+        for key in self._raw.__dict__.keys():
+            bases.update(re.findall(pattern, key))
+        return bases
+
+    def _get_projection_types(self):
+        """
+        Programmatically parse unique projection types present in ea_main_dataclass.
+        """
+        projection_types = set()
+        pattern2 = r"(WLE|toage)"
+        for key in self._raw.__dict__.keys():
+            projection_types.update(re.findall(pattern2, key))
+        return projection_types
+
+    def _get_confirmed_base_vars(self) -> dict[str, dict[str, Any]]:
+        """
+        Programmatically cross-reference ea_main_dataclass for each possible base variable.
+        Example output: {"base1": {"base1_toage_earnings", "base1_toage_eff_tax_rate", ...},
+                        "base2": {"base2_WLE_earnings", "base2_WLE_eff_tax_rate", ...}, ...}
+        """
+
+        suffixes = [
             "_earnings",
             "_eff_tax_rate",
             "_growth_rate",
@@ -47,55 +139,35 @@ class Base:
             "_total_loss_taxed",
         ]
 
-    def build(self):
-        for suffix in self._suffixes:
-            variable = f"{self._base_stem}{suffix}"
-            self.__dict__[variable] = self._get(variable)
+        confirmed_base_vars = {}
 
-class BaseBuilder:
-    """
-    Builds the attributes for each base earnings variable in the report.
-    """
+        for number in self._base_numbers:
+            base_stem = f"base{number}"
+            confirmed_base_vars[base_stem] = {}
+            for proj in self._projection_types:
+                for suffix in suffixes:
+                    variable = f"{base_stem}_{proj}{suffix}"
+                    if self._is_populated(variable):
+                        confirmed_base_vars[base_stem][variable] = self._get(variable)
+        return confirmed_base_vars
 
-    def __init__(
+    def build_all_bases(
         self,
         ea_main_dataclass: Any,
-        pv_earnings_toggles: PVEarningsToggles,
-        base_stem: str,
-    ) -> None:
-        self._raw = ea_main_dataclass
-        self._pv_earnings_toggles = pv_earnings_toggles
-        self._base_stem = base_stem
-
-    suffixes = [
-        "_earnings",
-        "_eff_tax_rate",
-        "_growth_rate",
-        "_pretrial_loss_notax",
-        "_pretrial_loss_taxed",
-        "_posttrial_loss_notax",
-        "_posttrial_loss_taxed",
-        "_total_loss_notax",
-        "_total_loss_taxed",
-    ]
-
-    def _get(self, name: str, default: Any = None) -> Any:
-        return getattr(self._raw, name, default)
-
-    def _is_populated(self, name: str) -> bool:
-        """True when a field has a non-empty, non-zero value after formatting."""
-        val = self._get(name)
-        if val is None:
-            return False
-        if isinstance(val, str):
-            # Treat formatted zero-currency/zero-percent strings as absent
-            return bool(val.strip()) and val.strip() not in ("$0", "0", "0.00", "0.00%")
-        if isinstance(val, (int, float)):
-            return val != 0
-        return bool(val)
-
-    def build(self):
-        
+        base_numbers: set[int],
+        confirmed_base_vars: dict[str, dict[str, Any]],
+    ):
+        """Instantiates the Base class for each base number and populates the instance with non-null variables."""
+        base_instances = []
+        for number in base_numbers:
+            base_instance = BaseOrCredit(
+                base_or_credit="base",
+                base_or_credit_number=number,
+                ea_main_dataclass=ea_main_dataclass,
+                confirmed_vars=confirmed_base_vars,
+            )
+            base_instances.append(base_instance)
+        return base_instances
 
 
 class CreditBuilder:
@@ -104,10 +176,53 @@ class CreditBuilder:
     """
 
     def __init__(
-        self, ea_main_dataclass: Any, pv_earnings_toggles: PVEarningsToggles
+        self,
+        ea_main_dataclass: Any,
+        pv_earnings_toggles: PVEarningsToggles,
     ) -> None:
+        """
+        Initializes the CreditBuilder.
+
+        Args:
+            ea_main_dataclass: The EA main dataclass.
+            pv_earnings_toggles: The GUI-provided PV Earnings toggles.
+        """
+        # Defining class attributes from arguments
         self._raw = ea_main_dataclass
         self._pv_earnings_toggles = pv_earnings_toggles
+
+        # Determine which credit numbers are present, based on GUI toggles
+        self._credit_numbers = set()
+        if self._pv_earnings_toggles.credit1_toggle:
+            self._credit_numbers.add(1)
+        if self._pv_earnings_toggles.credit2_toggle:
+            self._credit_numbers.add(2)
+        if self._pv_earnings_toggles.credit3_toggle:
+            self._credit_numbers.add(3)
+
+        # If no credit toggles are set to true, run fallback inference to determine which credits are present
+        if not self._credit_numbers:
+            self._credit_numbers = self._get_credit_numbers()
+
+        # Obtain list of projection types present based on GUI toggle
+        self._projection_types = set()
+        if self._pv_earnings_toggles.projection_type_toggle == "WLE":
+            self._projection_types.add("WLE")
+        if self._pv_earnings_toggles.projection_type_toggle == "toage":
+            self._projection_types.add("toage")
+
+        # Fallback: If no projection types are set, run inference
+        if not self._projection_types:
+            self._projection_types = self._get_projection_types()
+
+        # Obtain nested dict with confirmed credit varnames per unique credit instance
+        self.confirmed_credit_vars = self._get_confirmed_credit_vars()
+
+        self.credit_instances = self.build_all_credits(
+            ea_main_dataclass=self._raw,
+            credit_numbers=self._credit_numbers,
+            confirmed_credit_vars=self.confirmed_credit_vars,
+        )
 
     def _get(self, name: str, default: Any = None) -> Any:
         return getattr(self._raw, name, default)
@@ -123,6 +238,185 @@ class CreditBuilder:
         if isinstance(val, (int, float)):
             return val != 0
         return bool(val)
+
+    def _get_credit_numbers(self):
+        """
+        Programmatically parses unique credit numbers present in ea_main_dataclass.
+        """
+        credits = set()
+        pattern = r"credit(\d+)"
+        for key in self._raw.__dict__.keys():
+            credits.update(re.findall(pattern, key))
+        return credits
+
+    def _get_projection_types(self):
+        """
+        Programmatically parses unique projection types present in ea_main_dataclass.
+        """
+        projection_types = set()
+        pattern2 = r"(WLE|toage)"
+        for key in self._raw.__dict__.keys():
+            projection_types.update(re.findall(pattern2, key))
+        return projection_types
+
+    def _get_confirmed_credit_vars(self) -> dict[str, dict[str, Any]]:
+        """
+        Programmatically cross-reference ea_main_dataclass for each possible credit variable.
+        Example output: {"credit1": {"credit1_toage_earnings", "credit1_toage_eff_tax_rate", ...},
+                        "credit2": {"credit2_WLE_earnings", "credit2_WLE_eff_tax_rate", ...}, ...}
+        """
+
+        suffixes = [
+            "_earnings",
+            "_eff_tax_rate",
+            "_growth_rate",
+            "_pretrial_loss_notax",
+            "_pretrial_loss_taxed",
+            "_posttrial_loss_notax",
+            "_posttrial_loss_taxed",
+            "_total_loss_notax",
+            "_total_loss_taxed",
+        ]
+
+        confirmed_credit_vars = {}
+
+        for number in self._credit_numbers:
+            credit_stem = f"credit{number}"
+            confirmed_credit_vars[credit_stem] = {}
+            for proj in self._projection_types:
+                for suffix in suffixes:
+                    variable = f"{credit_stem}_{proj}{suffix}"
+                    if self._is_populated(variable):
+                        confirmed_credit_vars[credit_stem][variable] = self._get(
+                            variable
+                        )
+        return confirmed_credit_vars
+
+    def build_all_credits(
+        self,
+        ea_main_dataclass: Any,
+        credit_numbers: set[int],
+        confirmed_credit_vars: dict[str, dict[str, Any]],
+    ):
+        """Instantiates the Credit class for each credit number and populates the instance with non-null variables."""
+        credit_instances = []
+        for number in credit_numbers:
+            credit_instance = BaseOrCredit(
+                base_or_credit="credit",
+                base_or_credit_number=number,
+                ea_main_dataclass=ea_main_dataclass,
+                confirmed_vars=confirmed_credit_vars,
+            )
+            credit_instances.append(credit_instance)
+        return credit_instances
+
+
+class BaseOrCredit:
+    def __init__(
+        self,
+        base_or_credit: str,
+        base_or_credit_number: int,
+        ea_main_dataclass: Any,
+        confirmed_vars: dict[str, dict[str, Any]],
+    ) -> None:
+        """
+        Creates a "base" or "credit" instance and assigns all relevant, non-null variables in the confirmed_base_vars or confirmed_credit_vars as attributes.
+        Used for for-loop formatting within the docxtpl template.
+        """
+
+        # Store args
+        self._base_or_credit = base_or_credit
+        self._base_or_credit_number = base_or_credit_number
+        self._raw = ea_main_dataclass
+
+        # Create a sub-dict of confirmed_vars for the current base/credit number
+        self._base_or_credit_vars_dict = confirmed_vars[
+            f"{base_or_credit}{base_or_credit_number}"
+        ]
+
+        # Determine projection type for this base/credit (WLE or toage)
+        self._projection_type = (
+            "WLE"
+            if any("_WLE_" in key for key in self._base_or_credit_vars_dict)
+            else "toage"
+        )
+
+        # Create attributes to populate
+        self._earnings = None
+        self._eff_tax_rate = None
+        self._growth_rate = None
+        self._pretrial_loss_notax = None
+        self._pretrial_loss_taxed = None
+        self._posttrial_loss_notax = None
+        self._posttrial_loss_taxed = None
+        self._total_loss_notax = None
+        self._total_loss_taxed = None
+
+        # Populate base/credit attributes from confirmed bases/credits dict
+        self._populate_earnings_attributes(
+            base_or_credit_number=self._base_or_credit_number,
+            projection_type=self._projection_type,
+            base_or_credit_vars=self._base_or_credit_vars_dict,
+        )
+
+    def _populate_earnings_attributes(
+        self,
+        base_or_credit_number: int,
+        projection_type: str,
+        base_or_credit_vars: dict[str, Any],
+    ):
+        """
+        Populates the instance attributes from the confirmed bases/credits dictionary.
+        """
+        for key, value in base_or_credit_vars.items():
+            if (
+                key
+                == f"{self._base_or_credit}{base_or_credit_number}_{projection_type}_earnings"
+            ):
+                self._earnings = value
+            elif (
+                key
+                == f"{self._base_or_credit}{base_or_credit_number}_{projection_type}_eff_tax_rate"
+            ):
+                self._eff_tax_rate = value
+            elif (
+                key
+                == f"{self._base_or_credit}{base_or_credit_number}_{projection_type}_growth_rate"
+            ):
+                self._growth_rate = value
+            elif (
+                key
+                == f"{self._base_or_credit}{base_or_credit_number}_{projection_type}_pretrial_loss_notax"
+            ):
+                self._pretrial_loss_notax = value
+            elif (
+                key
+                == f"{self._base_or_credit}{base_or_credit_number}_{projection_type}_pretrial_loss_taxed"
+            ):
+                self._pretrial_loss_taxed = value
+            elif (
+                key
+                == f"{self._base_or_credit}{base_or_credit_number}_{projection_type}_posttrial_loss_notax"
+            ):
+                self._posttrial_loss_notax = value
+            elif (
+                key
+                == f"{self._base_or_credit}{base_or_credit_number}_{projection_type}_posttrial_loss_taxed"
+            ):
+                self._posttrial_loss_taxed = value
+            elif (
+                key
+                == f"{self._base_or_credit}{base_or_credit_number}_{projection_type}_total_loss_notax"
+            ):
+                self._total_loss_notax = value
+            elif (
+                key
+                == f"{self._base_or_credit}{base_or_credit_number}_{projection_type}_total_loss_taxed"
+            ):
+                self._total_loss_taxed = value
+            else:
+                continue
+        return
 
 
 class PVEarningsContextBuilder:
@@ -134,27 +428,28 @@ class PVEarningsContextBuilder:
 
     Usage::
 
-        ctx = PVEarningsContextBuilder(ea_main_dataclass, gui_toggles).build()
+        ctx = build_pv_earnings_context(ea_main_dataclass, gui_toggles)
 
-    When ``gui_toggles`` is provided the toggle values come directly from the
-    GUI (checkboxes / comboboxes).  When omitted the builder falls back to
-    inferring toggles from the extracted dataclass — used by the test harness
-    and any headless / scripted invocation.
+    ``gui_toggles`` always drives the template's conditional flags — the
+    module-level ``build_pv_earnings_context()`` entry point defaults it to a
+    conservative ``PVEarningsToggles()`` when the GUI didn't supply one.
+    ``base_builder``/``credit_builder`` additionally infer which base/credit
+    numbers and projection types are actually present in the extracted
+    dataclass whenever their corresponding toggles aren't set.
     """
 
     def __init__(
         self,
         ea_main_dataclass: Any,
-        gui_toggles: PVEarningsToggles | None = None,
-        base_builder: BaseBuilder | None = None,
-        credit_builder: CreditBuilder | None = None,
+        gui_toggles: PVEarningsToggles,
+        base_builder: BaseBuilder,
+        credit_builder: CreditBuilder,
     ) -> None:
+        # Defining class attributes from arguments
         self._raw = ea_main_dataclass
         self._gui = gui_toggles
         self._base_builder = base_builder
         self._credit_builder = credit_builder
-
-    # ── Public API ────────────────────────────────────────────────────────
 
     def build(self) -> dict[str, Any]:
         ctx: dict[str, Any] = {}
@@ -164,6 +459,10 @@ class PVEarningsContextBuilder:
         ctx.update(self._rehab_report_names(ctx["rehab_report_types"]))
         ctx.update(self._derived_fields())
         ctx.update(self._aliases())
+        # Per-base/credit instances for {% for base in base_instances %} style
+        # template loops referencing e.g. base._earnings, base._growth_rate.
+        ctx["base_instances"] = self._base_builder.base_instances
+        ctx["credit_instances"] = self._credit_builder.credit_instances
         return ctx
 
     # ── Private helpers ───────────────────────────────────────────────────
@@ -198,127 +497,26 @@ class PVEarningsContextBuilder:
         # Fallback: plain object with __dict__
         return {k: v for k, v in vars(self._raw).items() if not k.startswith("_")}
 
-    def _get_bases(self) -> set[str]:
-        """
-        Fallback method to determine the relevant bases (base1, base2, base3) for reference in report template.
-
-        Returns:
-            set[str]: The base earnings variables for the report.
-        """
-
-        # Regex to identify unique base instances
-        bases = set()
-        for key in self._raw.__dict__.keys():
-            bases.update(re.findall(r"base(\d+)", key))
-
-        for base in bases:
-            base_var = f"base{base}"
-            self._base_builder._bases.add(base_var)
-
-        return bases
-
-    def _get_credits(self) -> set[str]:
-        """
-        Fallback method to determine the relevant credits (credit1, credit2, credit3) for reference in report template.
-
-        Returns:
-            set[str]: The credit earnings variables for the report.
-        """
-
-        # Regex to identify unique credit instances
-        credits = set()
-        for key in self._raw.__dict__.keys():
-            credits.update(re.findall(r"credit(\d+)", key))
-
-        return credits
-
-    def _get_meals_benefits(self) -> tuple[set[str], set[str]]:
-        """
-        Fallback method to check for the presence of meals and benefits variables for reference in report template.
-
-        Returns:
-            tuple[set[str], set[str]]: The meals and benefits variables for the report.
-        """
-        meals = set()
-        for key in self._raw.__dict__.keys():
-            meals.update(re.findall(r"meals", key))
-
-        benefits = set()
-        for key in self._raw.__dict__.keys():
-            benefits.update(re.findall(r"benefits", key))
-
-        return meals, benefits
-
-    def _get_tax_rates(self) -> set[str]:
-        """
-        Determines the tax rates associated with relevant bases and credits.
-
-        Returns:
-            set[str]: The tax rate variables for the report.
-        """
-        tax_rates = set()
-        for key in self._raw.__dict__.keys():
-            tax_rates.update(re.findall(r"base\d+_tax_rate", key))
-            tax_rates.update(re.findall(r"credit\d+_tax_rate", key))
-
-        return tax_rates
-
-    def _get_projection_type(self) -> set[str]:
-        """
-        Fallback method to determine projection type (WLE or To Age).
-        """
-        projection_types = set()
-        for key in self._raw.__dict__.keys():
-            projection_types.update(re.findall(r"WLE", key))
-            projection_types.update(re.findall(r"toage", key))
-
-        return projection_types
-
     def _toggles(self) -> dict[str, Any]:
         """
-        Return all boolean/string flags that drive template conditionals.
-
-        When a PVEarningsToggles instance was supplied at construction time
-        (i.e. the GUI is in use) those values are used directly.  Otherwise
-        toggles are inferred from the extracted dataclass.
+        Return all boolean/string flags that drive template conditionals,
+        sourced directly from the GUI-provided PVEarningsToggles instance.
 
         projection_type_toggle:
             'WLE'   — work-life equivalent (most common)
             'To Age' — to-age projection
         """
-
-        if self._gui is not None:
-            return {
-                "base1_toggle": self._gui.base1_toggle,
-                "base2_toggle": self._gui.base2_toggle,
-                "base3_toggle": self._gui.base3_toggle,
-                "projection_type_toggle": self._gui.projection_type_toggle,
-                "credit1_toggle": self._gui.credit1_toggle,
-                "credit2_toggle": self._gui.credit2_toggle,
-                "credit3_toggle": self._gui.credit3_toggle,
-                "meals_toggle": self._gui.meals_toggle,
-                "benefits_toggle": self._gui.benefits_toggle,
-                "taxed_toggle": self._gui.taxed_toggle,
-            }
-
-        # Fallback: infer from extracted dataclass values
-        bases = self._get_bases()
-        credits = self._get_credits()
-        meals, benefits = self._get_meals_benefits()
-        tax_rates = self._get_tax_rates()
-        projection_type = self._get_projection_type()
-
         return {
-            "base1_toggle": "base1" in bases,
-            "base2_toggle": "base2" in bases,
-            "base3_toggle": "base3" in bases,
-            "projection_type_toggle": "WLE" if "WLE" in projection_type else "To Age",
-            "credit1_toggle": "credit1" in credits,
-            "credit2_toggle": "credit2" in credits,
-            "credit3_toggle": "credit3" in credits,
-            "meals_toggle": "meals" in meals,
-            "benefits_toggle": "benefits" in benefits,
-            "taxed_toggle": len(tax_rates) > 0,
+            "base1_toggle": self._gui.base1_toggle,
+            "base2_toggle": self._gui.base2_toggle,
+            "base3_toggle": self._gui.base3_toggle,
+            "projection_type_toggle": self._gui.projection_type_toggle,
+            "credit1_toggle": self._gui.credit1_toggle,
+            "credit2_toggle": self._gui.credit2_toggle,
+            "credit3_toggle": self._gui.credit3_toggle,
+            "meals_toggle": self._gui.meals_toggle,
+            "benefits_toggle": self._gui.benefits_toggle,
+            "taxed_toggle": self._gui.taxed_toggle,
         }
 
     def _rehab_report_types(self) -> dict[str, Any]:
@@ -327,15 +525,8 @@ class PVEarningsContextBuilder:
             {% if 'LCP' in rehab_report_types %}
             {% if 'MCP' in rehab_report_types %}
             {% if 'Voc' in rehab_report_types %}
-
-        When GUI toggles are present the list comes directly from them.
-        Otherwise the list is inferred from the extracted dataclass.
         """
-        if self._gui is not None:
-            return {"rehab_report_types": list(self._gui.rehab_report_types)}
-
-        else:
-            return {"rehab_report_types": []}
+        return {"rehab_report_types": list(self._gui.rehab_report_types)}
 
     def _rehab_report_names(self, rehab_report_types: list[str]) -> dict[str, Any]:
         """
@@ -455,4 +646,9 @@ def build_pv_earnings_context(
     gui_toggles: PVEarningsToggles | None = None,
 ) -> dict[str, Any]:
     """Module-level entry point for merge_reports_core dispatch."""
-    return PVEarningsContextBuilder(ea_main_dataclass, gui_toggles).build()
+    toggles = gui_toggles or PVEarningsToggles()
+    base_builder = BaseBuilder(ea_main_dataclass, toggles)
+    credit_builder = CreditBuilder(ea_main_dataclass, toggles)
+    return PVEarningsContextBuilder(
+        ea_main_dataclass, toggles, base_builder, credit_builder
+    ).build()
