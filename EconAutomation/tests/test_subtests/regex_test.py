@@ -51,12 +51,4 @@ for base in bases:
         else:
             continue
 
-print(confirmed_bases)
-
-# pattern = r"base(\d+)"
-
-
-# base_numbers = set()
-# for item in test_list:
-#     base_numbers.update(re.findall(pattern, item))
-# print(base_numbers)
+print(bases)
