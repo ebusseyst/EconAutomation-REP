@@ -25,6 +25,9 @@ from PySide6.QtWidgets import (
 
 from econ_automation._version import __version__ as _app_version
 from logging_resources.log_context import _get_log_dir
+from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase import (
+    create_case_profile,
+)
 from econ_automation.ea_scripts.case_setup_scripts.case_info_persistence import (
     load_case_info,
     save_case_info,
@@ -147,15 +150,22 @@ class CreateFolderDialog(QDialog):
         self._claimant_last = QLineEdit()
         self._attorney_first = QLineEdit()
         self._attorney_last = QLineEdit()
+        self._attorney_gender = QComboBox()
+        self._attorney_gender.addItems(["Male", "Female"])
 
         form.addRow("Claimant First Name:", self._claimant_first)
         form.addRow("Claimant Last Name:", self._claimant_last)
         form.addRow("Attorney First Name:", self._attorney_first)
         form.addRow("Attorney Last Name:", self._attorney_last)
+        form.addRow("Attorney Gender:", self._attorney_gender)
         layout.addLayout(form)
 
         btn_row = QHBoxLayout()
-        btn_row.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
+        btn_row.addItem(
+            QSpacerItem(
+                40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+            )
+        )
         ok_btn = QPushButton("OK")
         ok_btn.setObjectName("dialog_btn")
         ok_btn.clicked.connect(self._on_accept)
@@ -176,6 +186,7 @@ class CreateFolderDialog(QDialog):
             "claimant_name_last": self._claimant_last.text().strip(),
             "attorney_name_first": self._attorney_first.text().strip(),
             "attorney_name_last": self._attorney_last.text().strip(),
+            "attorney_gender": self._attorney_gender.currentText(),
         }
 
 
@@ -228,9 +239,9 @@ class ConfirmCaseInfoDialog(QDialog):
 
         self._trial_date_check = QCheckBox("Trial Date?")
         self._attorney_gender_combo = QComboBox()
-        self._attorney_gender_combo.addItems(["M", "F"])
+        self._attorney_gender_combo.addItems(["Male", "Female"])
         self._gender_combo = QComboBox()
-        self._gender_combo.addItems(["M", "F"])
+        self._gender_combo.addItems(["Male", "Female"])
         self._reference_date = QLineEdit()
         self._reference_date.setPlaceholderText("MM/DD/YYYY")
         self._dob = QLineEdit()
@@ -247,7 +258,11 @@ class ConfirmCaseInfoDialog(QDialog):
         layout.addLayout(form2)
 
         btn_row = QHBoxLayout()
-        btn_row.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
+        btn_row.addItem(
+            QSpacerItem(
+                40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+            )
+        )
         ok_btn = QPushButton("OK")
         ok_btn.setObjectName("dialog_btn")
         ok_btn.clicked.connect(self.accept)
@@ -281,13 +296,14 @@ class ConfirmCaseInfoDialog(QDialog):
             "doi": self._doi.text().strip(),
         }
 
+
 class ConfirmReferenceData(QDialog):
     """
     Pre-fills trial date from OFF extraction.
-    
+
     User confirms pre-populated trial/reference date, attorney/claimant genders, and claimant DOB/DOI.
     """
-    
+
     def __init__(self, parent, colors: dict, off_path: Path) -> None:
         super().__init__(parent)
         self.setWindowTitle("Confirm Case Information")
@@ -298,41 +314,41 @@ class ConfirmReferenceData(QDialog):
         self._build_ui()
         self._prefill()
         _apply_dialog_style(self, colors)
-    
+
     def _build_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 20, 24, 16)
         layout.setSpacing(12)
-        
+
         title = QLabel("Confirm Case Information")
         title.setObjectName("dialog_title")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
         layout.addWidget(_make_separator())
-        
+
         form = QFormLayout()
         form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         form.setHorizontalSpacing(12)
         form.setVerticalSpacing(8)
-        
+
         self._claimant_first = QLineEdit()
         self._claimant_last = QLineEdit()
         self._attorney_first = QLineEdit()
         self._attorney_last = QLineEdit()
-        
+
         form.addRow("Claimant First Name:", self._claimant_first)
         form.addRow("Claimant Last Name:", self._claimant_last)
         form.addRow("Attorney First Name:", self._attorney_first)
         form.addRow("Attorney Last Name:", self._attorney_last)
-        
+
         layout.addLayout(form)
         layout.addWidget(_make_separator())
-        
+
         form2 = QFormLayout()
         form2.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
         form2.setHorizontalSpacing(12)
         form2.setVerticalSpacing(8)
-        
+
         self._trial_date_check = QCheckBox("Trial Date?")
         self._attorney_gender_combo = QComboBox()
         self._attorney_gender_combo.addItems(["M", "F"])
@@ -344,7 +360,7 @@ class ConfirmReferenceData(QDialog):
         self._dob.setPlaceholderText("MM/DD/YYYY")
         self._doi = QLineEdit()
         self._doi.setPlaceholderText("MM/DD/YYYY")
-        
+
         form2.addRow(self._trial_date_check, QLabel(""))
         form2.addRow("Attorney Gender:", self._attorney_gender_combo)
         form2.addRow("Claimant Gender:", self._gender_combo)
@@ -352,9 +368,13 @@ class ConfirmReferenceData(QDialog):
         form2.addRow("Claimant DOB:", self._dob)
         form2.addRow("Claimant DOI:", self._doi)
         layout.addLayout(form2)
-        
+
         btn_row = QHBoxLayout()
-        btn_row.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
+        btn_row.addItem(
+            QSpacerItem(
+                40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+            )
+        )
         ok_btn = QPushButton("OK")
         ok_btn.setObjectName("dialog_btn")
         ok_btn.clicked.connect(self.accept)
@@ -364,7 +384,7 @@ class ConfirmReferenceData(QDialog):
         btn_row.addWidget(ok_btn)
         btn_row.addWidget(cancel_btn)
         layout.addLayout(btn_row)
-    
+
     def _prefill(self) -> None:
         case_profile = create_case_profile(self._off_path)
         self._claimant_first.setText(case_profile.claimant_name_first)
@@ -376,7 +396,7 @@ class ConfirmReferenceData(QDialog):
         self._reference_date.setText(case_profile.trial_date)
         self._dob.setText(case_profile.claimant_dob)
         self._doi.setText(case_profile.claimant_doi)
-    
+
     def form_data(self) -> dict:
         return {
             "claimant_name_first": self._claimant_first.text().strip(),
@@ -390,7 +410,7 @@ class ConfirmReferenceData(QDialog):
             "dob": self._dob.text().strip(),
             "doi": self._doi.text().strip(),
         }
-    
+
 
 def _read_recent_log() -> str | None:
     try:
@@ -448,13 +468,17 @@ class BugReportDialog(QDialog):
         desc_label = QLabel("Description:")
         layout.addWidget(desc_label)
         self._desc_edit = QTextEdit()
-        self._desc_edit.setPlaceholderText("Describe the issue and steps to reproduce...")
+        self._desc_edit.setPlaceholderText(
+            "Describe the issue and steps to reproduce..."
+        )
         self._desc_edit.setFixedHeight(100)
         layout.addWidget(self._desc_edit)
 
         btn_row = QHBoxLayout()
         btn_row.addItem(
-            QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+            QSpacerItem(
+                40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+            )
         )
         submit_btn = QPushButton("Submit")
         submit_btn.setObjectName("dialog_btn")
@@ -484,7 +508,11 @@ class BugReportDialog(QDialog):
             body_parts += ["", "**Error Message:**", f"```\n{self._error_message}\n```"]
 
         if self._log_snippet:
-            body_parts += ["", "**Recent Log Entries:**", f"```\n{self._log_snippet}\n```"]
+            body_parts += [
+                "",
+                "**Recent Log Entries:**",
+                f"```\n{self._log_snippet}\n```",
+            ]
 
         body = "\n".join(body_parts)
         params = urllib.parse.urlencode({"title": title, "body": body, "labels": "bug"})

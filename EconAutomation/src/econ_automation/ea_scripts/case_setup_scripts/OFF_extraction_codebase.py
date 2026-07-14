@@ -116,6 +116,7 @@ class CaseProfile:
     attorney_name_middle: str = ""
     attorney_name_last: str = ""
     attorney_sex: str = ""
+    attorney_salutation: str = ""
     attorney_phone: str = ""
     attorney_fax: str = ""
     attorney_email: str = ""

@@ -19,7 +19,7 @@ from econ_automation.ea_scripts.case_setup_scripts.workbook_setup_scripts import
 
 logger = logging.getLogger(__name__)
 
-_CASE_SUBFOLDERS = ["E-File", "Emails", "Report and Invoice", "Work Product"]
+_CASE_SUBFOLDERS = ["Admin", "E-File", "Emails", "Report and Invoices", "Work Products"]
 
 
 def _get_base_dir(base_filepaths: dict[str, Path], admin_bool: bool) -> Path:
@@ -75,7 +75,7 @@ def setup_new_case(
         claimant_dir = initialize_case_folders(case_profile, base_filepaths, admin_bool)
 
     _step("Copying and configuring workbook templates...")
-    work_product_dir = claimant_dir / "Work Product"
+    work_product_dir = claimant_dir / "Work Products"
     work_product_dir.mkdir(exist_ok=True)
     save_claimant_workbook_templates(case_profile, wb_template_dir, work_product_dir)
 
@@ -116,6 +116,38 @@ def initialize_case_folders(
         raise
 
     return Path(claimant_dir)
+
+
+def save_admin_templates(
+    case_profile: Any, admin_template_dir: Path, target_dir: Path
+) -> None:
+    """
+    Saves service agreement and invoice templates to target_dir (typically the Admin subfolder).
+    """
+    for docx_template in admin_template_dir.iterdir():
+        if docx_template.is_file() and docx_template.suffix in (
+            ".docx",
+            ".dotx",
+            ".docm",
+            ".dotm",
+        ):
+            template_name = docx_template.name
+
+            target_path = target_dir / template_name
+            if target_path.exists():
+                logger.warning(
+                    "Iterating %s template: already exists in target directory.",
+                    template_name,
+                )
+                final_template_name = f"{docx_template.stem} (1){docx_template.suffix}"
+                target_path = target_dir / final_template_name
+
+            shutil.copy2(docx_template, target_path)
+        else:
+            logger.warning(
+                "Skipping %s: not a docx, docx, docm, or dotm file.",
+                docx_template.name,
+            )
 
 
 def save_claimant_workbook_templates(
@@ -258,6 +290,9 @@ def make_case_profile_from_basic_info(data: dict) -> CaseProfile:
 
     attorney_first = data.get("attorney_name_first", "")
     attorney_last = data.get("attorney_name_last", "")
+    attorney_salutation = (
+        ("Mr." if attorney_sex == "Male" else "Ms.") if attorney_sex else ""
+    )
 
     return CaseProfile(
         claimant_name_first=data.get("claimant_name_first", ""),
@@ -274,4 +309,5 @@ def make_case_profile_from_basic_info(data: dict) -> CaseProfile:
         attorney_name_first=attorney_first,
         attorney_name_last=attorney_last,
         attorney_sex=attorney_sex,
+        attorney_salutation=attorney_salutation,
     )

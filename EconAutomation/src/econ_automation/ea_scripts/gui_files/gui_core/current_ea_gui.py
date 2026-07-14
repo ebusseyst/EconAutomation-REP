@@ -124,6 +124,7 @@ class Ui_ea_MainWindow(object):
     ea_reportmerge_sub2frame: QFrame
     ea_reportmerge_sub2frame_GLayout: QGridLayout
     ea_reportmerge_sub2frame_section_label: QLabel
+    ea_reportmerge_sub2frame_selected_claimant_label: QLabel
 
     # Report merge — projection type
     ea_reportmerge_projectiontype_sub3frame: QFrame
@@ -481,6 +482,21 @@ class Ui_ea_MainWindow(object):
         )
         self.ea_reportmerge_sub2frame_GLayout.addWidget(
             self.ea_reportmerge_sub2frame_section_label, 0, 0, 1, 2
+        )
+
+        self.ea_reportmerge_sub2frame_selected_claimant_label = QLabel(
+            self.ea_reportmerge_sub2frame
+        )
+        self.ea_reportmerge_sub2frame_selected_claimant_label.setObjectName(
+            "ea_reportmerge_sub2frame_selected_claimant_label"
+        )
+        self.ea_reportmerge_sub2frame_selected_claimant_label.setAlignment(
+            Qt.AlignmentFlag.AlignCenter
+        )
+
+        # THIS IS WHERE I LEFT OFF
+        self.ea_reportmerge_sub2frame_GLayout.addWidget(
+            self.ea_reportmerge_sub2frame_selected_claimant_label, 1, 0, 1, 2
         )
 
         self.frame_4 = QFrame(self.ea_reportmerge_sub2frame)
@@ -1504,6 +1520,9 @@ class Ui_ea_MainWindow(object):
         )
         self.ea_reportmerge_sub2frame_section_label.setText(
             QCoreApplication.translate("ea_MainWindow", "Report Configurations", None)
+        )
+        self.ea_reportmerge_sub2frame_selected_claimant_label.setText(
+            QCoreApplication.translate("ea_MainWindow", "Selected Claimant: None", None)
         )
         self.ea_reportmerge_label.setText(
             QCoreApplication.translate("ea_MainWindow", "Report Merge", None)
