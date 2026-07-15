@@ -115,7 +115,7 @@ class CaseProfile:
     attorney_name_first: str = ""
     attorney_name_middle: str = ""
     attorney_name_last: str = ""
-    attorney_sex: str = ""
+    attorney_gender: str = ""
     attorney_salutation: str = ""
     attorney_phone: str = ""
     attorney_fax: str = ""
@@ -285,7 +285,7 @@ class CaseProfile:
 
         # Attorney salutation / title variants
         _atty_sal_map = {"Male": "Mr.", "Female": "Ms."}
-        atty_sal = _atty_sal_map.get(self.attorney_sex, "Mr./Ms.")
+        atty_sal = _atty_sal_map.get(self.attorney_gender, "Mr./Ms.")
         self.attorney_salutation = atty_sal
         self.attorney_name_full_with_title = f"{self.attorney_name_full}, Esq."
         self.attorney_salutation_with_name_full = (

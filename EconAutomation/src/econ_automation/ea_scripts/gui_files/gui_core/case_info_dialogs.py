@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+from dotenv import load_dotenv
+import os
 import platform
-import urllib.parse
+import logging
 from datetime import datetime as dt
 from pathlib import Path
+from github import Github
 
-from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QColor, QDesktopServices, QPalette
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -33,6 +36,7 @@ from econ_automation.ea_scripts.case_setup_scripts.case_info_persistence import 
     save_case_info,
 )
 
+logger = logging.getLogger(__name__)
 
 def _apply_dialog_style(dialog: QDialog, colors: dict) -> None:
     c = colors
@@ -416,22 +420,34 @@ def _read_recent_log() -> str | None:
     try:
         log_dir = _get_log_dir()
         log_files = list(log_dir.glob("econ_automation_*.txt"))
+        
         if not log_files:
             return None
 
-        latest = max(log_files, key=lambda f: f.stat().st_mtime)
-        text = latest.read_text(encoding="utf-8", errors="replace")
+        rel_log = None
+        for log in sorted(log_files, key=lambda f: f.stat().st_mtime, reverse=True):
+            if "exception" in log.read_text(encoding="utf-8", errors="replace") or "error" in log.read_text(encoding="utf-8", errors="replace"):
+                rel_log = log
+                break
+        if rel_log is None:
+            rel_log = max(log_files, key=lambda f: f.stat().st_mtime) if max(log_files, key=lambda f: f.stat().st_mtime).read_text(encoding="utf-8", errors="replace") != "" else None
+        
+        text = rel_log.read_text(encoding="utf-8", errors="replace") if rel_log else ""
+        
         entries = [e.strip() for e in text.split("\n\n") if e.strip()]
-        snippet = "\n\n".join(entries[-10:])
+        snippet_body = "\n\n".join(entries[-10:])
+        snippet = f"Log snippet: {rel_log.name if rel_log else 'no log found'}\n{snippet_body}"
+        
         if len(snippet) > 3000:
             snippet = "...[truncated]\n\n" + snippet[-3000:]
         return snippet
-    except Exception:
+    except Exception as e:
+        logger.error(f"Error reading recent log: {e}")
         return None
 
 
 class BugReportDialog(QDialog):
-    """'Send Bug Report' — pre-fills a GitHub new-issue URL and opens it in the browser."""
+    """'Send Bug Report' — uses GH API and PyGithub to submit user bug reports directly to repo."""
 
     def __init__(self, parent, colors: dict, error_message: str | None = None):
         super().__init__(parent)
@@ -443,6 +459,23 @@ class BugReportDialog(QDialog):
         self._log_snippet = _read_recent_log()
         self._build_ui()
         _apply_dialog_style(self, colors)
+        
+        
+        # Find the project root (EconAutomation-REP)
+        script_dir = Path(__file__).resolve().parent
+        basedir = script_dir.parent.parent
+        while basedir.name != "EconAutomation":
+            basedir = basedir.parent
+
+
+        load_dotenv(os.path.join(basedir, 'GH_REPO.env'), override=True, verbose=True)
+        self._github_token = os.getenv("GITHUB_TOKEN")
+        self._github_repo = os.getenv("REPO_NAME")
+        self._github_owner = os.getenv("REPO_OWNER")
+        
+        # Initialize GH client with token
+        self.gh_client = Github(self._github_token)
+        self.gh_repo = self.gh_client.get_repo(f"{self._github_owner}/{self._github_repo}")
 
     def _build_ui(self) -> None:
         layout = QVBoxLayout(self)
@@ -464,6 +497,15 @@ class BugReportDialog(QDialog):
         self._title_edit.setPlaceholderText("Brief summary of the issue")
         form.addRow("Title:", self._title_edit)
         layout.addLayout(form)
+
+        user_label = QLabel("User:")
+        layout.addWidget(user_label)
+        self._user_edit = QTextEdit()
+        self._user_edit.setPlaceholderText(
+            "Please enter your initials."
+        )
+        self._user_edit.setFixedHeight(30)
+        layout.addWidget(self._user_edit)
 
         desc_label = QLabel("Description:")
         layout.addWidget(desc_label)
@@ -494,8 +536,12 @@ class BugReportDialog(QDialog):
         today = dt.now().strftime("%Y-%m-%d")
         title = f"{today} - {self._title_edit.text().strip() or 'Bug Report'}"
         description = self._desc_edit.toPlainText().strip()
+        user = self._user_edit.toPlainText().strip()
 
         body_parts = [
+            "**User:**",
+            user if user else "(no user provided)",
+            "",
             "**Description:**",
             description if description else "(no description provided)",
             "",
@@ -515,7 +561,14 @@ class BugReportDialog(QDialog):
             ]
 
         body = "\n".join(body_parts)
-        params = urllib.parse.urlencode({"title": title, "body": body, "labels": "bug"})
-        url = f"https://github.com/ebusseyst/EconAutomation-REP/issues/new?{params}"
-        QDesktopServices.openUrl(QUrl(url))
+        
+        # Create issue via GitHub API
+        issue = self.gh_repo.create_issue(
+            title=title,
+            body=body,
+            labels=["Bug"],
+            
+        )
+        
+        logger.info(f"Issue created: {issue.html_url}")
         self.accept()

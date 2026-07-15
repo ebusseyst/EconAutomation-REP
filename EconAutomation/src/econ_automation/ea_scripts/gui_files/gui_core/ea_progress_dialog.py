@@ -4,6 +4,7 @@ from pathlib import Path
 import logging
 
 try:
+    # pyrefly: ignore [missing-import]
     import pythoncom as _pythoncom
 
     _USE_COM = True

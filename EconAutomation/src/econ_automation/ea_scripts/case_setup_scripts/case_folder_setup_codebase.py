@@ -277,9 +277,8 @@ def make_case_profile_from_basic_info(data: dict) -> CaseProfile:
     All fields not present in data default to empty string; __post_init__ derives
     name variants, pronouns, etc. automatically.
     """
-    gender_map = {"M": "Male", "F": "Female"}
-    claimant_sex = gender_map.get(data.get("gender", ""), "")
-    attorney_sex = gender_map.get(data.get("attorney_gender", ""), "")
+    claimant_sex = data.get("gender", "")
+    attorney_gender = data.get("attorney_gender", "")
 
     dob_short, dob_long = OFFExtractor._format_date(data.get("dob", ""))
     doi_short, doi_long = OFFExtractor._format_date(data.get("doi", ""))
@@ -290,9 +289,6 @@ def make_case_profile_from_basic_info(data: dict) -> CaseProfile:
 
     attorney_first = data.get("attorney_name_first", "")
     attorney_last = data.get("attorney_name_last", "")
-    attorney_salutation = (
-        ("Mr." if attorney_sex == "Male" else "Ms.") if attorney_sex else ""
-    )
 
     return CaseProfile(
         claimant_name_first=data.get("claimant_name_first", ""),
@@ -308,6 +304,5 @@ def make_case_profile_from_basic_info(data: dict) -> CaseProfile:
         trial_date_long=trial_date_long,
         attorney_name_first=attorney_first,
         attorney_name_last=attorney_last,
-        attorney_sex=attorney_sex,
-        attorney_salutation=attorney_salutation,
+        attorney_gender=attorney_gender,
     )
