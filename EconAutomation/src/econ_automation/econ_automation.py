@@ -1,33 +1,38 @@
+import ctypes
 import logging
-<<<<<<< Updated upstream
-import logging.config
-=======
-import platform
 import subprocess
 import sys
 from pathlib import Path
->>>>>>> Stashed changes
+import platform
 
-import yaml
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
 
-<<<<<<< Updated upstream
-from econ_automation.ea_scripts.ea_main_codebase import EconWorkflowAutomation
-=======
-from econ_automation._version import __version__ as app_version
-from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase import (
-    make_case_profile_from_basic_info,
+from logging_resources.log_context import setup_logging
+
+from econ_automation.ea_scripts.gui_files.gui_core.current_ea_gui import (
+    Ui_ea_MainWindow,
 )
+from econ_automation.ea_scripts.update_scripts.update_codebase import (
+    check_and_apply_update,
+    save_install_location,
+)
+from econ_automation.ea_scripts.report_merge_scripts.pv_earnings_context_codebase import (
+    PVEarningsToggles,
+)
+from econ_automation.ea_scripts.report_merge_scripts.pvlcp_context_codebase import (
+    PVLCPToggles,
+)
+
 from econ_automation.ea_scripts.gui_files.gui_connections.gui_formatted_functions import (
-    select_claimant_folder_modal,
     select_OFF_file_modal,
+    select_claimant_folder_modal,
 )
 from econ_automation.ea_scripts.gui_files.gui_core.case_info_dialogs import (
     BugReportDialog,
     ConfirmCaseInfoDialog,
     CreateFolderDialog,
-)
-from econ_automation.ea_scripts.gui_files.gui_core.current_ea_gui import (
-    Ui_ea_MainWindow,
 )
 from econ_automation.ea_scripts.gui_files.gui_core.ea_progress_dialog import (
     CaseSetupWorker,
@@ -36,31 +41,18 @@ from econ_automation.ea_scripts.gui_files.gui_core.ea_progress_dialog import (
     ReportMergeWorker,
     SetupWorkbooksWorker,
 )
-from econ_automation.ea_scripts.report_merge_scripts.pv_earnings_context_codebase import (
-    PVEarningsToggles,
+from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase import (
+    make_case_profile_from_basic_info,
 )
-from econ_automation.ea_scripts.report_merge_scripts.pvlcp_context_codebase import (
-    PVLCPToggles,
-)
-from econ_automation.ea_scripts.update_scripts.update_codebase import (
-    check_and_apply_update,
-    save_install_location,
-)
-from logging_resources.log_context import setup_logging
+
+from econ_automation._version import __version__ as app_version
+
 
 setup_logging()
->>>>>>> Stashed changes
 
-# Top-level logger instance
-with open("src/econ_automation/logging_resources/logging_config.yaml", "r") as f:
-    config = yaml.safe_load(f.read())
-    logging.config.dictConfig(config)
-    
 logger = logging.getLogger(__name__)
 
 
-<<<<<<< Updated upstream
-=======
 class EconAutomationMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -118,7 +110,7 @@ class EconAutomationMainWindow(QMainWindow):
             self._open_in_explorer(claimant_dir)
 
     def _on_prepare_with_off(self) -> None:
-        _claimant_name, file_path = select_OFF_file_modal(self)
+        claimant_name, file_path = select_OFF_file_modal(self)
         if not file_path:
             return
         progress = EAProgressDialog(self, "Setting Up Case", self.ui._color_dict)
@@ -349,6 +341,5 @@ def main() -> None:
     ea_app.exec()
 
 
->>>>>>> Stashed changes
 if __name__ == "__main__":
-    econ_workflow_automation = EconWorkflowAutomation()
+    main()

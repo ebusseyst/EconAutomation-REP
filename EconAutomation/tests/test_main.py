@@ -1,61 +1,31 @@
-import logging
-import logging.config
 from pathlib import Path
-import datetime
-import sys
 
-import yaml
+from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase import create_case_profile
+from econ_automation.ea_scripts.report_merge_scripts.report_merge_codebase import merge_reports_core
 
-from tests.test_subtests.test_excel_chart_extractor import TestExcelChartExtractorCore
 
-# Top-level test logger instance
-logger = logging.getLogger(__name__)
+# TEST FILEPATHS
+sel_OFF_filepath = Path(
+    r"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/sample_OFFs/Gaston, C -- TEST Open File Form.docx"
+)
 
-# Setting up same logging config as main
-with open("src/logging_resources/logging_config.yaml", "r") as f:
-    config = yaml.safe_load(f.read())
-    logging.config.dictConfig(config)
+base_filepaths = {
+    "Private Directory": Path(
+        r"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/ea_outputs/private_claimant_directories"
+    ),
+    "Public Directory": Path(
+        r"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/ea_outputs/public_claimant_directories"
+    ),
+}
 
-# Resource path function (kept in sync with ea_main)
-def resource_path(relative_path: str) -> Path:
-    """Resolve path to a bundled resource; works in dev and PyInstaller exe."""
-    if hasattr(sys, '_MEIPASS'):
-        return Path(sys._MEIPASS) / relative_path
-    return Path(__file__).parent / relative_path
+wb_template_dir = Path(
+    r"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_wb_templates"
+)
 
-# TEMP: Will need to be changed to be more dynamic
-MASTERTEMPLATE_FILEPATH = resource_path("supporting_docs/sorted_econ_files/MASTERTEMPLATE (color coded).xlsx")
-WORKING_CALC_FILEPATH = resource_path("supporting_docs/sorted_econ_files/Working_CALC_VER1.11 (color coded).xlsx")
-PV2_FILEPATH = resource_path("supporting_docs/sorted_econ_files/PV2 (color coded).xlsx")
-HHS_FILEPATH = resource_path("supporting_docs/sorted_econ_files/HHS_PV_New (color coded).xlsx")
-
-# TEMP: Will need to be changed to be more dynamic
-EARNINGS_AND_PV_MEDS_TEMPLATE_FILEPATH = resource_path("supporting_docs/sorted_econ_files/Earnings and PV Meds Report Template (color coded).docx")
-LCP_TEMPLATE_FILEPATH = resource_path("supporting_docs/sorted_econ_files/LCP MASTERTEMPLATE (color coded).docx")
-
-# TEMP: Will need to be changed to be more dynamic
-OUTPUT_SAVE_DIRECTORY = resource_path("data_output_files/output_files")
+report_template_dir = Path(
+    r"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates"
+)
 
 if __name__ == "__main__":
-    
-    # TEMP: PULLING TODAY'S DATE
-    today = datetime.date.today()
-    today_str = today.strftime("%Y-%m-%d")
-    
-    # DEFINING FILE PATHS (TO BE CHANGED LATER)
-    input_workbooks_filepaths_dict = {
-        "mastertemplate_filepath": MASTERTEMPLATE_FILEPATH,
-        "working_calc_filepath": WORKING_CALC_FILEPATH,
-        "pv2_filepath": PV2_FILEPATH,
-        "hhs_filepath": HHS_FILEPATH
-        }
-        
-    output_template_filepaths_dict = {
-        "lcp_report_template_filepath": LCP_TEMPLATE_FILEPATH,
-        }
-    
-    output_save_paths_list = [
-        OUTPUT_SAVE_DIRECTORY
-        ]
-    
-    econ_workflow_automation = EconWorkflowAutomation(input_workbooks_filepaths_dict, output_template_filepaths_dict, output_save_paths_list)
+    ea_main_dataclass = create_case_profile(sel_OFF_filepath)
+    merge_reports_core(ea_main_dataclass=ea_main_dataclass, selected_template_filepaths=[Path(r"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx")], selected_output_filepaths=[base_filepaths["Private Directory"]])

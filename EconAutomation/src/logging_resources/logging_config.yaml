@@ -3,7 +3,7 @@ disable_existing_loggers: False
 
 filters:
   GlobalContextFilter:
-    (): logging_resources.log_context.GlobalContextFilter # the path to the filter class
+    (): logging_resources.log_context.GlobalContextFilter
 
 formatters:
   DefaultJSONFormatter:
@@ -16,7 +16,7 @@ formatters:
       lineno: line_number
       module: module_name
       funcName: function_name
-  
+
   DefaultConsoleFormatter:
     (): logging_resources.log_context.DefaultConsoleFormatter
     style: "{"
@@ -26,14 +26,21 @@ handlers:
   default_json_handler:
     class: logging.StreamHandler
     formatter: DefaultJSONFormatter
+    filters: [GlobalContextFilter]
     level: INFO
 
+  file_handler:
+    class: logging_resources.log_context.TimestampedJSONFileHandler
+    filters: [GlobalContextFilter]
+    level: INFO
+    max_logs: 10
+
 loggers:
-  assoc2_main:
-    handlers: [default_json_handler]
+  econ_automation:
+    handlers: [default_json_handler, file_handler]
     level: INFO
     propagate: False
 
 root:
-  handlers: [default_json_handler]
+  handlers: [default_json_handler, file_handler]
   level: INFO

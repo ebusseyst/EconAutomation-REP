@@ -1,0 +1,53 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pyside6-rcc fontset1.qrc -o ../gui_core/ea_fontset1.py)",
+      "Read(//private/tmp/**)",
+      "Bash(cp \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx\" .)",
+      "Bash(unzip -o PV_Earnings_Report_Template.docx -d pv_template_inspect)",
+      "Bash(python3 -c ' *)",
+      "Bash(cp /tmp/PV_Earnings_Report_Template_fixed.docx \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx\")",
+      "Bash(.venv/bin/python -c ' *)",
+      "Bash(unzip -o template.docx -d template_xml)",
+      "Bash(unzip -o output.docx -d output_xml)",
+      "Bash(mkdir -p /Users/ericmacbook/.claude/projects/-Users-ericmacbook-Documents-GitHub-EconAutomation-REP/memory)",
+      "Read(//Users/ericmacbook/.claude/projects/-Users-ericmacbook-Documents-GitHub-EconAutomation-REP/memory/**)",
+      "Read(//Users/ericmacbook/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/ae127e2a-a425-4776-a540-7f20b101e4e4/ff48b7ee-70e6-439f-9795-8259bc06dc27/skills/docx/**)",
+      "Bash(python scripts/office/unpack.py \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx\" /tmp/pv_earnings_unpacked/)",
+      "Bash(python3 scripts/office/unpack.py \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx\" /tmp/pv_earnings_unpacked/)",
+      "Bash(pandoc \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template.docx\" -t markdown --wrap=none)",
+      "Bash(python3 -)",
+      "Bash(python -c ' *)",
+      "Bash(cp \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template_Updated.docx\" pv_template.docx)",
+      "Bash(unzip -o pv_template.docx -d pv_template_extracted/)",
+      "Bash(python3)",
+      "Bash(rm -rf pv_template_extracted)",
+      "Bash(zip -r /tmp/PV_Earnings_Report_Template_Updated_fixed.docx . -x \"*.DS_Store\")",
+      "Bash(cp /tmp/PV_Earnings_Report_Template_Updated_fixed.docx \"/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/src/supporting_docs/econ_report_templates/PV_Earnings_Report_Template_Updated.docx\")",
+      "Bash(xargs cat)",
+      "Bash(.venv/Scripts/python -c \"import docxtpl; print\\(docxtpl.__version__\\); import inspect; print\\(inspect.getfile\\(docxtpl\\)\\)\")",
+      "Bash(.venv/Scripts/python -c \"from docxtpl import DocxTemplate; import inspect; src = inspect.getsource\\(DocxTemplate.__init__\\); print\\(src[:1500]\\)\")",
+      "Bash(.venv/Scripts/python -c \"from docxtpl import DocxTemplate; import inspect; print\\(inspect.getsource\\(DocxTemplate\\)\\)\")",
+      "Bash(.venv/Scripts/python -c \"from docxtpl import DocxTemplate; import inspect; src = inspect.getsource\\(DocxTemplate.build_xml\\); print\\(src\\)\")",
+      "Bash(.venv/Scripts/python -c \"from docxtpl import DocxTemplate; import inspect; src = inspect.getsource\\(DocxTemplate.init_jinja_env\\); print\\(src\\)\")",
+      "Bash(.venv/Scripts/python -c \"from docxtpl import DocxTemplate; import inspect; src = inspect.getsource\\(DocxTemplate.render\\); print\\(src\\)\")",
+      "Bash(.venv/Scripts/python -c \"from docxtpl import DocxTemplate; import inspect; src = inspect.getsource\\(DocxTemplate.render_xml_part\\); print\\(src\\)\")",
+      "Bash(.venv/Scripts/python -c ' *)",
+      "PowerShell(& \".venv\\\\Scripts\\\\python.exe\" -c \"import xlwings; print\\(xlwings.__version__\\)\")",
+      "PowerShell(& \".venv\\\\Scripts\\\\python.exe\" -c \"import PIL; print\\(PIL.__version__\\)\")",
+      "PowerShell(& \".venv\\\\Scripts\\\\python.exe\" -c \"import docx.image; import inspect; print\\(inspect.getfile\\(docx.image\\)\\)\")",
+      "Bash(.venv\\\\Scripts\\\\python.exe -c \"import xlwings; print\\(xlwings.__version__\\)\")",
+      "Bash(.venv/Scripts/python.exe -c \"import xlwings; print\\(xlwings.__version__\\)\")",
+      "Bash(dir \"C:\\\\Users\\\\EricBussey\\\\AppData\\\\Local\\\\Programs\\\\EconAutomation\\\\_internal\\\\python314.dll\")",
+      "Bash(grep -E \"\\\\.\\(py|bat|sh|yml|yaml\\)$\")",
+      "PowerShell(Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue)",
+      "PowerShell(Start-Process explorer)",
+      "PowerShell(python -m py_compile \"src\\\\econ_automation\\\\ea_scripts\\\\report_merge_scripts\\\\pv_earnings_context_codebase.py\"; echo \"exit=$LASTEXITCODE\")",
+      "Bash(rm -f /tmp/_t.py)"
+    ],
+    "additionalDirectories": [
+      "/private/tmp",
+      "\\tmp"
+    ]
+  }
+}

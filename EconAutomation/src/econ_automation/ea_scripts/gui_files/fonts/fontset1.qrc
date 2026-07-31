@@ -1,0 +1,22 @@
+<RCC>
+  <qresource prefix="/fonts">
+    <file>DMSans-Italic-VariableFont.ttf</file>
+    <file>DMSans-Regular-VariableFont.ttf</file>
+    <file>Figtree-Italic-VariableFont.ttf</file>
+    <file>Figtree-Regular-VariableFont.ttf</file>
+    <file>IBMPlexMono-Bold.ttf</file>
+    <file>IBMPlexMono-BoldItalic.ttf</file>
+    <file>IBMPlexMono-ExtraLight.ttf</file>
+    <file>IBMPlexMono-ExtraLightItalic.ttf</file>
+    <file>IBMPlexMono-Italic.ttf</file>
+    <file>IBMPlexMono-Light.ttf</file>
+    <file>IBMPlexMono-LightItalic.ttf</file>
+    <file>IBMPlexMono-Medium.ttf</file>
+    <file>IBMPlexMono-MediumItalic.ttf</file>
+    <file>IBMPlexMono-Regular.ttf</file>
+    <file>IBMPlexMono-SemiBold.ttf</file>
+    <file>IBMPlexMono-SemiBoldItalic.ttf</file>
+    <file>IBMPlexMono-Thin.ttf</file>
+    <file>IBMPlexMono-ThinItalic.ttf</file>
+  </qresource>
+</RCC>

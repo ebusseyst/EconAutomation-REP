@@ -1,157 +1,382 @@
+from dataclasses import make_dataclass, fields, is_dataclass
 import logging
-import sys
+import platform
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
+from importlib.metadata import version, metadata
 
-from econ_automation.ea_scripts.data_extraction_scripts.mastertemplate_extraction_codebase import MasterTemplateExtractor
-from econ_automation.ea_scripts.data_extraction_scripts.working_calc_extraction_codebase import WorkingCalcExtractor
-from econ_automation.ea_scripts.data_extraction_scripts.pv2_extraction_codebase import PV2Extractor
-from econ_automation.ea_scripts.data_extraction_scripts.hhspv_extraction_codebase import HHSPVExtractor
+from pydantic import BaseModel
 
-from econ_automation.ea_scripts.output_gen_scripts.output_core_codebase import WordTemplateProcessor
+from econ_automation.ea_scripts.file_system_scripts.file_system_codebase import (
+    FileSystemCore as fsc,
+)
+from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase import (
+    setup_new_case,
+)
 
-# Setting application name and version
-APP_NAME = "EconAuto"
-APP_VERSION = "0.1.0"
-APP_FULL_NAME = f"Econ Workflow Automation ({APP_NAME}-{APP_VERSION})"
+from econ_automation.ea_scripts.data_extraction_scripts.case_variables_extraction_codebase import (
+    CaseVariablesExtractor,
+)
+from econ_automation.ea_scripts.data_extraction_scripts.working_calc_extraction_codebase import (
+    WorkingCalcExtractor,
+)
+from econ_automation.ea_scripts.data_extraction_scripts.pv2_extraction_codebase import (
+    PV2Extractor,
+)
+# from econ_automation.ea_scripts.data_extraction_scripts.hhspv_extraction_codebase import (
+#     HHSPVExtractor,
+# )
 
-# Resource path function
-def resource_path(relative_path: str) -> Path:
-    """Resolve path to a bundled resource; works in dev and PyInstaller exe."""
-    if hasattr(sys, '_MEIPASS'):
-        return Path(sys._MEIPASS) / relative_path
-    return Path(__file__).parent / relative_path
+from econ_automation.ea_scripts.report_merge_scripts.report_merge_codebase import (
+    merge_reports_core,
+)
 
-# Dictionary of all relevant (hardcoded) filepaths
-def create_main_filepaths_dict() -> dict[str, dict[str, Path]]:
-    main_filepaths_dict = {
-    "WORKBOOKS": {
-        "MASTERTEMPLATE": resource_path("supporting_docs/sorted_econ_files/MASTERTEMPLATE (color coded).xlsx"),
-        "WORKING_CALC": resource_path("supporting_docs/sorted_econ_files/Working_CALC_VER1.11 (color coded).xlsx"),
-        "PV2": resource_path("supporting_docs/sorted_econ_files/PV2 (color coded).xlsx"),
-        "HHSPV": resource_path("supporting_docs/sorted_econ_files/HHS_PV_New (color coded).xlsx")
-    },
-    "TEMPLATES": {
-        "EARNINGS_AND_PV_MEDS": resource_path("supporting_docs/sorted_econ_files/Earnings and PV Meds Report Template (color coded).docx"),
-        "LCP_MASTERTEMPLATE": resource_path("supporting_docs/sorted_econ_files/LCP MASTERTEMPLATE (color coded).docx")
-    },
-    "OUTPUTS": {
-        "OUTPUT_1": Path("/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/ea_outputs/generated_reports"),
-        "OUTPUT_2": Path("/Users/ericmacbook/Documents/GitHub/EconAutomation-REP/EconAutomation/ea_outputs/generated_reports_2")
-    }
-}
-    return main_filepaths_dict
+APP_NAME = metadata("econ_automation").get("Name")
+APP_VERSION = version("econ_automation")
+APP_FULL_NAME = f"{APP_NAME} v{APP_VERSION}"
 
-# Module's logger instance
+WORKBOOK_OUTPUTS_SHEET_NAME: str = "REPORT_OUTPUTS"
+
 logger = logging.getLogger(__name__)
 
-class EconWorkflowAutomation:
-    def __init__(self,
-                 selected_workbooks_list: list[str]=["MASTERTEMPLATE", "WORKING_CALC", "PV2", "HHSPV"],
-                 selected_templates_list: list[str]=["EARNINGS_AND_PV_MEDS", "LCP_MASTERTEMPLATE"], 
-                 selected_outputs_list: list[str] = ["OUTPUT_1", "OUTPUT_2"]):
-        # TEMP: Defining default save directories and selected templates in __init__
-        # THIS IS IN A WONKY PLACE - NEED TO UNIFY WITH USER CHOICES, DELETE AFTER FRONTEND IS DONE
-        self.workbook_filepaths_dict = create_main_filepaths_dict()["WORKBOOKS"]
-        self.template_filepaths_dict = create_main_filepaths_dict()["TEMPLATES"]
-        self.output_filepaths_dict = create_main_filepaths_dict()["OUTPUTS"]
-        
-        # CALLING METHODS
-        self.initialize_extractors()
-        
-        self.selected_workbook_filepaths = self.select_workbook_filepaths(selected_workbooks_list, self.workbook_filepaths_dict)
-        self.selected_template_filepaths = self.select_template_filepaths(selected_templates_list, self.template_filepaths_dict)
-        self.selected_output_filepaths = self.select_output_filepaths(selected_outputs_list, self.output_filepaths_dict)
-    
-    def generate_reports (self,
-                          main_reformatted_data_dict: dict[str, dict[str, Any]],
-                          selected_template_filepaths: list[Path],
-                          selected_output_filepaths: list[Path]
-                          ):
-        """
-        Utilizes extracted/reformatted data to autofill and saved each selected report template.
-        """
-        try:
-            word_template_processor = WordTemplateProcessor(
-                main_reformatted_data_dict=main_reformatted_data_dict,
-                selected_template_filepaths=selected_template_filepaths,
-                selected_output_filepaths=selected_output_filepaths
+# Glob patterns used by build_selected_files_dict to locate workbooks inside a
+# claimant directory.  Each list is tried in order; first match wins.
+# Patterns cover legacy naming variants (e.g. "#2PV_*", "#Working_CALC_*").
+_WORKBOOK_GLOB_PATTERNS: dict[str, list[str]] = {
+    "CASE_VARIABLES": ["*Case*Variables*.xlsx"],
+    "WORKING_CALC": ["*Working*Calc*.xlsm", "*Working*Calc*.xlsx"],
+    "PV2": ["*PV2*.xlsm", "*2PV*.xlsm"],
+    # "HHSPV": ["*HHS*PV*.xlsx"],
+}
+
+# Subfolder names (relative to claimant_dir) that are also searched for workbooks.
+_WORKBOOK_SEARCH_SUBDIRS = ["Work Products"]
+
+# Glob patterns used by build_selected_files_dict to locate report templates.
+_TEMPLATE_GLOB_PATTERNS: dict[str, list[str]] = {
+    "PV_EARNINGS_TEMPLATE": [
+        "*PV_Earnings*Template*.docx",
+        "*PV*Earnings*Template*.docx",
+    ],
+    "PVLCP_TEMPLATE": ["*PVLCP*Template*.docx"],
+}
+
+
+# ── Primary entry points ──────────────────────────────────────────────────────
+
+
+def setup_new_case_workflow(
+    sel_OFF_filepath: Path,
+    base_filepaths: dict[str, Path],
+    wb_template_dir: Path,
+    admin_bool: bool = True,
+) -> None:
+    """
+    Creates the claimant folder structure, copies workbook templates, and
+    populates them from the selected OFF file.
+
+    Args:
+        sel_OFF_filepath: Path to the selected Open File Form (.docx).
+        base_filepaths: Base directory paths for the claimant case folders.
+        wb_template_dir: Parent directory containing the Excel workbook templates.
+
+    Raises:
+        ValueError: If sel_OFF_filepath does not point to an existing file.
+    """
+    if not sel_OFF_filepath.is_file():
+        raise ValueError(f"OFF file not found: {sel_OFF_filepath}")
+    setup_new_case(sel_OFF_filepath, base_filepaths, wb_template_dir, admin_bool)
+
+
+def build_selected_files_dict(
+    claimant_dir: Path,
+    requested_template_keys: list[str] | None = None,
+) -> dict[str, dict[str, Path]]:
+    """
+    Builds a selected_files_dict for run_extraction_and_report_merge by
+    scanning claimant_dir for known workbook patterns and resolving template
+    paths from ea_config.yaml.
+
+    Args:
+        claimant_dir: Path to the selected claimant's working directory.
+        requested_template_keys: Template keys to include (e.g.
+            ["PV_EARNINGS_TEMPLATE"]).  None includes all configured templates.
+
+    Returns:
+        A dict with "workbook_filepaths", "template_filepaths", and
+        "output_filepaths" ready for run_extraction_and_report_merge.
+    """
+    search_dirs = [claimant_dir] + [
+        d for sub in _WORKBOOK_SEARCH_SUBDIRS if (d := claimant_dir / sub).is_dir()
+    ]
+
+    workbook_fps: dict[str, Path] = {}
+    for key, patterns in _WORKBOOK_GLOB_PATTERNS.items():
+        match: Path | None = None
+        for search_dir in search_dirs:
+            for pattern in patterns:
+                hits = list(search_dir.glob(pattern))
+                if hits:
+                    match = hits[0]
+                    break
+            if match is not None:
+                break
+        if match is not None:
+            workbook_fps[key] = match
+        else:
+            logger.warning(
+                "build_selected_files_dict: no match for %s in %s", key, claimant_dir
             )
-        except TypeError:
-            logger.exception(f"EconWorkflowAutomation.generate_reports: Input data type error.")
-            raise
-    
-    def select_workbook_filepaths(self, selected_workbooks_list: list[str], workbook_filepaths_dict: dict[str, Path]) -> list[Path]:
-        """
-        Obtains the workbook filepaths based on the selected workbooks.
-        """
-        # TEMP: THIS WHOLE FUNCTION IS A STAND-IN UNTIL THE FRONTEND IS DEVELOPED
-        selected_workbook_filepaths = []
 
-        for workbook_name in selected_workbooks_list:
-            if workbook_name in workbook_filepaths_dict:
-                selected_workbook_filepaths.append(workbook_filepaths_dict[workbook_name])
-        
-        return selected_workbook_filepaths
-    
-    def select_template_filepaths(self, selected_templates_list: list[str], template_filepaths_dict: dict[str, Path]) -> list[Path]:
-        """
-        Obtains the template filepaths based on the selected templates.
-        """
-        # TEMP: THIS WHOLE FUNCTION IS A STAND-IN UNTIL THE FRONTEND IS DEVELOPED
-        selected_template_filepaths = []
+    fs = fsc()
+    platform_key = "Mac" if platform.system() == "Darwin" else "Windows"
+    rep_template_dir: Path = fs.main_filepaths_dict["rep_template_dir"][platform_key]
+    template_fps: dict[str, Path] = {}
+    for key, patterns in _TEMPLATE_GLOB_PATTERNS.items():
+        if requested_template_keys is not None and key not in requested_template_keys:
+            continue
+        for pattern in patterns:
+            matches = list(rep_template_dir.glob(pattern))
+            if matches:
+                template_fps[key] = matches[0]
+                break
+        else:
+            logger.warning(
+                "build_selected_files_dict: no template match for %s in %s",
+                key,
+                rep_template_dir,
+            )
 
-        for template_name in selected_templates_list:
-            if template_name in template_filepaths_dict:
-                selected_template_filepaths.append(template_filepaths_dict[template_name])
-        
-        return selected_template_filepaths
-    
-    def select_output_filepaths(self, selected_outputs_list: list[str], output_filepaths_dict: dict[str, Path]) -> list[Path]:
-        """
-        Obtains the output filepaths based on the selected outputs.
-        """
-        # TEMP: THIS WHOLE FUNCTION IS A STAND-IN UNTIL THE FRONTEND IS DEVELOPED
-        selected_output_filepaths = []
+    return {
+        "workbook_filepaths": workbook_fps,
+        "template_filepaths": template_fps,
+        "output_filepaths": {"CLAIMANT_DIR": claimant_dir},
+    }
 
-        for output_name in selected_outputs_list:
-            if output_name in output_filepaths_dict:
-                selected_output_filepaths.append(output_filepaths_dict[output_name])
-        
-        return selected_output_filepaths
-    
-    def initialize_extractors(self) -> None:
-        """
-        Initializes all data extractors.
-        """
-        self.mastertemplate_extractor = MasterTemplateExtractor(mastertemplate_path=self.workbook_filepaths_dict["MASTERTEMPLATE"])
-        self.working_calc_extractor = WorkingCalcExtractor(working_calc_path=self.workbook_filepaths_dict["WORKING_CALC"])
-        self.pv2_extractor = PV2Extractor(pv2_path=self.workbook_filepaths_dict["PV2"])
-        self.hhspv_extractor = HHSPVExtractor(hhspv_path=self.workbook_filepaths_dict["HHSPV"])
 
-        self.main_extracted_data_dict = self.get_all_extracted_data()
-        self.main_reformatted_data_dict = self.get_all_reformatted_data()
+def run_extraction_and_report_merge(
+    selected_files_dict: dict[str, dict[str, Path]],
+    gui_overrides: dict[str, Any] | None = None,
+    progress_callback: Callable[[str], None] | None = None,
+) -> None:
+    """
+    Runs the full data extraction and report merge workflow: initializes the
+    file system, extracts data from the selected Excel workbooks, flattens it
+    into a single dataclass, and renders Word report templates.
 
-    def get_all_extracted_data(self) -> dict[str, dict[str, Any]]:
-        """
-        Returns all extracted data from all extractors.
-        """
-        return {
-            "MASTERTEMPLATE": self.mastertemplate_extractor.extracted_data,
-            "WORKING_CALC": self.working_calc_extractor.extracted_data,
-            "PV2": self.pv2_extractor.extracted_data,
-            "HHSPV": self.hhspv_extractor.extracted_data
-        }
+    Args:
+        selected_files_dict: Maps file-category keys to lists of named file
+            identifiers as defined in ea_config.yaml. Defaults to
+            _DEFAULT_SELECTED_FILES.
+        gui_overrides: Maps template stem → PVEarningsToggles (or analogous
+            toggles object for other templates).  When provided, the context
+            builder for that template uses GUI widget state instead of
+            inferring toggles from the extracted dataclass.
+        progress_callback: Optional callable invoked with a status string at
+            each major processing step.
+    """
 
-    def get_all_reformatted_data(self) -> dict[str, dict[str, Any]]:
-        """
-        Returns all reformatted data from all extractors.
-        """
-        return {
-            "MASTERTEMPLATE": self.mastertemplate_extractor.reformatted_data_dict,
-            "WORKING_CALC": self.working_calc_extractor.reformatted_data_dict,
-            "PV2": self.pv2_extractor.reformatted_data_dict,
-            "HHSPV": self.hhspv_extractor.reformatted_data_dict
-        }
-    
-    
+    def _step(msg: str) -> None:
+        if progress_callback:
+            progress_callback(msg)
+
+    file_system_core = fsc()
+    main_filepaths_dict = file_system_core.main_filepaths_dict
+
+    selected_filepaths_dict = _select_relevant_filepaths(
+        selected_files_dict, main_filepaths_dict
+    )
+
+    _step("Initializing data extractors...")
+    extractors = _initialize_extractors(
+        selected_filepaths_dict=selected_filepaths_dict,
+        temp_dir_filepath=file_system_core.temp_dir_filepath,
+    )
+
+    _step("Extracting data from workbooks...")
+    econ_data_list = _get_all_reformatted_data(extractors)
+
+    _step("Processing extracted data...")
+    ea_main_dataclass = _flatten_all_extracted_data(econ_data_list)
+    image_paths = _collect_image_paths(extractors)
+
+    _step("Generating reports...")
+    _generate_reports(
+        ea_main_dataclass=ea_main_dataclass,
+        selected_template_filepaths=list(
+            selected_filepaths_dict["template_filepaths"].values()
+        ),
+        selected_output_filepaths=list(
+            selected_filepaths_dict["output_filepaths"].values()
+        ),
+        gui_overrides=gui_overrides,
+        image_paths=image_paths,
+    )
+
+
+# ── Private helpers ───────────────────────────────────────────────────────────
+
+
+def _select_relevant_filepaths(
+    selected_files_dict: dict[str, dict[str, Path]],
+    main_filepaths_dict: dict[str, dict[str, Path]],
+) -> dict[str, dict[str, Path]]:
+    """
+    Selects relevant filepaths from main_filepaths_dict based on user-selected
+    items, returns dict[str, dict[str, Path]].
+
+    Args:
+        selected_files_dict: Dictionary of user-selected file names.
+        main_filepaths_dict: Dictionary of filepaths.
+
+    Returns:
+        Dictionary of selected filepaths, keyed by category.
+    """
+    selected_filepaths_dict = {}
+
+    for category, filenames_dict in selected_files_dict.items():
+        if category not in main_filepaths_dict:
+            selected_filepaths_dict[category] = filenames_dict
+            continue
+        temp_sel_fps_dict = {}
+        for filename, filepath in filenames_dict.items():
+            if filename in main_filepaths_dict[category].keys():
+                temp_sel_fps_dict[filename] = filepath
+        selected_filepaths_dict[category] = temp_sel_fps_dict
+
+    return selected_filepaths_dict
+
+
+def _initialize_extractors(
+    selected_filepaths_dict: dict[str, dict[str, Path]],
+    temp_dir_filepath: Path,
+) -> dict[str, Any]:
+    """
+    Initializes all data extractors and returns them as a dict.
+
+    # TEMP: THIS WHOLE FUNCTION IS A STAND-IN UNTIL THE FRONTEND
+    # (AND MULTI-OFF EXTRACTION SUPPORT) IS DEVELOPED.
+
+    Args:
+        selected_filepaths_dict: Dictionary of selected filepaths by category.
+        temp_dir_filepath: Path to the temporary directory for workbook copies.
+
+    Returns:
+        Dictionary of initialized extractor instances keyed by short name.
+    """
+    workbook_fps = selected_filepaths_dict["workbook_filepaths"]
+    extractors: dict[str, Any] = {}
+
+    if (fp := workbook_fps.get("CASE_VARIABLES")) is not None:
+        extractors["case_variables"] = CaseVariablesExtractor(
+            case_variables_filepath=fp,
+            workbook_outputs_sheet_name=WORKBOOK_OUTPUTS_SHEET_NAME,
+            temp_dir_path=temp_dir_filepath,
+        )
+    else:
+        logger.warning(
+            "_initialize_extractors: CASE_VARIABLES workbook not found, skipping."
+        )
+
+    if (fp := workbook_fps.get("WORKING_CALC")) is not None:
+        extractors["working_calc"] = WorkingCalcExtractor(
+            working_calc_filepath=fp,
+            workbook_outputs_sheet_name=WORKBOOK_OUTPUTS_SHEET_NAME,
+            temp_dir_path=temp_dir_filepath,
+        )
+    else:
+        logger.warning(
+            "_initialize_extractors: WORKING_CALC workbook not found, skipping."
+        )
+
+    if (fp := workbook_fps.get("PV2")) is not None:
+        extractors["pv2"] = PV2Extractor(
+            pv2_filepath=fp,
+            workbook_outputs_sheet_name=WORKBOOK_OUTPUTS_SHEET_NAME,
+            temp_dir_path=temp_dir_filepath,
+        )
+    else:
+        logger.warning("_initialize_extractors: PV2 workbook not found, skipping.")
+
+    # if (fp := workbook_fps.get("HHSPV")) is not None:
+    #     extractors["hhspv"] = HHSPVExtractor(
+    #         hhspv_filepath=fp,
+    #         workbook_outputs_sheet_name=WORKBOOK_OUTPUTS_SHEET_NAME,
+    #         temp_dir_path=temp_dir_filepath,
+    #     )
+    # else:
+    #     logger.warning("_initialize_extractors: HHSPV workbook not found, skipping.")
+
+    return extractors
+
+
+def _collect_image_paths(extractors: dict[str, Any]) -> dict[str, Path]:
+    """Collects all extracted image paths from every extractor into one dict."""
+    image_paths: dict[str, Path] = {}
+    for extractor in extractors.values():
+        image_paths.update(getattr(extractor, "extracted_image_paths", {}))
+    return image_paths
+
+
+def _get_all_reformatted_data(extractors: dict[str, Any]) -> list[Any]:
+    """Returns all reformatted data from all extractors as a list of dataclasses."""
+    return [ext.workbook_dataclass for ext in extractors.values()]
+
+
+def _flatten_all_extracted_data(econ_data_list: list[Any]) -> Any:
+    """
+    Returns a flattened dataclass of all extracted data.
+
+    Args:
+        econ_data_list: List of dataclasses to flatten.
+
+    Returns:
+        Single flattened dataclass containing all extracted fields.
+    """
+    all_fields = []
+    all_values = {}
+    for dc in econ_data_list:
+        if isinstance(dc, BaseModel):
+            for name in type(dc).model_fields.keys():
+                all_fields.append((name, Any))
+                all_values[name] = getattr(dc, name)
+        elif is_dataclass(dc):
+            for f in fields(dc):
+                all_fields.append((f.name, Any))
+                all_values[f.name] = getattr(dc, f.name)
+        else:
+            raise TypeError(f"Unsupported type in econ_data_list: {type(dc)}")
+
+    EconAutomationData = make_dataclass("EconAutomationData", all_fields)
+    return EconAutomationData(**all_values)
+
+
+def _generate_reports(
+    ea_main_dataclass: Any,
+    selected_template_filepaths: list[Path],
+    selected_output_filepaths: list[Path],
+    gui_overrides: dict[str, Any] | None = None,
+    image_paths: dict[str, Path] | None = None,
+) -> None:
+    """
+    Renders each selected report template with extracted data and saves output files.
+
+    Args:
+        ea_main_dataclass: Flattened dataclass containing all extracted/reformatted data.
+        selected_template_filepaths: Paths to Word template files (.docx).
+        selected_output_filepaths: Paths to output directories for each template.
+        gui_overrides: Forwarded to merge_reports_core; maps template stem →
+            toggles object.
+        image_paths: Maps template variable name → Path for chart/table images.
+    """
+    try:
+        merge_reports_core(
+            ea_main_dataclass=ea_main_dataclass,
+            selected_template_filepaths=selected_template_filepaths,
+            selected_output_filepaths=selected_output_filepaths,
+            gui_overrides=gui_overrides,
+            image_paths=image_paths,
+        )
+    except TypeError:
+        logger.exception("_generate_reports: Input data type error.")
+        raise

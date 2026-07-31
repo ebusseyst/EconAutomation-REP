@@ -1,0 +1,14 @@
+<RCC>
+  <qresource prefix="/icons">
+    <file>dropdown_arrow_icon.png</file>
+    <file>dropup_arrow_icon.png</file>
+    <file>checkmark_icon.png</file>
+    <file>add_new_profile_icon.svg</file>
+    <file>add_note_icon.svg</file>
+    <file>bolt_boost_icon.svg</file>
+    <file>bolt_boost_icon.ico</file>
+    <file>profile_folder_icon.svg</file>
+    <file>table_icon.svg</file>
+    <file>table_view_icon.svg</file>
+  </qresource>
+</RCC>
