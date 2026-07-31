@@ -1,38 +1,29 @@
 import ctypes
 import logging
+import platform
 import subprocess
 import sys
 from pathlib import Path
-import platform
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
 
-from logging_resources.log_context import setup_logging
-
-from econ_automation.ea_scripts.gui_files.gui_core.current_ea_gui import (
-    Ui_ea_MainWindow,
+from econ_automation._version import __version__ as app_version
+from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase import (
+    make_case_profile_from_basic_info,
 )
-from econ_automation.ea_scripts.update_scripts.update_codebase import (
-    check_and_apply_update,
-    save_install_location,
-)
-from econ_automation.ea_scripts.report_merge_scripts.pv_earnings_context_codebase import (
-    PVEarningsToggles,
-)
-from econ_automation.ea_scripts.report_merge_scripts.pvlcp_context_codebase import (
-    PVLCPToggles,
-)
-
 from econ_automation.ea_scripts.gui_files.gui_connections.gui_formatted_functions import (
-    select_OFF_file_modal,
     select_claimant_folder_modal,
+    select_OFF_file_modal,
 )
 from econ_automation.ea_scripts.gui_files.gui_core.case_info_dialogs import (
     BugReportDialog,
     ConfirmCaseInfoDialog,
     CreateFolderDialog,
+)
+from econ_automation.ea_scripts.gui_files.gui_core.current_ea_gui import (
+    Ui_ea_MainWindow,
 )
 from econ_automation.ea_scripts.gui_files.gui_core.ea_progress_dialog import (
     CaseSetupWorker,
@@ -41,12 +32,17 @@ from econ_automation.ea_scripts.gui_files.gui_core.ea_progress_dialog import (
     ReportMergeWorker,
     SetupWorkbooksWorker,
 )
-from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase import (
-    make_case_profile_from_basic_info,
+from econ_automation.ea_scripts.report_merge_scripts.pv_earnings_context_codebase import (
+    PVEarningsToggles,
 )
-
-from econ_automation._version import __version__ as app_version
-
+from econ_automation.ea_scripts.report_merge_scripts.pvlcp_context_codebase import (
+    PVLCPToggles,
+)
+from econ_automation.ea_scripts.update_scripts.update_codebase import (
+    check_and_apply_update,
+    save_install_location,
+)
+from logging_resources.log_context import setup_logging
 
 setup_logging()
 
@@ -110,7 +106,7 @@ class EconAutomationMainWindow(QMainWindow):
             self._open_in_explorer(claimant_dir)
 
     def _on_prepare_with_off(self) -> None:
-        claimant_name, file_path = select_OFF_file_modal(self)
+        _claimant_name, file_path = select_OFF_file_modal(self)
         if not file_path:
             return
         progress = EAProgressDialog(self, "Setting Up Case", self.ui._color_dict)
@@ -335,7 +331,7 @@ class eaApp(QApplication):
 def main() -> None:
     myappid = "EconAutomation.App"
     if platform.system() == "Windows":
-        # pyrefly: ignore [missing-attribute]
+        # pyrefly: ignore [missing-attribute] (added for Darwin dev environment)
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     ea_app = eaApp(argv=sys.argv)
     ea_app.exec()

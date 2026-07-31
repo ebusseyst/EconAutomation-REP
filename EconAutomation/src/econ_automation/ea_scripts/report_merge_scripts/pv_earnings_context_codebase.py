@@ -1,7 +1,7 @@
 import logging
-from dataclasses import dataclass, field, is_dataclass, fields
-from typing import Any
 import re
+from dataclasses import dataclass, field, fields, is_dataclass
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -106,7 +106,7 @@ class BaseBuilder:
         """
         bases = set()
         pattern = r"base(\d+)"
-        for key in self._raw.__dict__.keys():
+        for key in self._raw.__dict__:
             bases.update(re.findall(pattern, key))
         return bases
 
@@ -116,7 +116,7 @@ class BaseBuilder:
         """
         projection_types = set()
         pattern2 = r"(WLE|toage)"
-        for key in self._raw.__dict__.keys():
+        for key in self._raw.__dict__:
             projection_types.update(re.findall(pattern2, key))
         return projection_types
 
@@ -245,7 +245,7 @@ class CreditBuilder:
         """
         credits = set()
         pattern = r"credit(\d+)"
-        for key in self._raw.__dict__.keys():
+        for key in self._raw.__dict__:
             credits.update(re.findall(pattern, key))
         return credits
 
@@ -255,7 +255,7 @@ class CreditBuilder:
         """
         projection_types = set()
         pattern2 = r"(WLE|toage)"
-        for key in self._raw.__dict__.keys():
+        for key in self._raw.__dict__:
             projection_types.update(re.findall(pattern2, key))
         return projection_types
 
@@ -416,7 +416,6 @@ class BaseOrCredit:
                 self._total_loss_taxed = value
             else:
                 continue
-        return
 
 
 class PVEarningsContextBuilder:
@@ -632,7 +631,7 @@ class PVEarningsContextBuilder:
                         and int(self._get("claimant_WLE_from_trial_int")) >= 11
                     )
                     or (
-                        toggles["projection_type_toggle"] == "To Age"
+                        toggles["projection_type_toggle"] == "toage"
                         and int(self._get("claimant_retire_from_trial_int")) >= 11
                     )
                 )

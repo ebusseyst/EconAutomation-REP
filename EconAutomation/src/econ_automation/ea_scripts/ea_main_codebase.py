@@ -1,32 +1,32 @@
-from dataclasses import make_dataclass, fields, is_dataclass
 import logging
 import platform
+from collections.abc import Callable
+from dataclasses import fields, is_dataclass, make_dataclass
+from importlib.metadata import metadata, version
 from pathlib import Path
-from typing import Any, Callable
-from importlib.metadata import version, metadata
+from typing import Any
 
 from pydantic import BaseModel
 
-from econ_automation.ea_scripts.file_system_scripts.file_system_codebase import (
-    FileSystemCore as fsc,
-)
 from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase import (
     setup_new_case,
 )
-
 from econ_automation.ea_scripts.data_extraction_scripts.case_variables_extraction_codebase import (
     CaseVariablesExtractor,
-)
-from econ_automation.ea_scripts.data_extraction_scripts.working_calc_extraction_codebase import (
-    WorkingCalcExtractor,
 )
 from econ_automation.ea_scripts.data_extraction_scripts.pv2_extraction_codebase import (
     PV2Extractor,
 )
+from econ_automation.ea_scripts.data_extraction_scripts.working_calc_extraction_codebase import (
+    WorkingCalcExtractor,
+)
+from econ_automation.ea_scripts.file_system_scripts.file_system_codebase import (
+    FileSystemCore as fsc,
+)
+
 # from econ_automation.ea_scripts.data_extraction_scripts.hhspv_extraction_codebase import (
 #     HHSPVExtractor,
 # )
-
 from econ_automation.ea_scripts.report_merge_scripts.report_merge_codebase import (
     merge_reports_core,
 )
@@ -240,7 +240,7 @@ def _select_relevant_filepaths(
             continue
         temp_sel_fps_dict = {}
         for filename, filepath in filenames_dict.items():
-            if filename in main_filepaths_dict[category].keys():
+            if filename in main_filepaths_dict[category].keys():  # noqa: SIM118
                 temp_sel_fps_dict[filename] = filepath
         selected_filepaths_dict[category] = temp_sel_fps_dict
 
@@ -337,7 +337,7 @@ def _flatten_all_extracted_data(econ_data_list: list[Any]) -> Any:
     all_values = {}
     for dc in econ_data_list:
         if isinstance(dc, BaseModel):
-            for name in type(dc).model_fields.keys():
+            for name in type(dc).model_fields:
                 all_fields.append((name, Any))
                 all_values[name] = getattr(dc, name)
         elif is_dataclass(dc):
