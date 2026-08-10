@@ -1,38 +1,28 @@
 import ctypes
 import logging
+import platform
 import subprocess
 import sys
 from pathlib import Path
-import platform
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QMainWindow, QMessageBox
 
-from logging_resources.log_context import setup_logging
-
-from econ_automation.ea_scripts.gui_files.gui_core.current_ea_gui import (
-    Ui_ea_MainWindow,
+from econ_automation._version import __version__ as app_version
+from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase import (
+    make_case_profile_from_basic_info,
 )
-from econ_automation.ea_scripts.update_scripts.update_codebase import (
-    check_and_apply_update,
-    save_install_location,
-)
-from econ_automation.ea_scripts.report_merge_scripts.pv_earnings_context_codebase import (
-    PVEarningsToggles,
-)
-from econ_automation.ea_scripts.report_merge_scripts.pvlcp_context_codebase import (
-    PVLCPToggles,
-)
-
 from econ_automation.ea_scripts.gui_files.gui_connections.gui_formatted_functions import (
-    select_OFF_file_modal,
     select_claimant_folder_modal,
+    select_OFF_file_modal,
 )
 from econ_automation.ea_scripts.gui_files.gui_core.case_info_dialogs import (
-    BugReportDialog,
     ConfirmCaseInfoDialog,
     CreateFolderDialog,
+)
+from econ_automation.ea_scripts.gui_files.gui_core.current_ea_gui import (
+    Ui_ea_MainWindow,
 )
 from econ_automation.ea_scripts.gui_files.gui_core.ea_progress_dialog import (
     CaseSetupWorker,
@@ -41,12 +31,17 @@ from econ_automation.ea_scripts.gui_files.gui_core.ea_progress_dialog import (
     ReportMergeWorker,
     SetupWorkbooksWorker,
 )
-from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase import (
-    make_case_profile_from_basic_info,
+from econ_automation.ea_scripts.report_merge_scripts.pv_earnings_context_codebase import (
+    PVEarningsToggles,
 )
-
-from econ_automation._version import __version__ as app_version
-
+from econ_automation.ea_scripts.report_merge_scripts.pvlcp_context_codebase import (
+    PVLCPToggles,
+)
+from econ_automation.ea_scripts.update_scripts.update_codebase import (
+    check_and_apply_update,
+    save_install_location,
+)
+from logging_resources.log_context import setup_logging
 
 setup_logging()
 
@@ -82,7 +77,6 @@ class EconAutomationMainWindow(QMainWindow):
             self._on_claimantdir_select
         )
         self.ui.ea_reportmerge_button.clicked.connect(self._on_merge_clicked)
-        self.ui.ea_bugreport_button.clicked.connect(self._on_bug_report)
 
     # ── Slots ──────────────────────────────────────────────────────────────────
 
@@ -102,15 +96,12 @@ class EconAutomationMainWindow(QMainWindow):
         worker.start()
         progress.exec()
         worker.wait()
-        if progress.had_error():
-            self._offer_bug_report(progress.error_message())
-            return
         claimant_dir = progress.result_dir()
         if claimant_dir is not None:
             self._open_in_explorer(claimant_dir)
 
     def _on_prepare_with_off(self) -> None:
-        claimant_name, file_path = select_OFF_file_modal(self)
+        _claimant_name, file_path = select_OFF_file_modal(self)
         if not file_path:
             return
         progress = EAProgressDialog(self, "Setting Up Case", self.ui._color_dict)
@@ -121,9 +112,6 @@ class EconAutomationMainWindow(QMainWindow):
         worker.start()
         progress.exec()
         worker.wait()
-        if progress.had_error():
-            self._offer_bug_report(progress.error_message())
-            return
         claimant_dir = progress.result_dir()
         if claimant_dir is not None:
             self._open_in_explorer(claimant_dir / "Work Products")
@@ -141,9 +129,6 @@ class EconAutomationMainWindow(QMainWindow):
         worker.start()
         progress.exec()
         worker.wait()
-        if progress.had_error():
-            self._offer_bug_report(progress.error_message())
-            return
         claimant_dir = progress.result_dir()
         if claimant_dir is not None:
             self._open_in_explorer(claimant_dir / "Work Products")
@@ -191,27 +176,10 @@ class EconAutomationMainWindow(QMainWindow):
         worker.start()
         dialog.exec()
         worker.wait()
-        if dialog.had_error():
-            self._offer_bug_report(dialog.error_message())
-            return
         if dialog.result_dir() is not None:
             self._open_in_explorer(self._selected_claimant_dir / "Reports and Invoices")
 
     # ── Helpers ────────────────────────────────────────────────────────────────
-
-    def _on_bug_report(self) -> None:
-        BugReportDialog(self, self.ui._color_dict).exec()
-
-    def _offer_bug_report(self, error_msg: str | None) -> None:
-        answer = QMessageBox.question(
-            self,
-            "Report Bug",
-            "An error occurred. Would you like to submit a bug report?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.Yes,
-        )
-        if answer == QMessageBox.StandardButton.Yes:
-            BugReportDialog(self, self.ui._color_dict, error_message=error_msg).exec()
 
     def _open_in_explorer(self, path: Path) -> None:
         if platform.system() == "Darwin":
@@ -265,7 +233,6 @@ def _force_taskbar_icon(hwnd: int, ico_path: str) -> None:
     LR_LOADFROMFILE = 0x0010
     LR_DEFAULTSIZE = 0x0040
 
-    # pyrefly: ignore [missing-attribute]
     user32 = ctypes.windll.user32
     hicon = user32.LoadImageW(
         None, ico_path, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE
@@ -297,6 +264,7 @@ class eaApp(QApplication):
         # Filesystem path — needed only for Win32 LoadImageW in _force_taskbar_icon
         if getattr(sys, "frozen", False):
             _ico = (
+                # DEBUG LATER: Remove ignore once confirmed that sys.frozen is always available
                 # pyrefly: ignore [missing-attribute]
                 Path(sys._MEIPASS)
                 / "econ_automation/ea_scripts/gui_files/icons/bolt_boost_icon.ico"
@@ -335,7 +303,6 @@ class eaApp(QApplication):
 def main() -> None:
     myappid = "EconAutomation.App"
     if platform.system() == "Windows":
-        # pyrefly: ignore [missing-attribute]
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     ea_app = eaApp(argv=sys.argv)
     ea_app.exec()

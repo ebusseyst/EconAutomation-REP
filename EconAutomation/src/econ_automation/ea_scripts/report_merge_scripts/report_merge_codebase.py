@@ -1,22 +1,21 @@
 import logging
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
-from datetime import datetime, date
 
 from docx.shared import Mm
-
 from docxtpl import DocxTemplate, InlineImage
-from jinja2 import Environment, Undefined, TemplateSyntaxError
+from jinja2 import Environment, TemplateSyntaxError, Undefined
 
-from econ_automation.ea_scripts.report_merge_scripts.run_consolidation_codebase import (
-    consolidate_all_runs,
-    remove_empty_numbered_paragraphs,
-)
 from econ_automation.ea_scripts.report_merge_scripts.pv_earnings_context_codebase import (
     build_pv_earnings_context,
 )
 from econ_automation.ea_scripts.report_merge_scripts.pvlcp_context_codebase import (
     build_pvlcp_context,
+)
+from econ_automation.ea_scripts.report_merge_scripts.run_consolidation_codebase import (
+    consolidate_all_runs,
+    remove_empty_numbered_paragraphs,
 )
 
 logger = logging.getLogger(__name__)
@@ -163,9 +162,7 @@ def merge_reports_core(
                     n,
                     template_filepath.name,
                 )
-            report_type = template_filepath.stem.removesuffix("_Template").replace(
-                "_", " "
-            )
+            report_type = template_filepath.stem.removesuffix("_Template").replace("_", " ")
             save_output_document(
                 doc=doc,
                 report_type=report_type,

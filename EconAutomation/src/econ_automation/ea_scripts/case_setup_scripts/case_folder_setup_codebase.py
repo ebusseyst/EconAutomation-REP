@@ -1,17 +1,16 @@
+import logging
+import platform
+import shutil
 from pathlib import Path
 from typing import Any, Callable
-import logging
-import shutil
-import platform
 
+from econ_automation.ea_scripts.case_setup_scripts.case_variables_creation_codebase import (
+    create_case_variables_excel_sheet,
+)
 from econ_automation.ea_scripts.case_setup_scripts.OFF_extraction_codebase import (
     CaseProfile,
     OFFExtractor,
 )
-from econ_automation.ea_scripts.case_setup_scripts.case_variables_creation_codebase import (
-    create_case_variables_excel_sheet,
-)
-
 from econ_automation.ea_scripts.case_setup_scripts.workbook_setup_scripts import (
     set_PV2_case_variables,
     set_WC_case_variables,
@@ -19,7 +18,7 @@ from econ_automation.ea_scripts.case_setup_scripts.workbook_setup_scripts import
 
 logger = logging.getLogger(__name__)
 
-_CASE_SUBFOLDERS = ["Admin", "E-File", "Emails", "Report and Invoices", "Work Products"]
+_CASE_SUBFOLDERS = ["E-File", "Emails", "Reports and Invoices", "Work Products"]
 
 
 def _get_base_dir(base_filepaths: dict[str, Path], admin_bool: bool) -> Path:
@@ -105,49 +104,13 @@ def initialize_case_folders(
     econ_claimant_dir_base = _get_base_dir(base_filepaths, admin_bool)
 
     claimant_dir_filepath = f"{claimant_name_last_initial}/{claimant_name_last}, {claimant_name_first} ({attorney_name_first_initial}. {attorney_name_last})"
-    claimant_dir = str(Path.joinpath(econ_claimant_dir_base, claimant_dir_filepath))
+    claimant_dir = Path.joinpath(econ_claimant_dir_base, claimant_dir_filepath)
 
-    try:
-        Path(claimant_dir).mkdir(parents=True, exist_ok=True)
-        for sub in _CASE_SUBFOLDERS:
-            Path(claimant_dir + "/" + sub).mkdir(exist_ok=True)
-    except PermissionError:
-        logger.error("Permission denied to create claimant directory: %s", claimant_dir)
-        raise
+    claimant_dir.mkdir(parents=True, exist_ok=True)
+    for sub in _CASE_SUBFOLDERS:
+        (claimant_dir / sub).mkdir(exist_ok=True)
 
-    return Path(claimant_dir)
-
-
-def save_admin_templates(
-    case_profile: Any, admin_template_dir: Path, target_dir: Path
-) -> None:
-    """
-    Saves service agreement and invoice templates to target_dir (typically the Admin subfolder).
-    """
-    for docx_template in admin_template_dir.iterdir():
-        if docx_template.is_file() and docx_template.suffix in (
-            ".docx",
-            ".dotx",
-            ".docm",
-            ".dotm",
-        ):
-            template_name = docx_template.name
-
-            target_path = target_dir / template_name
-            if target_path.exists():
-                logger.warning(
-                    "Iterating %s template: already exists in target directory.",
-                    template_name,
-                )
-                final_template_name = f"{docx_template.stem} (1){docx_template.suffix}"
-                target_path = target_dir / final_template_name
-
-            shutil.copy2(docx_template, target_path)
-        else:
-            logger.warning(
-                "Skipping %s: not a docx, docx, docm, or dotm file.",
-                docx_template.name,
-            )
+    return claimant_dir
 
 
 def save_claimant_workbook_templates(
@@ -166,16 +129,9 @@ def save_claimant_workbook_templates(
             if wb_template.stem == "Case_Variables":
                 create_case_variables_excel_sheet(case_profile, wb_template, target_dir)
             else:
-                target_path = target_dir / wb_template.name
-                if target_path.exists():
-                    logger.warning(
-                        "Skipping %s: already exists in target directory.",
-                        wb_template.name,
-                    )
-                else:
-                    claimant_wb = shutil.copy2(wb_template, target_dir)
-                    claimant_wb_path = Path(claimant_wb)
-                    prepare_claimant_workbooks(case_profile, claimant_wb_path)
+                claimant_wb = shutil.copy2(wb_template, target_dir)
+                claimant_wb_path = Path(claimant_wb)
+                prepare_claimant_workbooks(case_profile, claimant_wb_path)
 
 
 def prepare_claimant_workbooks(case_profile: Any, claimant_wb_path: Path) -> None:
@@ -277,8 +233,9 @@ def make_case_profile_from_basic_info(data: dict) -> CaseProfile:
     All fields not present in data default to empty string; __post_init__ derives
     name variants, pronouns, etc. automatically.
     """
-    claimant_sex = data.get("gender", "")
-    attorney_gender = data.get("attorney_gender", "")
+    gender_map = {"M": "Male", "F": "Female"}
+    claimant_sex = gender_map.get(data.get("gender", ""), "")
+    attorney_sex = gender_map.get(data.get("attorney_gender", ""), "")
 
     dob_short, dob_long = OFFExtractor._format_date(data.get("dob", ""))
     doi_short, doi_long = OFFExtractor._format_date(data.get("doi", ""))
@@ -304,5 +261,5 @@ def make_case_profile_from_basic_info(data: dict) -> CaseProfile:
         trial_date_long=trial_date_long,
         attorney_name_first=attorney_first,
         attorney_name_last=attorney_last,
-        attorney_gender=attorney_gender,
+        attorney_sex=attorney_sex,
     )

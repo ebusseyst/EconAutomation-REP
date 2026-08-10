@@ -14,35 +14,35 @@ import logging
 
 from PySide6.QtCore import (
     QCoreApplication,
-    QDate,  # noqa: F401
-    QDateTime,  # noqa: F401
-    QLocale,  # noqa: F401
+    QDate,
+    QDateTime,
+    QLocale,
     QMetaObject,
-    QObject,  # noqa: F401
-    QPoint,  # noqa: F401
-    QRect,  # noqa: F401
-    QSize,  # noqa: F401
-    QTime,  # noqa: F401
-    QUrl,  # noqa: F401
+    QObject,
+    QPoint,
+    QRect,
+    QSize,
+    QTime,
+    QUrl,
     Qt,
 )
 from PySide6.QtGui import (
-    QBrush,  # noqa: F401
+    QBrush,
     QColor,
-    QConicalGradient,  # noqa: F401
-    QCursor,  # noqa: F401
-    QFont,  # noqa: F401
+    QConicalGradient,
+    QCursor,
+    QFont,
     QFontDatabase,
-    QGradient,  # noqa: F401
+    QGradient,
     QIcon,
-    QImage,  # noqa: F401
-    QKeySequence,  # noqa: F401
-    QLinearGradient,  # noqa: F401
-    QPainter,  # noqa: F401
-    QPalette,  # noqa: F401
-    QPixmap,  # noqa: F401
-    QRadialGradient,  # noqa: F401
-    QTransform,  # noqa: F401
+    QImage,
+    QKeySequence,
+    QLinearGradient,
+    QPainter,
+    QPalette,
+    QPixmap,
+    QRadialGradient,
+    QTransform,
 )
 from PySide6.QtWidgets import (
     QCheckBox,
@@ -50,7 +50,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
     QGridLayout,
-    QHBoxLayout,  # noqa: F401
+    QHBoxLayout,
     QLabel,
     QMainWindow,
     QPushButton,
@@ -91,7 +91,6 @@ class Ui_ea_MainWindow(object):
     ea_CentralWidget_label_frame: QFrame
     ea_CentralWidget_label_VLayout: QVBoxLayout
     ea_CentralWidget_label: QLabel
-    ea_bugreport_button: QPushButton
 
     # Setup case section
     ea_setupcase_frame: QFrame
@@ -124,7 +123,6 @@ class Ui_ea_MainWindow(object):
     ea_reportmerge_sub2frame: QFrame
     ea_reportmerge_sub2frame_GLayout: QGridLayout
     ea_reportmerge_sub2frame_section_label: QLabel
-    ea_reportmerge_sub2frame_selected_claimant_label: QLabel
 
     # Report merge — projection type
     ea_reportmerge_projectiontype_sub3frame: QFrame
@@ -482,21 +480,6 @@ class Ui_ea_MainWindow(object):
         )
         self.ea_reportmerge_sub2frame_GLayout.addWidget(
             self.ea_reportmerge_sub2frame_section_label, 0, 0, 1, 2
-        )
-
-        self.ea_reportmerge_sub2frame_selected_claimant_label = QLabel(
-            self.ea_reportmerge_sub2frame
-        )
-        self.ea_reportmerge_sub2frame_selected_claimant_label.setObjectName(
-            "ea_reportmerge_sub2frame_selected_claimant_label"
-        )
-        self.ea_reportmerge_sub2frame_selected_claimant_label.setAlignment(
-            Qt.AlignmentFlag.AlignCenter
-        )
-
-        # THIS IS WHERE I LEFT OFF
-        self.ea_reportmerge_sub2frame_GLayout.addWidget(
-            self.ea_reportmerge_sub2frame_selected_claimant_label, 1, 0, 1, 2
         )
 
         self.frame_4 = QFrame(self.ea_reportmerge_sub2frame)
@@ -1022,15 +1005,7 @@ class Ui_ea_MainWindow(object):
         self.ea_CentralWidget_label.setObjectName("ea_CentralWidget_label")
         self.ea_CentralWidget_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.ea_bugreport_button = QPushButton(self.ea_CentralWidget_label_frame)
-        self.ea_bugreport_button.setObjectName("ea_bugreport_button")
-        self.ea_bugreport_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.ea_bugreport_button.setFlat(True)
-
         self.ea_CentralWidget_label_VLayout.addWidget(self.ea_CentralWidget_label)
-        self.ea_CentralWidget_label_VLayout.addWidget(
-            self.ea_bugreport_button, 0, Qt.AlignmentFlag.AlignRight
-        )
 
         self.ea_CentralWidgetframe_GLayout.addWidget(
             self.ea_CentralWidget_label_frame, 0, 0, 1, 3
@@ -1105,17 +1080,6 @@ class Ui_ea_MainWindow(object):
                 font-weight: 800;
                 font-style: italic;
                 color: {dark_navy};
-            }}
-            #ea_bugreport_button {{
-                background-color: transparent;
-                color: {dark_navy};
-                border: none;
-                font-size: 8pt;
-                padding: 1px 4px;
-                text-decoration: underline;
-            }}
-            #ea_bugreport_button:hover {{
-                color: {dark_gold};
             }}
         """.format(**fmt)
 
@@ -1521,9 +1485,6 @@ class Ui_ea_MainWindow(object):
         self.ea_reportmerge_sub2frame_section_label.setText(
             QCoreApplication.translate("ea_MainWindow", "Report Configurations", None)
         )
-        self.ea_reportmerge_sub2frame_selected_claimant_label.setText(
-            QCoreApplication.translate("ea_MainWindow", "Selected Claimant: None", None)
-        )
         self.ea_reportmerge_label.setText(
             QCoreApplication.translate("ea_MainWindow", "Report Merge", None)
         )
@@ -1532,9 +1493,6 @@ class Ui_ea_MainWindow(object):
         )
         self.ea_CentralWidget_label.setText(
             QCoreApplication.translate("ea_MainWindow", "EconAutomation", None)
-        )
-        self.ea_bugreport_button.setText(
-            QCoreApplication.translate("ea_MainWindow", "Send Bug Report", None)
         )
 
     # retranslateUi

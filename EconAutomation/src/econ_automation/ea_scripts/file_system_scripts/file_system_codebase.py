@@ -7,19 +7,15 @@ import yaml
 
 logger = logging.getLogger(__name__)
 
-# TODO: REMOVE HARDCODED ea_config - Copy.yaml PATH ONCE UPDATE IS PUSHED TO MAIN
 if platform.system() == "Darwin":
     EA_CONFIG_PATH = (
         Path.home()
-        / "Library/CloudStorage/ShareFile-ShareFile/Shared Folders/Shared Documents/Economics Claimant Folder/00-EconAutomation Reference Files/ea_config - Copy.yaml"
-        # / "Library/CloudStorage/ShareFile-ShareFile/Shared Folders/Shared Documents/Economics Claimant Folder/00-EconAutomation Reference Files/ea_config.yaml"
+        / "Library/CloudStorage/ShareFile-ShareFile/Shared Folders/Shared Documents/Economics Claimant Folder/00-EconAutomation Reference Files/ea_config.yaml"
     )
 else:
     EA_CONFIG_PATH = Path(
-        r"S:/Shared Folders/Shared Documents/Economics Claimant Folder/00-EconAutomation Reference Files/ea_config - Copy.yaml"
-        # r"S:/Shared Folders/Shared Documents/Economics Claimant Folder/00-EconAutomation Reference Files/ea_config.yaml"
+        r"S:/Economics Claimant Folder/00-EconAutomation Reference Files/ea_config.yaml"
     )
-
 
 class FileSystemCore:
     def __init__(self):
@@ -52,8 +48,7 @@ class FileSystemCore:
             for key, filepath_dict in ea_config_data.items()
         }
 
-    def _resolve_file_paths(self, filepath_dict: dict[str, str]) -> dict[str, Path]:
-        return {
-            name: Path(filepath).expanduser()
-            for name, filepath in filepath_dict.items()
-        }
+    def _resolve_file_paths(
+        self, filepath_dict: dict[str, str]
+    ) -> dict[str, Path]:
+        return {name: Path(filepath).expanduser() for name, filepath in filepath_dict.items()}

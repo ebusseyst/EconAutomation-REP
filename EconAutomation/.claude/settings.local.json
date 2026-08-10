@@ -42,12 +42,12 @@
       "Bash(grep -E \"\\\\.\\(py|bat|sh|yml|yaml\\)$\")",
       "PowerShell(Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue)",
       "PowerShell(Start-Process explorer)",
-      "PowerShell(python -m py_compile \"src\\\\econ_automation\\\\ea_scripts\\\\report_merge_scripts\\\\pv_earnings_context_codebase.py\"; echo \"exit=$LASTEXITCODE\")",
-      "Bash(rm -f /tmp/_t.py)"
+      "PowerShell(& \".venv\\\\Scripts\\\\pyinstaller.exe\" econ_automation.spec --clean --noconfirm)",
+      "PowerShell(Get-Process -Name \"EconAutomation\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Force)"
     ],
     "additionalDirectories": [
-      "/private/tmp",
-      "\\tmp"
+      "/private/tmp"
     ]
   }
 }

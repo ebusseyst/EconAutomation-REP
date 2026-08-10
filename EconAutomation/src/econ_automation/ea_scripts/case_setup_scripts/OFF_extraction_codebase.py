@@ -1,12 +1,13 @@
-from dataclasses import dataclass, field
-from pathlib import Path
-from itertools import batched
-from dateutil.relativedelta import relativedelta
-from dateutil import parser
+import datetime as dt
 import logging
 import re
+from dataclasses import dataclass, field
+from itertools import batched
+from pathlib import Path
 
 import docx
+from dateutil import parser
+from dateutil.relativedelta import relativedelta
 from docx.document import Document as DocumentObject
 
 logger = logging.getLogger(__name__)
@@ -115,8 +116,7 @@ class CaseProfile:
     attorney_name_first: str = ""
     attorney_name_middle: str = ""
     attorney_name_last: str = ""
-    attorney_gender: str = ""
-    attorney_salutation: str = ""
+    attorney_sex: str = ""
     attorney_phone: str = ""
     attorney_fax: str = ""
     attorney_email: str = ""
@@ -285,7 +285,7 @@ class CaseProfile:
 
         # Attorney salutation / title variants
         _atty_sal_map = {"Male": "Mr.", "Female": "Ms."}
-        atty_sal = _atty_sal_map.get(self.attorney_gender, "Mr./Ms.")
+        atty_sal = _atty_sal_map.get(self.attorney_sex, "Mr./Ms.")
         self.attorney_salutation = atty_sal
         self.attorney_name_full_with_title = f"{self.attorney_name_full}, Esq."
         self.attorney_salutation_with_name_full = (

@@ -1,11 +1,11 @@
 import json
 import logging
 import os
+import platform
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
-import platform
 
 import requests
 from packaging.version import Version
@@ -89,8 +89,7 @@ def download_installer(download_url: str, dest_dir: Path) -> Path | None:
         with requests.get(download_url, stream=True, timeout=30) as response:
             response.raise_for_status()
             with open(download_path, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
+                f.writelines(response.iter_content(chunk_size=8192))
         return download_path
     except Exception as e:
         logger.error(f"Installer download failed: {e}")

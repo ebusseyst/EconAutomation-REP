@@ -1,10 +1,10 @@
+import logging
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any
-from datetime import datetime
-import dateutil.parser as parser
-import logging
 
+import dateutil.parser as parser
 import xlwings as xlw
 
 logger = logging.getLogger(__name__)

@@ -1,13 +1,5 @@
 from __future__ import annotations
 
-from dotenv import load_dotenv
-import os
-import platform
-import logging
-from datetime import datetime as dt
-from pathlib import Path
-from github import Github
-
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import (
@@ -22,21 +14,13 @@ from PySide6.QtWidgets import (
     QPushButton,
     QSizePolicy,
     QSpacerItem,
-    QTextEdit,
     QVBoxLayout,
 )
 
-from econ_automation._version import __version__ as _app_version
-from logging_resources.log_context import _get_log_dir
-from econ_automation.ea_scripts.case_setup_scripts.case_folder_setup_codebase import (
-    create_case_profile,
-)
 from econ_automation.ea_scripts.case_setup_scripts.case_info_persistence import (
     load_case_info,
     save_case_info,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def _apply_dialog_style(dialog: QDialog, colors: dict) -> None:
@@ -79,17 +63,6 @@ def _apply_dialog_style(dialog: QDialog, colors: dict) -> None:
             border-radius: 3px;
             padding: 3px 5px;
             font-size: 11pt;
-        }}
-        QTextEdit {{
-            background-color: white;
-            color: {c["dark_navy"]};
-            border: 1px solid {c["warm_gold"]};
-            border-radius: 3px;
-            padding: 3px 5px;
-            font-size: 11pt;
-        }}
-        QTextEdit:focus {{
-            border: 1px solid {c["light_gold"]};
         }}
         QCheckBox {{
             color: {c["off_white"]};
@@ -155,22 +128,15 @@ class CreateFolderDialog(QDialog):
         self._claimant_last = QLineEdit()
         self._attorney_first = QLineEdit()
         self._attorney_last = QLineEdit()
-        self._attorney_gender = QComboBox()
-        self._attorney_gender.addItems(["Male", "Female"])
 
         form.addRow("Claimant First Name:", self._claimant_first)
         form.addRow("Claimant Last Name:", self._claimant_last)
         form.addRow("Attorney First Name:", self._attorney_first)
         form.addRow("Attorney Last Name:", self._attorney_last)
-        form.addRow("Attorney Gender:", self._attorney_gender)
         layout.addLayout(form)
 
         btn_row = QHBoxLayout()
-        btn_row.addItem(
-            QSpacerItem(
-                40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
-            )
-        )
+        btn_row.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         ok_btn = QPushButton("OK")
         ok_btn.setObjectName("dialog_btn")
         ok_btn.clicked.connect(self._on_accept)
@@ -191,12 +157,11 @@ class CreateFolderDialog(QDialog):
             "claimant_name_last": self._claimant_last.text().strip(),
             "attorney_name_first": self._attorney_first.text().strip(),
             "attorney_name_last": self._attorney_last.text().strip(),
-            "attorney_gender": self._attorney_gender.currentText(),
         }
 
 
 class ConfirmCaseInfoDialog(QDialog):
-    """'Confirm Case Information' — pre-fills from OFF cache, requests user confirmation of essential values."""
+    """'Confirm Case Information' — pre-fills from cache, collects additional fields for no-OFF workbook setup."""
 
     def __init__(self, parent, colors: dict):
         super().__init__(parent)
@@ -204,118 +169,6 @@ class ConfirmCaseInfoDialog(QDialog):
         self.setModal(True)
         self.setMinimumWidth(400)
         self._colors = colors
-        self._build_ui()
-        self._prefill()
-        _apply_dialog_style(self, colors)
-
-    def _build_ui(self) -> None:
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(24, 20, 24, 16)
-        layout.setSpacing(12)
-
-        title = QLabel("Confirm Case Information")
-        title.setObjectName("dialog_title")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title)
-        layout.addWidget(_make_separator())
-
-        form = QFormLayout()
-        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
-        form.setHorizontalSpacing(12)
-        form.setVerticalSpacing(8)
-
-        self._claimant_first = QLineEdit()
-        self._claimant_last = QLineEdit()
-        self._attorney_first = QLineEdit()
-        self._attorney_last = QLineEdit()
-
-        form.addRow("Claimant First Name:", self._claimant_first)
-        form.addRow("Claimant Last Name:", self._claimant_last)
-        form.addRow("Attorney First Name:", self._attorney_first)
-        form.addRow("Attorney Last Name:", self._attorney_last)
-
-        layout.addLayout(form)
-        layout.addWidget(_make_separator())
-
-        form2 = QFormLayout()
-        form2.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
-        form2.setHorizontalSpacing(12)
-        form2.setVerticalSpacing(8)
-
-        self._trial_date_check = QCheckBox("Trial Date?")
-        self._attorney_gender_combo = QComboBox()
-        self._attorney_gender_combo.addItems(["Male", "Female"])
-        self._gender_combo = QComboBox()
-        self._gender_combo.addItems(["Male", "Female"])
-        self._reference_date = QLineEdit()
-        self._reference_date.setPlaceholderText("MM/DD/YYYY")
-        self._dob = QLineEdit()
-        self._dob.setPlaceholderText("MM/DD/YYYY")
-        self._doi = QLineEdit()
-        self._doi.setPlaceholderText("MM/DD/YYYY")
-
-        form2.addRow(self._trial_date_check, QLabel(""))
-        form2.addRow("Attorney Gender:", self._attorney_gender_combo)
-        form2.addRow("Claimant Gender:", self._gender_combo)
-        form2.addRow("Trial/Reference Date:", self._reference_date)
-        form2.addRow("Claimant DOB:", self._dob)
-        form2.addRow("Claimant DOI:", self._doi)
-        layout.addLayout(form2)
-
-        btn_row = QHBoxLayout()
-        btn_row.addItem(
-            QSpacerItem(
-                40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
-            )
-        )
-        ok_btn = QPushButton("OK")
-        ok_btn.setObjectName("dialog_btn")
-        ok_btn.clicked.connect(self.accept)
-        cancel_btn = QPushButton("Cancel")
-        cancel_btn.setObjectName("dialog_btn")
-        cancel_btn.clicked.connect(self.reject)
-        btn_row.addWidget(ok_btn)
-        btn_row.addWidget(cancel_btn)
-        layout.addLayout(btn_row)
-
-    def _prefill(self) -> None:
-        cached = load_case_info()
-        if not cached:
-            return
-        self._claimant_first.setText(cached.get("claimant_name_first", ""))
-        self._claimant_last.setText(cached.get("claimant_name_last", ""))
-        self._attorney_first.setText(cached.get("attorney_name_first", ""))
-        self._attorney_last.setText(cached.get("attorney_name_last", ""))
-
-    def form_data(self) -> dict:
-        return {
-            "claimant_name_first": self._claimant_first.text().strip(),
-            "claimant_name_last": self._claimant_last.text().strip(),
-            "attorney_name_first": self._attorney_first.text().strip(),
-            "attorney_name_last": self._attorney_last.text().strip(),
-            "trial_date_bool": self._trial_date_check.isChecked(),
-            "attorney_gender": self._attorney_gender_combo.currentText(),
-            "gender": self._gender_combo.currentText(),
-            "reference_date": self._reference_date.text().strip(),
-            "dob": self._dob.text().strip(),
-            "doi": self._doi.text().strip(),
-        }
-
-
-class ConfirmReferenceData(QDialog):
-    """
-    Pre-fills trial date from OFF extraction.
-
-    User confirms pre-populated trial/reference date, attorney/claimant genders, and claimant DOB/DOI.
-    """
-
-    def __init__(self, parent, colors: dict, off_path: Path) -> None:
-        super().__init__(parent)
-        self.setWindowTitle("Confirm Case Information")
-        self.setModal(True)
-        self.setMinimumWidth(400)
-        self._colors = colors
-        self._off_path = off_path
         self._build_ui()
         self._prefill()
         _apply_dialog_style(self, colors)
@@ -375,11 +228,7 @@ class ConfirmReferenceData(QDialog):
         layout.addLayout(form2)
 
         btn_row = QHBoxLayout()
-        btn_row.addItem(
-            QSpacerItem(
-                40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
-            )
-        )
+        btn_row.addItem(QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
         ok_btn = QPushButton("OK")
         ok_btn.setObjectName("dialog_btn")
         ok_btn.clicked.connect(self.accept)
@@ -391,16 +240,13 @@ class ConfirmReferenceData(QDialog):
         layout.addLayout(btn_row)
 
     def _prefill(self) -> None:
-        case_profile = create_case_profile(self._off_path)
-        self._claimant_first.setText(case_profile.claimant_name_first)
-        self._claimant_last.setText(case_profile.claimant_name_last)
-        self._attorney_first.setText(case_profile.attorney_name_first)
-        self._attorney_last.setText(case_profile.attorney_name_last)
-        self._attorney_gender_combo.setCurrentText(case_profile.attorney_gender)
-        self._gender_combo.setCurrentText(case_profile.claimant_gender)
-        self._reference_date.setText(case_profile.trial_date)
-        self._dob.setText(case_profile.claimant_dob)
-        self._doi.setText(case_profile.claimant_doi)
+        cached = load_case_info()
+        if not cached:
+            return
+        self._claimant_first.setText(cached.get("claimant_name_first", ""))
+        self._claimant_last.setText(cached.get("claimant_name_last", ""))
+        self._attorney_first.setText(cached.get("attorney_name_first", ""))
+        self._attorney_last.setText(cached.get("attorney_name_last", ""))
 
     def form_data(self) -> dict:
         return {
@@ -415,167 +261,3 @@ class ConfirmReferenceData(QDialog):
             "dob": self._dob.text().strip(),
             "doi": self._doi.text().strip(),
         }
-
-
-def _read_recent_log() -> str | None:
-    try:
-        log_dir = _get_log_dir()
-        log_files = list(log_dir.glob("econ_automation_*.txt"))
-
-        if not log_files:
-            return None
-
-        rel_log = None
-        for log in sorted(log_files, key=lambda f: f.stat().st_mtime, reverse=True):
-            if "exception" in log.read_text(
-                encoding="utf-8", errors="replace"
-            ) or "error" in log.read_text(encoding="utf-8", errors="replace"):
-                rel_log = log
-                break
-        if rel_log is None:
-            rel_log = (
-                max(log_files, key=lambda f: f.stat().st_mtime)
-                if max(log_files, key=lambda f: f.stat().st_mtime).read_text(
-                    encoding="utf-8", errors="replace"
-                )
-                != ""
-                else None
-            )
-
-        text = rel_log.read_text(encoding="utf-8", errors="replace") if rel_log else ""
-
-        entries = [e.strip() for e in text.split("\n\n") if e.strip()]
-        snippet_body = "\n\n".join(entries[-10:])
-        snippet = f"Log snippet: {rel_log.name if rel_log else 'no log found'}\n{snippet_body}"
-
-        if len(snippet) > 3000:
-            snippet = "...[truncated]\n\n" + snippet[-3000:]
-        return snippet
-    except Exception as e:
-        logger.error(f"Error reading recent log: {e}")
-        return None
-
-
-class BugReportDialog(QDialog):
-    """'Send Bug Report' — uses GH API and PyGithub to submit user bug reports directly to repo."""
-
-    def __init__(self, parent, colors: dict, error_message: str | None = None):
-        super().__init__(parent)
-        self.setWindowTitle("Send Bug Report")
-        self.setModal(True)
-        self.setMinimumWidth(440)
-        self._colors = colors
-        self._error_message = error_message
-        self._log_snippet = _read_recent_log()
-        self._build_ui()
-        _apply_dialog_style(self, colors)
-
-        # Find the project root (EconAutomation-REP)
-        script_dir = Path(__file__).resolve().parent
-        basedir = script_dir.parent.parent
-        while basedir.name != "EconAutomation":
-            basedir = basedir.parent
-
-        load_dotenv(os.path.join(basedir, "GH_REPO.env"), override=True, verbose=True)
-        self._github_token = os.getenv("GITHUB_TOKEN")
-        self._github_repo = os.getenv("REPO_NAME")
-        self._github_owner = os.getenv("REPO_OWNER")
-
-        # Initialize GH client with token
-        self.gh_client = Github(self._github_token)
-        self.gh_repo = self.gh_client.get_repo(
-            f"{self._github_owner}/{self._github_repo}"
-        )
-
-    def _build_ui(self) -> None:
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(24, 20, 24, 16)
-        layout.setSpacing(12)
-
-        title = QLabel("Send Bug Report")
-        title.setObjectName("dialog_title")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title)
-        layout.addWidget(_make_separator())
-
-        form = QFormLayout()
-        form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
-        form.setHorizontalSpacing(12)
-        form.setVerticalSpacing(8)
-        self._title_edit = QLineEdit()
-        self._title_edit.setText("Bug Report")
-        self._title_edit.setPlaceholderText("Brief summary of the issue")
-        form.addRow("Title:", self._title_edit)
-        layout.addLayout(form)
-
-        user_label = QLabel("User:")
-        layout.addWidget(user_label)
-        self._user_edit = QTextEdit()
-        self._user_edit.setPlaceholderText("Please enter your initials.")
-        self._user_edit.setFixedHeight(30)
-        layout.addWidget(self._user_edit)
-
-        desc_label = QLabel("Description:")
-        layout.addWidget(desc_label)
-        self._desc_edit = QTextEdit()
-        self._desc_edit.setPlaceholderText(
-            "Describe the issue and steps to reproduce..."
-        )
-        self._desc_edit.setFixedHeight(100)
-        layout.addWidget(self._desc_edit)
-
-        btn_row = QHBoxLayout()
-        btn_row.addItem(
-            QSpacerItem(
-                40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
-            )
-        )
-        submit_btn = QPushButton("Submit")
-        submit_btn.setObjectName("dialog_btn")
-        submit_btn.clicked.connect(self._on_submit)
-        cancel_btn = QPushButton("Cancel")
-        cancel_btn.setObjectName("dialog_btn")
-        cancel_btn.clicked.connect(self.reject)
-        btn_row.addWidget(submit_btn)
-        btn_row.addWidget(cancel_btn)
-        layout.addLayout(btn_row)
-
-    def _on_submit(self) -> None:
-        today = dt.now().strftime("%Y-%m-%d")
-        title = f"{today} - {self._title_edit.text().strip() or 'Bug Report'}"
-        description = self._desc_edit.toPlainText().strip()
-        user = self._user_edit.toPlainText().strip()
-
-        body_parts = [
-            "**User:**",
-            user if user else "(no user provided)",
-            "",
-            "**Description:**",
-            description if description else "(no description provided)",
-            "",
-            "**Environment:**",
-            f"- App Version: v{_app_version}",
-            f"- OS: {platform.system()} {platform.version()}",
-        ]
-
-        if self._error_message:
-            body_parts += ["", "**Error Message:**", f"```\n{self._error_message}\n```"]
-
-        if self._log_snippet:
-            body_parts += [
-                "",
-                "**Recent Log Entries:**",
-                f"```\n{self._log_snippet}\n```",
-            ]
-
-        body = "\n".join(body_parts)
-
-        # Create issue via GitHub API
-        issue = self.gh_repo.create_issue(
-            title=title,
-            body=body,
-            labels=["Bug"],
-        )
-
-        logger.info(f"Issue created: {issue.html_url}")
-        self.accept()

@@ -1,9 +1,10 @@
 import re as _re
-from lxml import etree
-from docx.oxml.ns import qn
-from docx.oxml import OxmlElement
-from docxtpl import DocxTemplate
 from copy import deepcopy
+
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docxtpl import DocxTemplate
+from lxml import etree
 
 # Word automatically injects these properties without user intent.
 # Stripping them before comparison lets adjacent runs that are visually
@@ -97,7 +98,7 @@ def fix_same_row_tr_tags(doc: DocxTemplate) -> None:
     SAME <w:tr> element.
 
     docxtpl's patch_xml regex is greedy and replaces the ENTIRE <w:tr> with
-    whichever {%tr...%} tag it matches last (always the endif), discarding the
+    whichever {%tr...%} tag it matches last — always the endif — discarding the
     opening if condition. The standard docxtpl contract requires each tag to be
     in its own dedicated row. This function enforces that contract automatically:
 

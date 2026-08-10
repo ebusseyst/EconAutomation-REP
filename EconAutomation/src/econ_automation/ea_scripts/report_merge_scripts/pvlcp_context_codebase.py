@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass, field, is_dataclass, fields
+from dataclasses import dataclass, field, fields, is_dataclass
 from typing import Any
 
 from docxtpl import RichText
