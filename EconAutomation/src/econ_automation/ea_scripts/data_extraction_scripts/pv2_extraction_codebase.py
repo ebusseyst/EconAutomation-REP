@@ -22,6 +22,7 @@ class PV2Extractor(DataExtractorCore):
         )
         super().__init__(
             workbook_pathstr=str(pv2_filepath),
+            # pyrefly: ignore [bad-argument-type]
             workbook_variables_dict=workbook_info.workbook_variables_dict,
             workbook_charts_dict=workbook_info.workbook_charts_dict,
             workbook_tables_dict=workbook_info.workbook_tables_dict,

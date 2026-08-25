@@ -46,9 +46,11 @@ def determine_variable_map(ea_main_dataclass: Any) -> dict[str, Any]:
     """
     try:
         variable_map = {
-            k: (v if isinstance(v, (str, int, float, datetime, date)) else f"[[ {k} ]]")
+            k: (v if isinstance(v, (str, int, float, datetime, date)) and not None else f"[[ {k} ]]")
             for k, v in ea_main_dataclass.__dict__.items()
         }
+        # DEBUG
+        print(variable_map.items())
     except TypeError:
         logger.exception("determine_variable_map() TypeError")
         raise

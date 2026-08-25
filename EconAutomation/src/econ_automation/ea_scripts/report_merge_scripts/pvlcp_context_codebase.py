@@ -115,8 +115,22 @@ class PVLCPContextBuilder:
 
             out[f"WC_CPI_selcat_{cat}"] = has_low or has_high
 
-            low_val = self._get(f"WC_CPI_selcat_{cat}low_growth_rate") or ""
-            high_val = self._get(f"WC_CPI_selcat_{cat}high_growth_rate") or ""
+            # Pulls unmodified percentage (type: str) 
+            low_val_orig = self._get(f"WC_CPI_selcat_{cat}low_growth_rate") or ""
+            high_val_orig = self._get(f"WC_CPI_selcat_{cat}high_growth_rate") or ""
+
+            # Enforcing CPI growth rate-only one significant figure only policy (08/25/2026)
+            def split_CPI_growth_rate(orig_val) :
+                delim = "."
+
+                val_before, val_after = orig_val.split(delim) if orig_val else ""
+                val_after = val_after[0]
+                
+                return f"{val_before}.{val_after}%"
+            
+            
+            low_val = split_CPI_growth_rate(low_val_orig) if low_val_orig else ""
+            high_val = split_CPI_growth_rate(high_val_orig) if high_val_orig else ""
 
             rt = RichText()
             if has_low and has_high:
@@ -149,7 +163,6 @@ class PVLCPContextBuilder:
             )
             >= 2,
         }
-
 
 def build_pvlcp_context(
     ea_main_dataclass: Any,

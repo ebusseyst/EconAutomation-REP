@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-  # noqa: UP009
 
 ################################################################################
 ## Form generated from reading UI file 'econ_automation_ui.ui'
@@ -9,8 +9,8 @@
 ################################################################################
 from __future__ import annotations
 
-from pathlib import Path
 import logging
+from pathlib import Path
 
 from PySide6.QtCore import (
     QCoreApplication,
@@ -22,9 +22,9 @@ from PySide6.QtCore import (
     QPoint,
     QRect,
     QSize,
+    Qt,
     QTime,
     QUrl,
-    Qt,
 )
 from PySide6.QtGui import (
     QBrush,
@@ -58,8 +58,11 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from econ_automation.ea_scripts.gui_files.gui_core import ea_fontset1  # noqa: F401
-from econ_automation.ea_scripts.gui_files.gui_core import ea_iconset1  # noqa: F401
+
+from econ_automation.ea_scripts.gui_files.gui_core import (
+    ea_fontset1,  # noqa: F401
+    ea_iconset1,  # noqa: F401
+)
 
 # Module's logger instance
 logger = logging.getLogger(__name__)
@@ -478,9 +481,10 @@ class Ui_ea_MainWindow(object):
         self.ea_reportmerge_sub2frame_section_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter
         )
-        self.ea_reportmerge_sub2frame_GLayout.addWidget(
-            self.ea_reportmerge_sub2frame_section_label, 0, 0, 1, 2
-        )
+        self.ea_reportmerge_sub2frame_section_label.hide()
+        # self.ea_reportmerge_sub2frame_GLayout.addWidget(
+        #     self.ea_reportmerge_sub2frame_section_label, 0, 0, 1, 2
+        # )
 
         self.frame_4 = QFrame(self.ea_reportmerge_sub2frame)
         self.frame_4.setObjectName("frame_4")
@@ -571,7 +575,7 @@ class Ui_ea_MainWindow(object):
 
         self.ea_reportmerge_sub2frame_GLayout.addWidget(
             self.ea_reportmerge_referencereports_sub3frame,
-            2,
+            3,
             0,
             1,
             1,
@@ -772,16 +776,17 @@ class Ui_ea_MainWindow(object):
 
         self.ea_reportmerge_sub2frame_GLayout.addWidget(
             self.ea_reportmerge_reporttypes_sub3frame,
-            2,
+            3,
             1,
             1,
             1,
             Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop,
         )
         self.ea_reportmerge_sub2frame_GLayout.setRowStretch(0, 0)
-        self.ea_reportmerge_sub2frame_GLayout.setRowStretch(1, 1)
-        self.ea_reportmerge_sub2frame_GLayout.setRowStretch(2, 3)
-        self.ea_reportmerge_sub2frame_GLayout.setRowStretch(3, 1)
+        self.ea_reportmerge_sub2frame_GLayout.setRowStretch(1, 0)
+        self.ea_reportmerge_sub2frame_GLayout.setRowStretch(2, 1)
+        self.ea_reportmerge_sub2frame_GLayout.setRowStretch(3, 3)
+        self.ea_reportmerge_sub2frame_GLayout.setRowStretch(4, 1)
 
         self.ea_reportmerge_taxstatus_sub3frame = QFrame(self.ea_reportmerge_sub2frame)
         self.ea_reportmerge_taxstatus_sub3frame.setObjectName(
@@ -942,7 +947,7 @@ class Ui_ea_MainWindow(object):
         self.ea_reportmerge_claimantdirselect_button.setMinimumSize(160, 22)
         self.ea_reportmerge_sub2frame_GLayout.addWidget(
             self.ea_reportmerge_claimantdirselect_button,
-            1,
+            2,
             0,
             1,
             2,
@@ -955,7 +960,17 @@ class Ui_ea_MainWindow(object):
         self.ea_reportmerge_selectedclaimantdir_label.setObjectName(
             "ea_reportmerge_selectedclaimantdir_label"
         )
-        self.ea_reportmerge_selectedclaimantdir_label.hide()
+        self.ea_reportmerge_selectedclaimantdir_label.setAlignment(
+            Qt.AlignmentFlag.AlignCenter
+        )
+        self.ea_reportmerge_sub2frame_GLayout.addWidget(
+            self.ea_reportmerge_selectedclaimantdir_label,
+            1,
+            0,
+            1,
+            2,
+            Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter,
+        )
 
         self.ea_reportmerge_button = QPushButton(
             self.ea_reportmerge_claimantdir_subframe
@@ -966,7 +981,7 @@ class Ui_ea_MainWindow(object):
 
         self.ea_reportmerge_sub2frame_GLayout.addWidget(
             self.ea_reportmerge_button,
-            3,
+            4,
             0,
             1,
             2,
@@ -1230,7 +1245,7 @@ class Ui_ea_MainWindow(object):
             }}
             #ea_reportmerge_sub2frame #ea_reportmerge_sub2frame_section_label {{
                 font-family: DM Sans;
-                font-size: {fs_xs}pt;
+                font-size: {fs_small}pt;
                 font-weight: 600;
                 color: {dark_navy};
                 background-color: transparent;
@@ -1296,19 +1311,20 @@ class Ui_ea_MainWindow(object):
             }}
             #ea_reportmerge_frame #ea_reportmerge_claimantdir_section_label {{
                 font-family: DM Sans;
-                font-size: {fs_xs}pt;
+                font-size: {fs_small}pt;
                 font-weight: 600;
                 color: {dark_navy};
                 background-color: transparent;
                 border: none;
             }}
-            #ea_reportmerge_frame #ea_reportmerge_claimantdir_subframe #ea_reportmerge_selectedclaimantdir_label {{
+            #ea_reportmerge_frame #ea_reportmerge_selectedclaimantdir_label {{
                 font-family: Figtree;
                 font-size: {fs_xs}pt;
-                font-weight: 300;
+                font-weight: 500;
+                font-style: italic;
                 color: {dark_navy};
-                background-color: white;
-                border: 1px solid {dark_navy};
+                background-color: transparent;
+                border: none;
                 border-radius: 4px;
             }}
             #ea_reportmerge_frame #ea_reportmerge_claimantdirselect_button {{
@@ -1336,6 +1352,7 @@ class Ui_ea_MainWindow(object):
                 font-weight: 400;
                 color: {dark_navy};
                 padding: 3px;
+                margin-bottom: 2px;
             }}
             #ea_reportmerge_frame #ea_reportmerge_button:hover {{
                 background-color: {off_white};
@@ -1359,12 +1376,12 @@ class Ui_ea_MainWindow(object):
         )
         self.ea_setupcase_createfolder_subframe_label.setText(
             QCoreApplication.translate(
-                "ea_MainWindow", "Create New Claimant Folder (No Workbooks)", None
+                "ea_MainWindow", "Create Claimant Folder (No Workbooks)", None
             )
         )
         self.ea_setupcase_createfolder_button.setText(
             QCoreApplication.translate(
-                "ea_MainWindow", "Create Claimant Folder Only", None
+                "ea_MainWindow", "Create Folder", None
             )
         )
         self.ea_setupcase_createcase_subframe_label.setText(
@@ -1377,7 +1394,7 @@ class Ui_ea_MainWindow(object):
         )
         self.ea_setupcase_OFFSelect_button.setText(
             QCoreApplication.translate(
-                "ea_MainWindow", "Prepare Workbooks with OFF", None
+                "ea_MainWindow", "Prepare with OFF", None
             )
         )
         self.ea_setupcase_selectedOFF_label.setText(
@@ -1387,7 +1404,7 @@ class Ui_ea_MainWindow(object):
         )
         self.ea_setupcase_createcase_button.setText(
             QCoreApplication.translate(
-                "ea_MainWindow", "Prepare Workbooks without OFF", None
+                "ea_MainWindow", "Prepare without OFF", None
             )
         )
         self.label_4.setText(
@@ -1479,7 +1496,7 @@ class Ui_ea_MainWindow(object):
         )
         self.ea_reportmerge_claimantdirselect_button.setText(
             QCoreApplication.translate(
-                "ea_MainWindow", "Select Claimant Folder for Merge", None
+                "ea_MainWindow", "Select Claimant Folder", None
             )
         )
         self.ea_reportmerge_sub2frame_section_label.setText(

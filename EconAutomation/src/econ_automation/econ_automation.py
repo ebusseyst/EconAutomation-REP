@@ -141,6 +141,7 @@ class EconAutomationMainWindow(QMainWindow):
         label.setText(
             Path(result).name if result else "No Econ claimant folder selected."
         )
+        label.show()
 
     def _on_merge_clicked(self) -> None:
         if self._selected_claimant_dir is None:

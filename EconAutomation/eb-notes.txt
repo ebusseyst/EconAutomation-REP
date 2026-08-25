@@ -11,5 +11,9 @@ Split EconAutomation-REP into three repositories due to hardcoded GH distributio
 08/25/2026:
 v0.4.3 pushed following bug reports
 
-Updated Excel file name detection to robust, Pythonic approach throughout pipeline.
-Updated WorkingCalc year rounding and dynamic DR chart to appropriately match target outputs. 
+Updated Excel file name detection to use more robust, Pythonic approach throughout pipeline.
+Updated WorkingCalc year rounding and dynamic DR chart to appropriately match target outputs.
+Corrected econ_automation.spec file (imported from EconAutomation-LAST project) to correctly target EconAutomation-REP main file.
+Added dynamic "selected claimant directory" label to Report Merge sections.
+Removed and/or simplified wordy sections of the GUI.
+Set PVLCP CPI Growth Rate percentages to be one significant figure only.
