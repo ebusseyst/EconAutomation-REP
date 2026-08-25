@@ -70,6 +70,7 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
   uninstallStr: String;
   execOk: Boolean;
+  execOkStr: String;
   resultCode: Integer;
 begin
   if CurStep <> ssInstall then Exit;
@@ -99,8 +100,12 @@ begin
   // remain, so let the user decide rather than silently installing on top.
   if (not execOk) or (resultCode <> 0) then
   begin
+    if execOk then
+      execOkStr := 'True'
+    else
+      execOkStr := 'False';
     Log(Format('Previous version uninstall did not complete cleanly ' +
-        '(execOk=%s, resultCode=%d).', [BoolToStr(execOk), resultCode]));
+        '(execOk=%s, resultCode=%d).', [execOkStr, resultCode]));
     if SuppressibleMsgBox(
         'The previous version of {#MyAppName} could not be fully removed ' +
         'automatically (it may be running, locked, or require ' +
