@@ -1,6 +1,6 @@
+import logging
 from pathlib import Path
 from typing import Any
-import logging
 
 import openpyxl as opxl
 from openpyxl.cell.cell import MergedCell

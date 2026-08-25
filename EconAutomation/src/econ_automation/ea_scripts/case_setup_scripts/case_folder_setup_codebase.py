@@ -126,7 +126,7 @@ def save_claimant_workbook_templates(
             ".xltx",
             ".xltm",
         ):
-            if wb_template.stem == "Case_Variables":
+            if "Case" in wb_template.stem and "Variables" in wb_template.stem:
                 create_case_variables_excel_sheet(case_profile, wb_template, target_dir)
             else:
                 claimant_wb = shutil.copy2(wb_template, target_dir)
@@ -138,7 +138,7 @@ def prepare_claimant_workbooks(case_profile: Any, claimant_wb_path: Path) -> Non
     """
     Processes each non-"Case_Variables" workbook saved in the private claimant folder, adding case variable info where appropriate.
     """
-    if claimant_wb_path.stem == "PV2_Current":
+    if "PV2" in claimant_wb_path.stem:
         new_wb_name = f"{case_profile.claimant_name_last}{case_profile.claimant_name_first_initial} - {claimant_wb_path.name}"
         final_path = claimant_wb_path.parent / new_wb_name
         if final_path.exists():
@@ -149,7 +149,7 @@ def prepare_claimant_workbooks(case_profile: Any, claimant_wb_path: Path) -> Non
             return
         set_PV2_case_variables(case_profile, claimant_wb_path)
         claimant_wb_path.rename(final_path)
-    elif claimant_wb_path.stem == "WorkingCalc_Current":
+    elif "WorkingCalc" in claimant_wb_path.stem:
         new_wb_name = f"{case_profile.claimant_name_last}{case_profile.claimant_name_first_initial} - {claimant_wb_path.name}"
         final_path = claimant_wb_path.parent / new_wb_name
         if final_path.exists():

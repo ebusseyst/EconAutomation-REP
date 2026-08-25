@@ -7,3 +7,9 @@ Split EconAutomation-REP into three repositories due to hardcoded GH distributio
   1. EconAutomation-REP (distribution branch - files are manually transferred from other reps when ready for distro)
   2. EconAutomation-LAST (source from most recently published release - used for hotfixes)
   3. EconAutomation-BETA (contains all next-version changes)
+
+08/25/2026:
+v0.4.3 pushed following bug reports
+
+Updated Excel file name detection to robust, Pythonic approach throughout pipeline.
+Updated WorkingCalc year rounding and dynamic DR chart to appropriately match target outputs. 
