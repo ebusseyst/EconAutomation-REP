@@ -87,15 +87,27 @@ class PVEarningsContextBuilder:
         Pass through every extracted field from the flattened dataclass.
         Includes non-primitive types (RichText, image objects) so docxtpl
         can render {{r ...}} tags correctly.
+
+        Fields whose extracted value is None are omitted rather than passed
+        through, so Jinja treats them as undefined (rendering via
+        _DebugUndefined) instead of stringifying a present None to "None".
         """
         if isinstance(self._raw, BaseModel):
             return {
-                k: v for k, v in self._raw.__dict__.items() if not k.startswith("_")
+                k: v
+                for k, v in self._raw.__dict__.items()
+                if not k.startswith("_") and v is not None
             }
         if is_dataclass(self._raw):
-            return {f.name: self._get(f.name) for f in fields(self._raw)}
+            return {
+                f.name: self._get(f.name)
+                for f in fields(self._raw)
+                if self._get(f.name) is not None
+            }
         # Fallback: plain object with __dict__
-        return {k: v for k, v in vars(self._raw).items() if not k.startswith("_")}
+        return {
+            k: v for k, v in vars(self._raw).items() if not k.startswith("_") and v is not None
+        }
 
     def _toggles(self) -> dict[str, Any]:
         """

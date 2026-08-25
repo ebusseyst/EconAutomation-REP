@@ -17,3 +17,4 @@ Corrected econ_automation.spec file (imported from EconAutomation-LAST project) 
 Added dynamic "selected claimant directory" label to Report Merge sections.
 Removed and/or simplified wordy sections of the GUI.
 Set PVLCP CPI Growth Rate percentages to be one significant figure only.
+Fixed "None" values that were populating to report - all empty values will now properly display disclamatory formatting.

@@ -78,13 +78,28 @@ class PVLCPContextBuilder:
         return bool(val)
 
     def _all_fields(self) -> dict[str, Any]:
+        """
+        Pass through every extracted field from the flattened dataclass.
+
+        Fields whose extracted value is None are omitted rather than passed
+        through, so Jinja treats them as undefined (rendering via
+        _DebugUndefined) instead of stringifying a present None to "None".
+        """
         if isinstance(self._raw, BaseModel):
             return {
-                k: v for k, v in self._raw.__dict__.items() if not k.startswith("_")
+                k: v
+                for k, v in self._raw.__dict__.items()
+                if not k.startswith("_") and v is not None
             }
         if is_dataclass(self._raw):
-            return {f.name: self._get(f.name) for f in fields(self._raw)}
-        return {k: v for k, v in vars(self._raw).items() if not k.startswith("_")}
+            return {
+                f.name: self._get(f.name)
+                for f in fields(self._raw)
+                if self._get(f.name) is not None
+            }
+        return {
+            k: v for k, v in vars(self._raw).items() if not k.startswith("_") and v is not None
+        }
 
     def _rehab_report_types(self) -> dict[str, Any]:
         """
