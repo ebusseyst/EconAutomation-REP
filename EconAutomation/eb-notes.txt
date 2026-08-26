@@ -1,4 +1,4 @@
-THIS RELEASE WAS PULLED FROM EconAutomation-LAST
+THIS REPOSITORY WAS PULLED FROM EconAutomation-LAST (08/10/2026)
 
 08/10/2026:
 v0.4.2 pushed after Egnyte file system migration
@@ -18,3 +18,4 @@ Added dynamic "selected claimant directory" label to Report Merge sections.
 Removed and/or simplified wordy sections of the GUI.
 Set PVLCP CPI Growth Rate percentages to be one significant figure only.
 Fixed "None" values that were populating to report - all empty values will now properly display disclamatory formatting.
+Fixed deprecated version references to ensure update framework applies consistently.
